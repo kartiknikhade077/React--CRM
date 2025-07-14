@@ -13,7 +13,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8080/home/register", formData);
+      await axios.post("http://localhost:8081/home/register", formData);
       setSuccess("Registration successful!");
     } catch (err) {
       setError(err.response?.data || "An error occurred during registration");
