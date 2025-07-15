@@ -11,11 +11,8 @@ import "bootstrap/dist/js/bootstrap.bundle.min";
 import SuperDash from "./SuperAdminComponent/SuperDash";
 import CompDash from "./Company/Company";
 import EmpDash from "./Employee/EmpDash";
-
 import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
 import UpdateCompany from "./SuperAdminComponent/UpdateCompany";
-
 import EmployeeList from "./Company/EmployeeList"
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
