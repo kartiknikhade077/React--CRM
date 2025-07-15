@@ -11,6 +11,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import SuperDash from "./SuperAdminComponent/SuperDash";
 import CompDash from "./Company/Company";
 import EmpDash from "./Employee/EmpDash";
+import EmployeeList from "./Company/EmployeeList"
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 const App = () => {
@@ -22,6 +23,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/studenList" element={<StudentList />} />
+        <Route path="/EmployeeList" element={<EmployeeList />} />
         
         {/* Protected Routes */}
         <Route
