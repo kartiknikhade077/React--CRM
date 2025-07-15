@@ -15,19 +15,34 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(
-        "http://localhost:8081/signin", // Correct URL based on the controller mapping
-        formData,
-        { headers: { "Content-Type": "application/json" } }
-      );
+      const response = await axios.post("http://localhost:8081/signin", formData, {
+        headers: { "Content-Type": "application/json" },
+      });
+  
       setSuccess("Login successful!");
-     
-      localStorage.setItem("token", response.data.jwtToken); // Save JWT token
-      navigate("/adminDashboard");
+  
+      const { jwtToken, role } = response.data;
+  
+      localStorage.setItem("token", jwtToken);
+      localStorage.setItem("role", role); // Save role for conditional access
+  
+      if (role === "ROLE_SUPERADMIN") {
+        navigate("/superDash");
+      }
+      else if(role === "ROLE_COMPANY"){
+        navigate("/compDash");
+      }
+      else if(role === "ROLE_EMP"){
+        navigate("/empDash");
+      }
+      else {
+        navigate("/adminDashboard");
+      }
     } catch (err) {
       setError(err.response?.data || "An error occurred during login");
     }
   };
+  
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
