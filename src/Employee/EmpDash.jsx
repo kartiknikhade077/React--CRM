@@ -1,18 +1,17 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import EmployeeNav from "./EmployeeNavBar";
 
 const EmpDash = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role !== "ROLE_EMP") {
-      navigate("/"); // block unauthorized access
-    }
-  }, [navigate]);
+    
+  });
 
   return (
     <div>
+      <EmployeeNav/>
       <h1>Welcome, Employee Dashboard!</h1>
     </div>
   );
