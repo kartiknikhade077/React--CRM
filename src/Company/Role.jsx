@@ -16,13 +16,13 @@ const RoleModel = () => {
     const [departments, setDepartments] = useState([]);
     const [editMode, setEditMode] = useState(false);
     const [selectedRole, setSelectedRole] = useState({
-    roleId: "",
-    departmentId: "",
-    roleName: "",
-    templateAccess: false,
-    emailAccess: false,
-    leadAccess: false,
-  });
+        roleId: "",
+        departmentId: "",
+        roleName: "",
+        templateAccess: false,
+        emailAccess: false,
+        leadAccess: false,
+    });
 
 
     useEffect(() => {
@@ -30,13 +30,13 @@ const RoleModel = () => {
     }, [page]);
 
     const handleCloseRoleModel = () => setShow(false);
-    const handleShowRoleModel = (edit = false)  => {
+    const handleShowRoleModel = (edit = false) => {
         setShow(true)
         fetchDepartment();
-       setEditMode(edit);
+        setEditMode(edit);
 
     };
-    
+
 
 
 
@@ -44,7 +44,7 @@ const RoleModel = () => {
         try {
             const response = await axiosInstance.get(`company/getDepartments`);
             setDepartments(response.data);
-            
+
 
         } catch (error) {
             console.error("Failed to fetch employees:", error);
@@ -69,19 +69,19 @@ const RoleModel = () => {
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
 
-         try {
-    if (editMode) {
-      // Ensure roleId is sent for update
-      await axiosInstance.put("/company/updateRole", data);
-    } else {
-      await axiosInstance.post("/company/createRole", data);
-    }
+        try {
+            if (editMode) {
+                // Ensure roleId is sent for update
+                await axiosInstance.put("/company/updateRole", data);
+            } else {
+                await axiosInstance.post("/company/createRole", data);
+            }
 
-    await fetchRoles(); // Refresh role list
-    handleCloseRoleModel(); // Close modal
-  } catch (error) {
-    console.error("Error saving role:", error);
-  }
+            await fetchRoles(); // Refresh role list
+            handleCloseRoleModel(); // Close modal
+        } catch (error) {
+            console.error("Error saving role:", error);
+        }
     };
 
     const fetchByRoleId = async (roleId) => {
@@ -89,17 +89,17 @@ const RoleModel = () => {
 
         try {
             const response = await axiosInstance.get(`/company/getRolesByRoleId/${roleId}`);
-           const role = response.data;
-                setSelectedRole({
-        roleId: role.roleId,
-        departmentId: role.departmentId,
-        roleName: role.roleName,
-        templateAccess: role.templateAccess,
-        emailAccess: role.emailAccess,
-        leadAccess: role.leadAccess,
-      });
+            const role = response.data;
+            setSelectedRole({
+                roleId: role.roleId,
+                departmentId: role.departmentId,
+                roleName: role.roleName,
+                templateAccess: role.templateAccess,
+                emailAccess: role.emailAccess,
+                leadAccess: role.leadAccess,
+            });
             handleShowRoleModel(true)
-            
+
             // Do something with the data, like show modal or fill a form
         } catch (error) {
             console.error("Failed to fetch role:", error);
@@ -176,14 +176,14 @@ const RoleModel = () => {
                             <input type="hidden" name="roleId" value={selectedRole.roleId || ""} />
                             <label className="form-label">Department Name</label>
                             <select
-  className="form-control"
-  name="departmentId"
-  value={selectedRole.departmentId}
-  onChange={(e) =>
-    setSelectedRole(prev => ({ ...prev, departmentId: e.target.value }))
-  }
-  required
->
+                                className="form-control"
+                                name="departmentId"
+                                value={selectedRole.departmentId}
+                                onChange={(e) =>
+                                    setSelectedRole(prev => ({ ...prev, departmentId: e.target.value }))
+                                }
+                                required
+                            >
                                 <option value="">Select a department</option>
                                 {departments.map((dept) => (
                                     <option key={dept.departmentId} value={dept.departmentId}>
@@ -200,7 +200,7 @@ const RoleModel = () => {
                         {/* Checkboxes */}
                         <div className="mb-3 mt-2">
                             <div className="form-check">
-                                <input className="form-check-input" type="checkbox" name="templateAccess" value="true"  defaultChecked={selectedRole.templateAccess} />
+                                <input className="form-check-input" type="checkbox" name="templateAccess" value="true" defaultChecked={selectedRole.templateAccess} />
                                 <label className="form-check-label">Template Access</label>
                             </div>
                             <div className="form-check">
