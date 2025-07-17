@@ -17,8 +17,9 @@ import EmployeeList from "./Company/EmployeeList";
 import UpdateEmployeeList from "./Company/UpdateEmployeeList";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Department from "./Company/Department";
 // import RoleLayout from "./navbar/RoleLayout";
-
+import CompRole from "./Company/Role";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -104,6 +105,24 @@ const App = () => {
           element={
             <ProtectedRoute>
               <UpdateEmployeeList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/department"
+          element={
+            <ProtectedRoute>
+              <Department />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/CompRole"
+          element={
+            <ProtectedRoute>
+              <CompRole />
             </ProtectedRoute>
           }
         />

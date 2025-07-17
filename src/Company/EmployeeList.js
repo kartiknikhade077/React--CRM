@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CompanyNavbar from "./CompanyNabar";
+import CompanyNavbar from "./CompanyNavbar";
 import axiosInstance from "../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
 // import "bootstrap/dist/css/bootstrap.min.css";

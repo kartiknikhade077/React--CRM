@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
-import CompanyNavbar from "./CompanyNabar";
+import CompanyNavbar from "./CompanyNavbar";
 
 const UpdateEmployeeList = () => {
   

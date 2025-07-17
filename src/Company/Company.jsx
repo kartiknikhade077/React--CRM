@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import CompanyNavbar from "../Company/CompanyNabar";
+import CompanyNavbar from "./CompanyNavbar";
 
 const Company = () => {
   const navigate = useNavigate();

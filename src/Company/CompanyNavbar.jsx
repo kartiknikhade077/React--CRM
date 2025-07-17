@@ -41,6 +41,17 @@ const CompanyNavbar = () => {
             </Link>
           </li>
           <li className="nav-item">
+            <Link className="nav-link" to="/department">
+              Department
+            </Link>
+          </li>
+          <li className="nav-item">
+            <Link className="nav-link" to="/CompRole">
+              {" "}
+              Role
+            </Link>
+          </li>
+          <li className="nav-item">
             <Link className="nav-link" to="#">
               Settings
             </Link>

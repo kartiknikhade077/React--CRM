@@ -51,7 +51,7 @@ const Department = () => {
             <CompanyNav />
             <h2 className="mb-3">Department List</h2>
             <Button variant="primary" onClick={handleShowDeptartment}>
-                Launch demo modal
+                Create
             </Button>
             <table className="table table-bordered table-striped">
                 <thead className="table-dark">
