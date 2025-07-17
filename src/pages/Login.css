@@ -1,0 +1,222 @@
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
+
+.crm-login-page {
+    display: flex;
+    height: 100vh;
+    font-family: "Segoe UI", sans-serif;
+}
+
+.crm-login-left {
+    flex: 1;
+    background: linear-gradient(135deg, #6e00ff, #a600ff);
+    color: white;
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    animation: fadeInUp 1s ease-in-out;
+}
+
+.crm-login-logo {
+    width: 140px;
+    margin-bottom: 40px;
+}
+
+.crm-login-left h2 {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.crm-login-left p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.crm-login-left-illustration {
+    max-width: 40%;
+    animation: float 3s ease-in-out infinite;
+}
+
+.crm-login-register-link {
+    margin-top: 30px;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.crm-login-register-link a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+    font-size: 1.4rem;
+}
+
+.crm-login-register-link a:hover {
+    color: #ddddff;
+}
+
+.crm-login-form-title {
+    text-align: center;
+}
+
+.crm-login-right {
+    flex: 1;
+    background: #f9f9f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInRight 1.2s ease-in-out;
+}
+
+.crm-login-form {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 400px;
+}
+
+.crm-login-form h3 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    color: #111;
+}
+
+.crm-login-form input {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.crm-login-button {
+    width: 100%;
+    background-color: #111827;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.crm-login-button:hover {
+    background-color: #000;
+}
+
+.crm-login-forgot-password {
+    text-align: right;
+    margin-bottom: 16px;
+}
+
+.crm-login-forgot-password a {
+    color: #4f46e5;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.crm-login-or-text {
+    text-align: center;
+    margin: 20px 0 10px;
+    color: #555;
+    font-size: 14px;
+}
+
+.crm-login-social-icons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 20px;
+}
+
+.crm-login-social-icons i {
+    cursor: pointer;
+    color: #333;
+    transition: transform 0.3s;
+}
+
+.crm-login-social-icons i:hover {
+    transform: scale(1.2);
+}
+
+.crm-login-error-msg {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.crm-login-success-msg {
+    color: green;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* Animations */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .crm-login-page {
+        flex-direction: column;
+    }
+
+    .crm-login-left {
+        display: none;
+    }
+
+    .crm-login-right {
+        flex: none;
+        height: 100vh;
+    }
+}

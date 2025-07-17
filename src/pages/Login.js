@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import "./Login.css";
+import animateLeft from "../Assets/login-left1.png";
+import axios from "axios";
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -15,67 +17,91 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8081/signin", formData, {
-        headers: { "Content-Type": "application/json" },
-      });
-  
+      const response = await axios.post(
+        "http://localhost:8081/signin",
+        formData,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
       setSuccess("Login successful!");
-  
+
       const { jwtToken, role } = response.data;
-  
+
       localStorage.setItem("token", jwtToken);
-      localStorage.setItem("role", role); // Save role for conditional access
-  
+      localStorage.setItem("role", role);
+
       if (role === "ROLE_SUPERADMIN") {
         navigate("/superDash");
-      }
-      else if(role === "ROLE_COMPANY"){
+      } else if (role === "ROLE_COMPANY") {
         navigate("/compDash");
-      }
-      else if(role === "ROLE_EMP"){
+      } else if (role === "ROLE_EMP") {
         navigate("/empDash");
-      }
-      else {
+      } else {
         navigate("/adminDashboard");
       }
     } catch (err) {
       setError(err.response?.data || "An error occurred during login");
     }
   };
-  
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <div className="card p-4" style={{ width: "100%", maxWidth: "400px" }}>
-        <h2 className="text-center mb-4">Login</h2>
-        {error && <div className="alert alert-danger">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="username" className="form-label">Username</label>
-            <input
-              type="text"
-              name="username"
-              id="username"
-              className="form-control"
-              placeholder="Enter username"
-              value={formData.username}
-              onChange={handleChange}
-            />
+    <div className="crm-login-page">
+      <div className="crm-login-left">
+        <h2>Seamless Login for Exclusive Access</h2>
+        <p>
+          Immerse yourself in a hassle-free login journey with our intuitively
+          designed login form. Effortlessly access your account.
+        </p>
+        <img
+          src={animateLeft}
+          alt="Animation"
+          className="crm-login-left-illustration"
+        />
+        <p className="crm-login-register-link">
+          Don't have an account? <a href="/register">Register here</a>
+        </p>
+      </div>
+
+      <div className="crm-login-right">
+        <form className="crm-login-form" onSubmit={handleSubmit}>
+          <h3 className="crm-login-form-title">Sign in</h3>
+
+          {error && <div className="crm-login-error-msg">{error}</div>}
+          {success && <div className="crm-login-success-msg">{success}</div>}
+
+          <input
+            type="text"
+            name="username"
+            placeholder="Email address"
+            value={formData.username}
+            onChange={handleChange}
+            required
+          />
+
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+
+          <div className="crm-login-forgot-password">
+            <a href="/forgot-password">Forgot your password?</a>
           </div>
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label">Password</label>
-            <input
-              type="password"
-              name="password"
-              id="password"
-              className="form-control"
-              placeholder="Enter password"
-              value={formData.password}
-              onChange={handleChange}
-            />
+
+          <button type="submit" className="crm-login-button">
+            Sign in
+          </button>
+
+          <p className="crm-login-or-text">or continue with</p>
+
+          <div className="crm-login-social-icons">
+            <i className="fab fa-google"></i>
           </div>
-          <button type="submit" className="btn btn-primary w-100">Login</button>
         </form>
       </div>
     </div>
