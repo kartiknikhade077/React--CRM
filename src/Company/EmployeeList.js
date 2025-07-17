@@ -7,8 +7,6 @@ import { toast } from "react-toastify";
 // import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 const Company = () => {
-
-
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [employees, setEmployees] = useState([]);
@@ -23,26 +21,25 @@ const Company = () => {
   const [pageSize, setPageSize] = useState(10);
   const [pageCount, setPageCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const [departments, setDepartments] = useState([]);
   const [roles, setRoles] = useState([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [selectedRoleId, setSelectedRoleId] = useState("");
 
-
-//   const [formData, setFormData] = useState({
-//     name: "",
-//     email: "",
-//     password: "",
-//     phone: "",
-//     department: "",
-//     role: "",
-//     gender: "",
-//     description: "",
-//     leadAccess: false,
-//     templateAccess: false,
-//     emailAccess: false,
-//   });
+  //   const [formData, setFormData] = useState({
+  //     name: "",
+  //     email: "",
+  //     password: "",
+  //     phone: "",
+  //     department: "",
+  //     role: "",
+  //     gender: "",
+  //     description: "",
+  //     leadAccess: false,
+  //     templateAccess: false,
+  //     emailAccess: false,
+  //   });
 
   const defaultFormData = {
     name: "",
@@ -57,7 +54,7 @@ const Company = () => {
     templateAccess: false,
     emailAccess: false,
   };
-const [formData, setFormData] = useState(defaultFormData);
+  const [formData, setFormData] = useState(defaultFormData);
 
   useEffect(() => {
     fetchEmployees();
@@ -74,8 +71,6 @@ const [formData, setFormData] = useState(defaultFormData);
     }
   };
 
-
-
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
@@ -89,58 +84,58 @@ const [formData, setFormData] = useState(defaultFormData);
     fetchDepartments();
   }, []);
 
-const handleDepartmentChange = async (e) => {
-  const departmentId = e.target.value;
-  setSelectedDepartmentId(departmentId);
+  const handleDepartmentChange = async (e) => {
+    const departmentId = e.target.value;
+    setSelectedDepartmentId(departmentId);
 
-  const selectedDept = departments.find(
-    (d) => d.departmentId.toString() === departmentId
-  );
-
-  setFormData((prev) => ({
-    ...prev,
-    department: selectedDept?.departmentName || "",
-    role: "", // reset role
-  }));
-
-  try {
-    const res = await axiosInstance.get(
-      `/company/getRolesByDepartmentId/${departmentId}`
+    const selectedDept = departments.find(
+      (d) => d.departmentId.toString() === departmentId
     );
-    setRoles(res.data);
-  } catch (err) {
-    toast.error("Failed to load roles for this department");
-  }
-};
 
-
-const handleRoleChange = async (e) => {
-  const roleId = e.target.value;
-  setSelectedRoleId(roleId);
-
-  const selectedRole = roles.find((r) => r.roleId.toString() === roleId);
-
-  setFormData((prev) => ({
-    ...prev,
-    role: selectedRole?.roleName || "",
-  }));
-
-  try {
-    const res = await axiosInstance.get(`/company/getRolesByRoleId/${roleId}`);
-    const data = res.data;
-
-    // Set default access from role
     setFormData((prev) => ({
       ...prev,
-      leadAccess: data.leadAccess,
-      templateAccess: data.templateAccess,
-      emailAccess: data.emailAccess,
+      department: selectedDept?.departmentName || "",
+      role: "", // reset role
     }));
-  } catch (err) {
-    toast.error("Failed to load role access");
-  }
-};
 
+    try {
+      const res = await axiosInstance.get(
+        `/company/getRolesByDepartmentId/${departmentId}`
+      );
+      setRoles(res.data);
+    } catch (err) {
+      toast.error("Failed to load roles for this department");
+    }
+  };
+
+  const handleRoleChange = async (e) => {
+    const roleId = e.target.value;
+    setSelectedRoleId(roleId);
+
+    const selectedRole = roles.find((r) => r.roleId.toString() === roleId);
+
+    setFormData((prev) => ({
+      ...prev,
+      role: selectedRole?.roleName || "",
+    }));
+
+    try {
+      const res = await axiosInstance.get(
+        `/company/getRolesByRoleId/${roleId}`
+      );
+      const data = res.data;
+
+      // Set default access from role
+      setFormData((prev) => ({
+        ...prev,
+        leadAccess: data.leadAccess,
+        templateAccess: data.templateAccess,
+        emailAccess: data.emailAccess,
+      }));
+    } catch (err) {
+      toast.error("Failed to load role access");
+    }
+  };
 
   // For search Console
   const searchEmployees = async (term) => {
@@ -161,17 +156,17 @@ const handleRoleChange = async (e) => {
   };
 
   //    form code
-const checkEmailDuplicate = async (email) => {
-  try {
-    const response = await axiosInstance.get(
-      `/company/checkDuplicateEmail/${email}`
-    );
-    return response.data; // true = unique, false = already exists
-  } catch (err) {
-    console.error("Error checking duplicate email", err);
-    return false;
-  }
-};
+  const checkEmailDuplicate = async (email) => {
+    try {
+      const response = await axiosInstance.get(
+        `/company/checkDuplicateEmail/${email}`
+      );
+      return response.data; // true = unique, false = already exists
+    } catch (err) {
+      console.error("Error checking duplicate email", err);
+      return false;
+    }
+  };
 
   const handleInputChange = async (e) => {
     const { name, value, type, checked } = e.target;
@@ -212,86 +207,87 @@ const checkEmailDuplicate = async (email) => {
     });
   };
 
+  //   const handleSubmit = async (e) => {
+  //     e.preventDefault();
 
+  //     try {
+  //       const token = localStorage.getItem("token");
 
+  //       console.log("Submitted formData:", formData);
+  //       await axiosInstance.post("/company/createEmployee", formData);
 
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
+  //       // ✅ Trigger the modal close button programmatically
+  //       document.querySelector("#createEmployeeModal .btn-close")?.click();
 
-//     try {
-//       const token = localStorage.getItem("token");
+  //       // Clear form
 
-//       console.log("Submitted formData:", formData);
-//       await axiosInstance.post("/company/createEmployee", formData);
+  //       setFormData({
+  //         name: "",
+  //         email: "",
+  //         password: "",
+  //         phone: "",
+  //         description: "",
+  //         department: "",
+  //         gender: "",
+  //         leadAccess: false,
+  //         templateAccess: false, // ✅ match backend
+  //         emailAccess: false,
+  //       });
 
-//       // ✅ Trigger the modal close button programmatically
-//       document.querySelector("#createEmployeeModal .btn-close")?.click();
+  //       // Refresh data
+  //       fetchEmployees();
 
-//       // Clear form
+  //       toast.success("Company created successfully!"); // ✅ Toast here
+  //     } catch (error) {
+  //       console.error("Error creating employee:", error.response || error);
 
-//       setFormData({
-//         name: "",
-//         email: "",
-//         password: "",
-//         phone: "",
-//         description: "",
-//         department: "",
-//         gender: "",
-//         leadAccess: false,
-//         templateAccess: false, // ✅ match backend
-//         emailAccess: false,
-//       });
+  //       toast.error("Failed to create employee. See console for details.");
+  //     }
 
-//       // Refresh data
-//       fetchEmployees();
+  //     // in handleSubmit
+  //     await axiosInstance.post("/company/createEmployee", {
+  //       ...formData,
+  //       department: formData.department, // string
+  //       role: formData.role, // string
+  //     });
+  //   };
 
-//       toast.success("Company created successfully!"); // ✅ Toast here
-//     } catch (error) {
-//       console.error("Error creating employee:", error.response || error);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-//       toast.error("Failed to create employee. See console for details.");
-//     }
+    // Check duplicate email
+    const isEmailUnique = await checkEmailDuplicate(formData.email);
+    if (!isEmailUnique) {
+      toast.error("❌ Email already exists. Please use a different one.");
+      return;
+    }
 
-//     // in handleSubmit
-//     await axiosInstance.post("/company/createEmployee", {
-//       ...formData,
-//       department: formData.department, // string
-//       role: formData.role, // string
-//     });
-//   };
+    try {
+      const payload = {
+        ...formData,
+        departmentId: selectedDepartmentId, // ✅ Add this
+        roleId: selectedRoleId, // ✅ Add this
+        tempalteAccess: formData.templateAccess, // match typo in backend
+      };
+      delete payload.templateAccess; // remove correct key since backend uses typo
 
+      console.log("Submitted payload:", payload);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+      await axiosInstance.post("/company/createEmployee", payload);
+      toast.success("✅ Employee created successfully");
 
-  // Check duplicate email
-  const isEmailUnique = await checkEmailDuplicate(formData.email);
-  if (!isEmailUnique) {
-    toast.error("❌ Email already exists. Please use a different one.");
-    return;
-  }
-
-  try {
-    const payload = {
-      ...formData,
-      tempalteAccess: formData.templateAccess, // match typo in backend
-    };
-    delete payload.templateAccess; // remove correct key since backend uses typo
-
-    console.log("Submitted payload:", payload);
-
-    await axiosInstance.post("/company/createEmployee", payload);
-    toast.success("✅ Employee created successfully");
-
-    // Reset
-    setFormData(defaultFormData);
-    document.querySelector("#createEmployeeModal .btn-close")?.click();
-    fetchEmployees();
-  } catch (error) {
-    console.error("Error creating employee:", error);
-    toast.error("❌ Failed to create employee. See console for details.");
-  }
-};
+      // Reset
+      setFormData(defaultFormData);
+      setSelectedDepartmentId("");
+      setSelectedRoleId("");
+      
+      document.querySelector("#createEmployeeModal .btn-close")?.click();
+      fetchEmployees();
+    } catch (error) {
+      console.error("Error creating employee:", error);
+      toast.error("❌ Failed to create employee. See console for details.");
+    }
+  };
 
   const handleUpdate = (emp) => {
     navigate(`/UpdateEmployeeList/${emp.employeeId}`, {

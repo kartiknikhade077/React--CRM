@@ -371,7 +371,6 @@ const handleUpdate = (company) => {
             <tr>
               <th>Company Name</th>
               <th>Email</th>
-              <th>Expiry date</th>
               <th>Description</th>
               <th>Update</th>
             </tr>
@@ -382,7 +381,6 @@ const handleUpdate = (company) => {
                 <tr key={index}>
                   <td>{company.companyName}</td>
                   <td>{company.companyEmail}</td>
-                  <td>{company.expirayDate}</td>
                   <td>{company.companyDescription}</td>
 
                   <td>
