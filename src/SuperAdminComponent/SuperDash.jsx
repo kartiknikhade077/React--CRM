@@ -6,6 +6,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { toast } from "react-toastify";
 import axiosInstance from "../BaseComponet/axiosInstance";
 import RoleLayout from "../navbar/RoleLayout";
+import NavbarSuperAdmin from "./NavbarSuperAdmin";
 const SuperDash = () => {
   const navigate = useNavigate();
 
@@ -197,7 +198,8 @@ const handleUpdate = (company) => {
 
 
   return (
-    <RoleLayout role="superadmin">
+    <>
+      <NavbarSuperAdmin />
       <div className="container mt-4">
         <div className="row m-0 p-0 w-100">
           <div className="col-md-3">
@@ -465,7 +467,7 @@ const handleUpdate = (company) => {
           </ul>
         </nav>
       </div>
-    </RoleLayout>
+    </>
   );
 };
 
