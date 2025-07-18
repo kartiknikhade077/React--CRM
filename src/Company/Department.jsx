@@ -82,83 +82,93 @@ const Department = () => {
 
         <div className="slidebar-main-div-right-section">
           {" "}
-          <h2 className="mb-3">Department List</h2>
-          <Button variant="primary" onClick={handleShowDepartment}>
-            Create
-          </Button>
-          <table className="table table-bordered table-striped mt-3">
-            <thead className="table-dark">
-              <tr>
-                <th>ID</th>
-                <th>Dept Name</th>
-                <th>Email</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {departments.length > 0 ? (
-                departments.map((dept) => (
-                  <tr key={dept.departmentId}>
-                    <td>{dept.departmentId}</td>
-                    <td>{dept.departmentName}</td>
-                    <td>{dept.departmentEmail}</td>
-                    <td>
-                      <Button
-                        variant="primary"
-                        onClick={() => fetchByDepartmentId(dept.departmentId)}
-                      >
-                        Update
-                      </Button>
+          <h2 className="mb-3">Department</h2>
+          <div className="Companalist-main-card">
+            <div>
+              <Button
+                className="btn btn-dark m-1 ml-auto"
+                variant=""
+                onClick={handleShowDepartment}
+              >
+                Create
+              </Button>
+            </div>
+            <table className="table table-hover align-middle">
+              <thead className="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Dept Name</th>
+                  <th>Email</th>
+                  <th className="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {departments.length > 0 ? (
+                  departments.map((dept) => (
+                    <tr key={dept.departmentId}>
+                      <td>{dept.departmentId}</td>
+                      <td>{dept.departmentName}</td>
+                      <td>{dept.departmentEmail}</td>
+
+                      <td className="text-end">
+                        <button
+                          className="btn btn-outline-primary btn-sm"
+                          onClick={() => fetchByDepartmentId(dept.departmentId)}
+                        >
+                          <i className="bi bi-pencil-square"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center">
+                      Department Not Set
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="text-center">
-                    Department Not Set
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <Modal show={show} onHide={handleCloseDepartment}>
-            <Modal.Header closeButton>
-              <Modal.Title>
-                {isEditMode ? "Update Department" : "Create Department"}
-              </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <form onSubmit={saveDepartment}>
-                <div className="mb-3">
-                  <label className="form-label">Department Name</label>
-                  <input
-                    className="form-control"
-                    name="departmentName"
-                    required
-                    defaultValue={selectedDepartment?.departmentName || ""}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Department Email</label>
-                  <input
-                    className="form-control"
-                    name="departmentEmail"
-                    required
-                    defaultValue={selectedDepartment?.departmentEmail || ""}
-                  />
-                </div>
+                )}
+              </tbody>
+            </table>
 
-                <Modal.Footer>
-                  <Button variant="secondary" onClick={handleCloseDepartment}>
-                    Close
-                  </Button>
-                  <Button variant="primary" type="submit">
-                    {isEditMode ? "Update" : "Create"}
-                  </Button>
-                </Modal.Footer>
-              </form>
-            </Modal.Body>
-          </Modal>
+            <Modal show={show} onHide={handleCloseDepartment}>
+              <Modal.Header closeButton>
+                <Modal.Title>
+                  {isEditMode ? "Update Department" : "Create Department"}
+                </Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                <form onSubmit={saveDepartment}>
+                  <div className="mb-3">
+                    <label className="form-label">Department Name</label>
+                    <input
+                      className="form-control"
+                      name="departmentName"
+                      required
+                      defaultValue={selectedDepartment?.departmentName || ""}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Department Email</label>
+                    <input
+                      className="form-control"
+                      name="departmentEmail"
+                      required
+                      defaultValue={selectedDepartment?.departmentEmail || ""}
+                    />
+                  </div>
+
+                  <Modal.Footer>
+                    <Button variant="secondary" onClick={handleCloseDepartment}>
+                      Close
+                    </Button>
+                    <Button variant="primary" type="submit">
+                      {isEditMode ? "Update" : "Create"}
+                    </Button>
+                  </Modal.Footer>
+                </form>
+              </Modal.Body>
+            </Modal>
+          </div>
         </div>
       </div>
     </div>

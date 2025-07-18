@@ -132,130 +132,115 @@ const UpdateCompany = () => {
         <SidebarSuperAdmin />
 
         <div className="slidebar-main-div-right-section">
-          <div className="container mt-4">
-            <div className="card shadow-lg">
-              <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  <i className="bi bi-building"></i> Update Company Details
-                </h5>
+          <div className="container mt-4 flex-grow-1">
+            <div className="card p-4 shadow-sm">
+              <h4 className="mb-3">🧾 Update Company Info</h4>
+
+              <div className="mb-3">
+                <label className="form-label">Company Name</label>
+                <input
+                  type="text"
+                  name="companyName"
+                  className="form-control"
+                  value={company.companyName}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Company Email</label>
+                <input
+                  type="email"
+                  name="companyEmail"
+                  className="form-control"
+                  value={company.companyEmail}
+                  readOnly
+                />
+                {emailError && (
+                  <small className="text-danger">{emailError}</small>
+                )}
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Description</label>
+                <textarea
+                  name="companyDescription"
+                  className="form-control"
+                  rows="3"
+                  value={company.companyDescription}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                />
+              </div>
+
+              <div className="d-flex justify-content-between">
                 {!isEditing ? (
                   <button
-                    className="btn btn-light btn-sm"
+                    className="btn btn-outline-primary"
                     onClick={() => setIsEditing(true)}
                   >
                     ✏️ Edit
                   </button>
                 ) : (
                   <button
-                    className="btn btn-success btn-sm"
+                    className="btn btn-success"
                     onClick={handleSaveCompany}
                   >
-                    💾 Save Info
+                    💾 Save Company
                   </button>
                 )}
               </div>
-
-              <div className="card-body">
-                <div className="row g-3">
-                  <div className="col-md-6">
-                    <label className="form-label">Company Name</label>
-                    <input
-                      type="text"
-                      name="companyName"
-                      className="form-control"
-                      value={company.companyName}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Company Email</label>
-                    <input
-                      type="email"
-                      name="companyEmail"
-                      // className={`form-control ${emailError ? "is-invalid" : ""}`}
-                      className="form-control"
-                      value={company.companyEmail}
-                      // onChange={handleChange}
-                      // disabled={!isEditing}
-                      readOnly
-                    />
-                    {emailError && (
-                      <div className="invalid-feedback">{emailError}</div>
-                    )}
-                  </div>
-
-                  <div className="col-12">
-                    <label className="form-label">Description</label>
-                    <textarea
-                      name="companyDescription"
-                      rows="3"
-                      className="form-control"
-                      value={company.companyDescription}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
-            <div className="card shadow-lg mt-4">
-              <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  <i className="bi bi-lock"></i> Access Permissions
-                </h5>
-                <button
-                  className="btn btn-success btn-sm"
-                  onClick={handleSaveAccess}
-                >
-                  💾 Save Access
-                </button>
+            <div className="card mt-4 p-4 shadow-sm">
+              <h5 className="mb-3">🔐 Module Access Control</h5>
+
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="leadAccess"
+                  id="leadAccess"
+                  checked={access.leadAccess}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="leadAccess">
+                  Lead Access
+                </label>
               </div>
 
-              <div className="card-body">
-                <div className="form-check form-switch mb-3">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    name="leadAccess"
-                    checked={access.leadAccess}
-                    onChange={handleAccessChange}
-                    id="leadAccess"
-                  />
-                  <label className="form-check-label" htmlFor="leadAccess">
-                    Lead Access {access.leadAccess ? "✅" : "❌"}
-                  </label>
-                </div>
-
-                <div className="form-check form-switch mb-3">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    name="template"
-                    checked={access.template}
-                    onChange={handleAccessChange}
-                    id="template"
-                  />
-                  <label className="form-check-label" htmlFor="template">
-                    Template Access {access.template ? "✅" : "❌"}
-                  </label>
-                </div>
-
-                <div className="form-check form-switch mb-3">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    name="email"
-                    checked={access.email}
-                    onChange={handleAccessChange}
-                    id="email"
-                  />
-                  <label className="form-check-label" htmlFor="email">
-                    Email Access {access.email ? "✅" : "❌"}
-                  </label>
-                </div>
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="template"
+                  id="template"
+                  checked={access.template}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="template">
+                  Template Access
+                </label>
               </div>
+
+              <div className="form-check form-switch mb-4">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="email"
+                  id="email"
+                  checked={access.email}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="email">
+                  Email Access
+                </label>
+              </div>
+
+              <button className="btn btn-dark" onClick={handleSaveAccess}>
+                💾 Save Access
+              </button>
             </div>
           </div>
         </div>

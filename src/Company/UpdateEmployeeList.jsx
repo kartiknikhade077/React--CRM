@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
-import CompanyNavbar from "./CompanyNavbar";
+
+import CompanySidebar from "./CompanySidebar";
+import CompanyTopbar from "./CompanyTopbar";
 
 const UpdateEmployeeList = () => {
   const [emailError, setEmailError] = useState("");
@@ -22,78 +24,81 @@ const UpdateEmployeeList = () => {
   const [roles, setRoles] = useState([]);
 
   // Fetch data
-useEffect(() => {
-  axiosInstance.get(`/company/getEmployee/${id}`).then((res) => {
-    setEmp(res.data.employeeInfo);
-    setInitialEmp(res.data.employeeInfo);
-    setAccess({
-      leadAccess: res.data.moduleAccess.leadAccess,
-      template: res.data.moduleAccess.template,
-      email: res.data.moduleAccess.email,
+  useEffect(() => {
+    axiosInstance.get(`/company/getEmployee/${id}`).then((res) => {
+      setEmp(res.data.employeeInfo);
+      setInitialEmp(res.data.employeeInfo);
+      setAccess({
+        leadAccess: res.data.moduleAccess.leadAccess,
+        template: res.data.moduleAccess.template,
+        email: res.data.moduleAccess.email,
+      });
+
+      // Set default department and fetch roles
+      const deptId = res.data.employeeInfo.departmentId;
+      if (deptId) {
+        axiosInstance
+          .get(`/company/getRolesByDepartmentId/${deptId}`)
+          .then((roleRes) => {
+            setRoles(roleRes.data);
+          });
+      }
     });
 
-    // Set default department and fetch roles
-    const deptId = res.data.employeeInfo.departmentId;
-    if (deptId) {
-      axiosInstance
-        .get(`/company/getRolesByDepartmentId/${deptId}`)
-        .then((roleRes) => {
-          setRoles(roleRes.data);
-        });
-    }
-  });
+    // Fetch department list
+    axiosInstance.get("/company/getDepartments").then((res) => {
+      setDepartments(res.data);
+    });
+  }, [id]);
 
-  // Fetch department list
-  axiosInstance.get("/company/getDepartments").then((res) => {
-    setDepartments(res.data);
-  });
-}, [id]);
-
-const handleDepartmentChange = async (e) => {
-  const departmentId = parseInt(e.target.value);
-  const selectedDept = departments.find((d) => d.departmentId === departmentId);
-
-  setEmp((prev) => ({
-    ...prev,
-    departmentId,
-    department: selectedDept?.departmentName || "",
-    roleId: "", // reset role
-  }));
-
-  try {
-    const res = await axiosInstance.get(
-      `/company/getRolesByDepartmentId/${departmentId}`
+  const handleDepartmentChange = async (e) => {
+    const departmentId = parseInt(e.target.value);
+    const selectedDept = departments.find(
+      (d) => d.departmentId === departmentId
     );
-    setRoles(res.data);
-  } catch (err) {
-    toast.error("Failed to load roles");
-  }
-};
 
-const handleRoleChange = async (e) => {
-  const roleId = parseInt(e.target.value);
-  const selectedRole = roles.find((r) => r.roleId === roleId);
+    setEmp((prev) => ({
+      ...prev,
+      departmentId,
+      department: selectedDept?.departmentName || "",
+      roleId: "", // reset role
+    }));
 
-  setEmp((prev) => ({
-    ...prev,
-    roleId,
-    role: selectedRole?.roleName || "",
-  }));
+    try {
+      const res = await axiosInstance.get(
+        `/company/getRolesByDepartmentId/${departmentId}`
+      );
+      setRoles(res.data);
+    } catch (err) {
+      toast.error("Failed to load roles");
+    }
+  };
 
-  try {
-    const res = await axiosInstance.get(`/company/getRolesByRoleId/${roleId}`);
-    const data = res.data;
+  const handleRoleChange = async (e) => {
+    const roleId = parseInt(e.target.value);
+    const selectedRole = roles.find((r) => r.roleId === roleId);
 
-    setAccess({
-      leadAccess: data.leadAccess,
-      template: data.templateAccess,
-      email: data.emailAccess,
-    });
-  } catch (err) {
-    toast.error("Failed to load role access");
-  }
-};
+    setEmp((prev) => ({
+      ...prev,
+      roleId,
+      role: selectedRole?.roleName || "",
+    }));
 
+    try {
+      const res = await axiosInstance.get(
+        `/company/getRolesByRoleId/${roleId}`
+      );
+      const data = res.data;
+
+      setAccess({
+        leadAccess: data.leadAccess,
+        template: data.templateAccess,
+        email: data.emailAccess,
+      });
+    } catch (err) {
+      toast.error("Failed to load role access");
+    }
+  };
 
   if (!emp) return <div className="p-4">🔄 Loading employee info...</div>;
 
@@ -145,8 +150,8 @@ const handleRoleChange = async (e) => {
     const isChanged =
       emp.name !== initialemp.name ||
       emp.email !== initialemp.email ||
-      emp.description !== initialemp.description||
-    emp.departmentId !== initialemp.departmentId ||
+      emp.description !== initialemp.description ||
+      emp.departmentId !== initialemp.departmentId ||
       emp.roleId !== initialemp.roleId;
     if (!isChanged) {
       toast.info("ℹ️ No changes detected.");
@@ -197,34 +202,17 @@ const handleRoleChange = async (e) => {
 
   return (
     <>
-      <CompanyNavbar />
+       <CompanyTopbar />
+      <div className="slidebar-main-div">
+        <CompanySidebar />
 
-      <div className="container mt-4">
-        <div className="card shadow-lg">
-          <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">
-              <i className="bi bi-building"></i> Update Employee Details
-            </h5>
-            {!isEditing ? (
-              <button
-                className="btn btn-light btn-sm"
-                onClick={() => setIsEditing(true)}
-              >
-                ✏️ Edit
-              </button>
-            ) : (
-              <button
-                className="btn btn-success btn-sm"
-                onClick={handleSaveEmployee}
-              >
-                💾 Save Info
-              </button>
-            )}
-          </div>
+        <div className="slidebar-main-div-right-section">
+          <div className="container mt-4">
+            {/* Employee Info */}
+            <div className="card p-4 shadow-sm">
+              <h4 className="mb-3">👤 Update Employee Info</h4>
 
-          <div className="card-body">
-            <div className="row g-3">
-              <div className="col-md-6">
+              <div className="mb-3">
                 <label className="form-label">Employee Name</label>
                 <input
                   type="text"
@@ -235,24 +223,22 @@ const handleRoleChange = async (e) => {
                   disabled={!isEditing}
                 />
               </div>
-              <div className="col-md-6">
+
+              <div className="mb-3">
                 <label className="form-label">Employee Email</label>
                 <input
                   type="email"
                   name="email"
-                  //   className={`form-control ${emailError ? "is-invalid" : ""}`}
                   className="form-control"
                   value={emp.email}
-                  //   onChange={handleChange}
-                  //   disabled={!isEditing}
                   readOnly
                 />
                 {emailError && (
-                  <div className="invalid-feedback">{emailError}</div>
+                  <small className="text-danger">{emailError}</small>
                 )}
               </div>
 
-              <div className="col-md-6">
+              <div className="mb-3">
                 <label className="form-label">Department</label>
                 <select
                   name="departmentId"
@@ -263,14 +249,17 @@ const handleRoleChange = async (e) => {
                 >
                   <option value="">-- Select Department --</option>
                   {departments.map((dept) => (
-                    <option key={dept.departmentId} value={dept.departmentId}>
+                    <option
+                      key={dept.departmentId}
+                      value={dept.departmentId}
+                    >
                       {dept.departmentName}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="col-md-6">
+              <div className="mb-3">
                 <label className="form-label">Role</label>
                 <select
                   name="roleId"
@@ -288,7 +277,7 @@ const handleRoleChange = async (e) => {
                 </select>
               </div>
 
-              <div className="col-12">
+              <div className="mb-3">
                 <label className="form-label">Description</label>
                 <textarea
                   name="description"
@@ -299,64 +288,77 @@ const handleRoleChange = async (e) => {
                   disabled={!isEditing}
                 />
               </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="card shadow-lg mt-4">
-          <div className="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">
-              <i className="bi bi-lock"></i> Access Permissions
-            </h5>
-            <button
-              className="btn btn-success btn-sm"
-              onClick={handleSaveAccess}
-            >
-              💾 Save Access
-            </button>
-          </div>
-
-          <div className="card-body">
-            <div className="form-check form-switch mb-3">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                name="leadAccess"
-                checked={access.leadAccess}
-                onChange={handleAccessChange}
-                id="leadAccess"
-              />
-              <label className="form-check-label" htmlFor="leadAccess">
-                Lead Access {access.leadAccess ? "✅" : "❌"}
-              </label>
+              <div className="d-flex justify-content-end">
+                {!isEditing ? (
+                  <button
+                    className="btn btn-outline-primary"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    ✏️ Edit
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-success"
+                    onClick={handleSaveEmployee}
+                  >
+                    💾 Save Info
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="form-check form-switch mb-3">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                name="template"
-                checked={access.template}
-                onChange={handleAccessChange}
-                id="template"
-              />
-              <label className="form-check-label" htmlFor="template">
-                Template Access {access.template ? "✅" : "❌"}
-              </label>
-            </div>
+            {/* Access Permissions */}
+            <div className="card mt-4 p-4 shadow-sm">
+              <h5 className="mb-3">🔐 Access Permissions</h5>
 
-            <div className="form-check form-switch mb-3">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                name="email"
-                checked={access.email}
-                onChange={handleAccessChange}
-                id="email"
-              />
-              <label className="form-check-label" htmlFor="email">
-                Email Access {access.email ? "✅" : "❌"}
-              </label>
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="leadAccess"
+                  id="leadAccess"
+                  checked={access.leadAccess}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="leadAccess">
+                  Lead Access
+                </label>
+              </div>
+
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="template"
+                  id="template"
+                  checked={access.template}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="template">
+                  Template Access
+                </label>
+              </div>
+
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="email"
+                  id="email"
+                  checked={access.email}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="email">
+                  Email Access
+                </label>
+              </div>
+
+              <div className="d-flex justify-content-end">
+                <button className="btn btn-dark" onClick={handleSaveAccess}>
+                  💾 Save Access
+                </button>
+              </div>
             </div>
           </div>
         </div>

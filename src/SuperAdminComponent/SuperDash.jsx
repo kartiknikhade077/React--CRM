@@ -5,9 +5,13 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { toast } from "react-toastify";
 import axiosInstance from "../BaseComponet/axiosInstance";
+import "bootstrap-icons/font/bootstrap-icons.css";
+import PaginationComponent from "../Pagination/PaginationComponent";
 
 import NavbarTopSuperAdmin from "./NavbarTopSuperAdmin";
 import SidebarSuperAdmin from "./SidebarSuperAdmin";
+
+import "./SuperDash.css";
 const SuperDash = () => {
   const navigate = useNavigate();
 
@@ -50,11 +54,6 @@ const SuperDash = () => {
         return;
       }
 
-      // const response = await axios.get(`http://localhost:8081/super/getCompanyList/0/1000`, {
-      //   headers: {
-      //     Authorization: `Bearer ${token}`,
-      //   },
-      // });
       const response = await axiosInstance.get(`/super/getCompanyList/0/1000`);
 
       console.log("📦 Full API Response:", response); // ✅ Log full response
@@ -200,17 +199,19 @@ const SuperDash = () => {
         <SidebarSuperAdmin />
 
         <div className="slidebar-main-div-right-section">
-          <div className="container mt-4">
-            <div className="row m-0 p-0 w-100">
+          <h4>Company</h4>
+          <div className="Companalist-main-card">
+            <div className="row m-0 p-0 w-100 d-flex justify-content-between mb-2">
+              <div className=""></div>
               <div className="col-md-3">
-                <h4>Company List</h4>
-              </div>
-              <div className="col-md-6">
-                <div className="">
+                <div className="input-group">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
                   <input
                     type="text"
-                    className="form-control"
-                    placeholder="Search company by name"
+                    className="form-control border-start-0"
+                    placeholder="Search..."
                     value={searchTerm}
                     onChange={(e) => {
                       const term = e.target.value;
@@ -222,11 +223,11 @@ const SuperDash = () => {
               </div>
               <div className="col-md-3 d-flex justify-content-end">
                 <button
-                  className="btn btn-primary mb-2"
+                  className="btn btn-dark d-flex align-items-center gap-1"
                   data-bs-toggle="modal"
                   data-bs-target="#createCompanyModal"
                 >
-                  Create Company
+                  <i className="bi bi-plus-circle"></i> New Company
                 </button>
               </div>
             </div>
@@ -368,36 +369,37 @@ const SuperDash = () => {
             </div>
 
             {/* Table */}
-            <table className="table table-bordered">
-              <thead>
+            <table className="table table-hover align-middle">
+              <thead className="table-light">
                 <tr>
+                  <th>#</th>
                   <th>Company Name</th>
                   <th>Email</th>
                   <th>Description</th>
-                  <th>Update</th>
+                  <th className="text-end">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {(companies || []).length > 0 ? (
                   companies.map((company, index) => (
                     <tr key={index}>
+                      <td>{index + 1 + currentPage * pageSize}</td>
                       <td>{company.companyName}</td>
                       <td>{company.companyEmail}</td>
                       <td>{company.companyDescription}</td>
-
-                      <td>
+                      <td className="text-end">
                         <button
-                          className="btn btn-primary btn-sm"
+                          className="btn btn-outline-primary btn-sm"
                           onClick={() => handleUpdate(company)}
                         >
-                          Action
+                          <i className="bi bi-pencil-square"></i> Edit
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center">
+                    <td colSpan="5" className="text-center py-4">
                       No companies found.
                     </td>
                   </tr>
@@ -405,27 +407,9 @@ const SuperDash = () => {
               </tbody>
             </table>
 
-            <div className="mb-3 d-flex align-items-center gap-2">
-              <label htmlFor="pageSizeInput" className="form-label mb-0">
-                Rows per page:
-              </label>
-              <input
-                type="number"
-                id="pageSizeInput"
-                className="form-control"
-                style={{ width: "100px" }}
-                value={pageSize}
-                onChange={(e) => {
-                  const newSize = parseInt(e.target.value);
-                  if (!isNaN(newSize) && newSize > 0) {
-                    setPageSize(newSize);
-                    paginateData(0, newSize); // Reset to page 0
-                  }
-                }}
-              />
-            </div>
+    
 
-            <nav>
+            {/* <nav>
               <ul className="pagination justify-content-center">
                 <li
                   className={`page-item ${currentPage === 0 ? "disabled" : ""}`}
@@ -467,7 +451,18 @@ const SuperDash = () => {
                   </button>
                 </li>
               </ul>
-            </nav>
+            </nav> */}
+
+            <PaginationComponent
+              currentPage={currentPage}
+              pageSize={pageSize}
+              pageCount={pageCount}
+              onPageChange={(newPage) => paginateData(newPage, pageSize)}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                paginateData(0, newSize); // Reset to page 0 on size change
+              }}
+            />
           </div>
         </div>
       </div>

@@ -108,62 +108,73 @@ const RoleModel = () => {
 
         <div className="slidebar-main-div-right-section">
           <h2 className="mb-3">Roles List</h2>
-          <Button variant="primary" onClick={() => handleShowRoleModel(false)}>
-            Create Role
-          </Button>
-          <table className="table table-bordered table-striped">
-            <thead className="table-dark">
-              <tr>
-                <th>Role Name</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles.length > 0 ? (
-                roles.map((role) => (
-                  <tr key={role.roleId}>
-                    <td>{role.roleName}</td>
-                    <td>
-                      {" "}
-                      <Button
-                        variant="primary"
-                        onClick={() => fetchByRoleId(role.roleId)}
-                      >
-                        Edit
-                      </Button>
+
+          <div className="Companalist-main-card">
+            <div className="row m-0 p-0 w-100">
+              <div className="col-md-12 d-flex justify-content-end">
+                <Button
+                  variant="btn btn-dark "
+                  onClick={() => handleShowRoleModel(false)}
+                >
+                  Create Role
+                </Button>
+              </div>
+            </div>
+
+            <table className="table table-hover align-middle mt-2">
+              <thead className="table-light">
+                <tr>
+                  <th>Role Name</th>
+                  <th className="text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roles.length > 0 ? (
+                  roles.map((role) => (
+                    <tr key={role.roleId}>
+                      <td>{role.roleName}</td>
+                      <td className="text-center">
+                        {" "}
+                        <button
+                          className="btn btn-outline-primary btn-sm"
+                          onClick={() => fetchByRoleId(role.roleId)}
+                        >
+                          <i className="bi bi-pencil-square"></i> Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="text-center">
+                      No Roles found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="text-center">
-                    No Roles found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          {/* Pagination Controls */}
-          <div className="d-flex justify-content-between">
-            <button
-              className="btn btn-primary"
-              onClick={() => setPage((prev) => (prev > 0 ? prev - 1 : 0))}
-            >
-              Previous
-            </button>
+                )}
+              </tbody>
+            </table>
 
-            <span className="align-self-center">
-              Page {page + 1} of {totalPages}
-            </span>
+            {/* Pagination Controls */}
+            <div className="d-flex justify-content-between">
+              <button
+                className="btn btn-primary"
+                onClick={() => setPage((prev) => (prev > 0 ? prev - 1 : 0))}
+              >
+                Previous
+              </button>
 
-            <button
-              className="btn btn-primary"
-              onClick={() => setPage((prev) => prev + 1)}
-            >
-              Next
-            </button>
+              <span className="align-self-center">
+                Page {page + 1} of {totalPages}
+              </span>
+
+              <button
+                className="btn btn-primary"
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                Next
+              </button>
+            </div>
           </div>
-
           <Modal
             show={show}
             onHide={handleCloseRoleModel}
