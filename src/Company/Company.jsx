@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import CompanyNavbar from "./CompanyNavbar";
 
+import CompanySidebar from "./CompanySidebar";
+import CompanyTopbar from "./CompanyTopbar";
 const Company = () => {
   const navigate = useNavigate();
 
@@ -14,8 +15,13 @@ const Company = () => {
 
   return (
     <div>
-      <CompanyNavbar />
-      <h1>Welcome, Company Dashboard!</h1>
+      <CompanyTopbar />
+      <div className="slidebar-main-div">
+        <CompanySidebar />
+        <div className="slidebar-main-div-right-section">
+          <h1>Welcome, Company Dashboard!</h1>
+        </div>
+      </div>
     </div>
   );
 };

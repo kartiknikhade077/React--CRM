@@ -5,6 +5,8 @@ import axiosInstance from "../BaseComponet/axiosInstance";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import { toast } from "react-toastify";
+import CompanyTopbar from "./CompanyTopbar";
+import CompanySidebar from "./CompanySidebar";
 
 const Department = () => {
   const navigate = useNavigate();
@@ -74,86 +76,91 @@ const Department = () => {
 
   return (
     <div>
-      <CompanyNav />
-      <h2 className="mb-3">Department List</h2>
-      <Button variant="primary" onClick={handleShowDepartment}>
-        Create
-      </Button>
+      <CompanyTopbar />
+      <div className="slidebar-main-div">
+        <CompanySidebar />
 
-      <table className="table table-bordered table-striped mt-3">
-        <thead className="table-dark">
-          <tr>
-            <th>ID</th>
-            <th>Dept Name</th>
-            <th>Email</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {departments.length > 0 ? (
-            departments.map((dept) => (
-              <tr key={dept.departmentId}>
-                <td>{dept.departmentId}</td>
-                <td>{dept.departmentName}</td>
-                <td>{dept.departmentEmail}</td>
-                <td>
-                  <Button
-                    variant="primary"
-                    onClick={() => fetchByDepartmentId(dept.departmentId)}
-                  >
-                    Update
-                  </Button>
-                </td>
+        <div className="slidebar-main-div-right-section">
+          {" "}
+          <h2 className="mb-3">Department List</h2>
+          <Button variant="primary" onClick={handleShowDepartment}>
+            Create
+          </Button>
+          <table className="table table-bordered table-striped mt-3">
+            <thead className="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Dept Name</th>
+                <th>Email</th>
+                <th>Action</th>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="4" className="text-center">
-                Department Not Set
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {departments.length > 0 ? (
+                departments.map((dept) => (
+                  <tr key={dept.departmentId}>
+                    <td>{dept.departmentId}</td>
+                    <td>{dept.departmentName}</td>
+                    <td>{dept.departmentEmail}</td>
+                    <td>
+                      <Button
+                        variant="primary"
+                        onClick={() => fetchByDepartmentId(dept.departmentId)}
+                      >
+                        Update
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="text-center">
+                    Department Not Set
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          <Modal show={show} onHide={handleCloseDepartment}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                {isEditMode ? "Update Department" : "Create Department"}
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <form onSubmit={saveDepartment}>
+                <div className="mb-3">
+                  <label className="form-label">Department Name</label>
+                  <input
+                    className="form-control"
+                    name="departmentName"
+                    required
+                    defaultValue={selectedDepartment?.departmentName || ""}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Department Email</label>
+                  <input
+                    className="form-control"
+                    name="departmentEmail"
+                    required
+                    defaultValue={selectedDepartment?.departmentEmail || ""}
+                  />
+                </div>
 
-      <Modal show={show} onHide={handleCloseDepartment}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {isEditMode ? "Update Department" : "Create Department"}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <form onSubmit={saveDepartment}>
-            <div className="mb-3">
-              <label className="form-label">Department Name</label>
-              <input
-                className="form-control"
-                name="departmentName"
-                required
-                defaultValue={selectedDepartment?.departmentName || ""}
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Department Email</label>
-              <input
-                className="form-control"
-                name="departmentEmail"
-                required
-                defaultValue={selectedDepartment?.departmentEmail || ""}
-              />
-            </div>
-
-            <Modal.Footer>
-              <Button variant="secondary" onClick={handleCloseDepartment}>
-                Close
-              </Button>
-              <Button variant="primary" type="submit">
-                {isEditMode ? "Update" : "Create"}
-              </Button>
-            </Modal.Footer>
-          </form>
-        </Modal.Body>
-      </Modal>
+                <Modal.Footer>
+                  <Button variant="secondary" onClick={handleCloseDepartment}>
+                    Close
+                  </Button>
+                  <Button variant="primary" type="submit">
+                    {isEditMode ? "Update" : "Create"}
+                  </Button>
+                </Modal.Footer>
+              </form>
+            </Modal.Body>
+          </Modal>
+        </div>
+      </div>
     </div>
   );
 };

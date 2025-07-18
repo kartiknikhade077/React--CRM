@@ -1,0 +1,40 @@
+.company-topbar {
+    height: 6vh;
+    margin-left: 0px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    /* position: fixed; */
+    top: 0;
+    right: 0;
+    left: 230px;
+    z-index: 999;
+}
+
+.topbar-search {
+    display: flex;
+    align-items: center;
+    background-color: #e9ecef;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.topbar-search input {
+    border: none;
+    background: transparent;
+    margin-left: 10px;
+    outline: none;
+}
+
+.topbar-icons {
+    display: flex;
+    gap: 20px;
+}
+
+.icon {
+    font-size: 18px;
+    cursor: pointer;
+}

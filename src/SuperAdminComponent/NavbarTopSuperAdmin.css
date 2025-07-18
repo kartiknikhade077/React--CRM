@@ -1,0 +1,44 @@
+.superadmin-topbar {
+    /* height: 60px; */
+    height: 6vh;
+    /* match sidebar width */
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    /* position: fixed; */
+    top: 0;
+    right: 0;
+    left: 230px;
+    z-index: 100;
+}
+
+.topbar-search {
+    display: flex;
+    align-items: center;
+    background-color: #f1f3f5;
+    padding: 5px 10px;
+    border-radius: 5px;
+    width: 250px;
+}
+
+.topbar-search input {
+    border: none;
+    background: none;
+    outline: none;
+    margin-left: 8px;
+    width: 100%;
+}
+
+.topbar-icons {
+    display: flex;
+    gap: 20px;
+}
+
+.icon {
+    font-size: 18px;
+    color: #555;
+    cursor: pointer;
+}

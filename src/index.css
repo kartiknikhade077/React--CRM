@@ -31,3 +31,22 @@ code {
 .modal.right.show .modal-dialog {
   transform: translate3d(0, 0, 0);
 }
+
+
+
+/* for Slidebar Common CSS */
+
+.slidebar-main-div-right-section{
+  /* margin-left: 230px; */
+  margin-left: 0px;
+  padding: 60px 20px 20px 20px;
+  width: 100%;
+  /* height: 100%; */
+  background: #f4f4f5;
+}
+
+.slidebar-main-div{
+  display: flex;
+  min-height: 94vh;
+}
+/* for Slidebar Common CSS END*/
