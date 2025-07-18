@@ -59,7 +59,7 @@ const fetchEmployees = async () => {
     );
 
      const fetchedEmployees = response.data.content || response.data;
-     
+
     // Adjust according to your API structure
     setEmployees(response.data.content || response.data);
     setPageCount(response.data.totalPages || 1);
@@ -260,10 +260,11 @@ const fetchEmployees = async () => {
         <CompanySidebar />
 
         <div className="slidebar-main-div-right-section">
-          <h4>Employee List</h4>
           <div className="Companalist-main-card">
             <div className="row m-0 p-0 w-100 d-flex justify-content-between mb-2">
-              <div className=""></div>
+              <div className="col-md-3">
+                <h4>Employee List</h4>
+              </div>
               <div className="col-md-3">
                 <div className="input-group">
                   <span className="input-group-text bg-white border-end-0">

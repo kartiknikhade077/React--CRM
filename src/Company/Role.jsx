@@ -5,16 +5,19 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import CompanyTopbar from "./CompanyTopbar";
 import CompanySidebar from "./CompanySidebar";
+import PaginationComponent from "../Pagination/PaginationComponent";
 const RoleModel = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [roles, setRoles] = useState([]);
   const [page, setPage] = useState(0);
-  const [size] = useState(5); // Items per page
+  // const [size] = useState(5); // Items per page
   const [totalPages, setTotalPages] = useState(0);
   const [show, setShow] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [editMode, setEditMode] = useState(false);
+  const [size, setSize] = useState(5);
+
   const [selectedRole, setSelectedRole] = useState({
     roleId: "",
     departmentId: "",
@@ -26,7 +29,7 @@ const RoleModel = () => {
 
   useEffect(() => {
     fetchRoles();
-  }, [page]);
+  }, [page, size]); // ✅ so data fetches again when page size changes
 
   const handleCloseRoleModel = () => setShow(false);
   const handleShowRoleModel = (edit = false) => {
@@ -50,7 +53,8 @@ const RoleModel = () => {
         `company/getRoleByCompanyId/${page}/${size}`
       );
       setRoles(response.data.roles);
-      setTotalPages(response.data.totolPage);
+      // setTotalPages(response.data.totolPages);
+      setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error("Failed to fetch employees:", error);
     }
@@ -154,8 +158,19 @@ const RoleModel = () => {
               </tbody>
             </table>
 
+            <PaginationComponent
+              currentPage={page}
+              pageSize={size}
+              pageCount={totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newSize) => {
+                setSize(newSize);
+                setPage(0); // Reset to first page when size changes
+              }}
+            />
+
             {/* Pagination Controls */}
-            <div className="d-flex justify-content-between">
+            {/* <div className="d-flex justify-content-between">
               <button
                 className="btn btn-primary"
                 onClick={() => setPage((prev) => (prev > 0 ? prev - 1 : 0))}
@@ -173,7 +188,7 @@ const RoleModel = () => {
               >
                 Next
               </button>
-            </div>
+            </div> */}
           </div>
           <Modal
             show={show}
