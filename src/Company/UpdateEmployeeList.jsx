@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 
 import CompanySidebar from "./CompanySidebar";
 import CompanyTopbar from "./CompanyTopbar";
-
+// /getLead/{leadId}
 const UpdateEmployeeList = () => {
   const [emailError, setEmailError] = useState("");
 

@@ -18,6 +18,10 @@ import UpdateEmployeeList from "./Company/UpdateEmployeeList";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Department from "./Company/Department";
+
+import LeadCompany from "./Company/LeadCompany";
+import UpdateLead from "./Company/UpdateLead";
+
 // import RoleLayout from "./navbar/RoleLayout";
 import CompRole from "./Company/Role";
 const App = () => {
@@ -123,6 +127,24 @@ const App = () => {
           element={
             <ProtectedRoute>
               <CompRole />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/Leaddash"
+          element={
+            <ProtectedRoute>
+              <LeadCompany />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/UpdateLead/:leadId"
+          element={
+            <ProtectedRoute>
+              <UpdateLead />
             </ProtectedRoute>
           }
         />

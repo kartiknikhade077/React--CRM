@@ -7,6 +7,7 @@ import {
   FaUserTag,
   FaCog,
   FaSignOutAlt,
+  FaUserTie,
 } from "react-icons/fa";
 import "./CompanySidebar.css";
 
@@ -29,11 +30,18 @@ const CompanySidebar = () => {
             <FaTachometerAlt /> Dashboard
           </Link>
         </li>
+
+        <li className={location.pathname === "/lead" ? "active" : ""}>
+          <Link to="/leadDash">
+            <FaUserTie /> Lead
+          </Link>
+        </li>
         <li className={location.pathname === "/EmployeeList" ? "active" : ""}>
           <Link to="/EmployeeList">
             <FaUsers /> Employee
           </Link>
         </li>
+
         <li className={location.pathname === "/department" ? "active" : ""}>
           <Link to="/department">
             <FaBuilding /> Department
