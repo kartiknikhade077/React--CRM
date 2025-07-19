@@ -522,7 +522,9 @@ const fetchEmployees = async () => {
                 )}
               </tbody>
             </table>
+          </div>
 
+          <div className="pagination-main-crd">
             <PaginationComponent
               currentPage={currentPage}
               pageSize={pageSize}

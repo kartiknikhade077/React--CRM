@@ -1,4 +1,3 @@
-
 import CompanySidebar from "./CompanySidebar";
 import CompanyTopbar from "./CompanyTopbar";
 import axiosInstance from "../BaseComponet/axiosInstance";
@@ -8,11 +7,10 @@ import PaginationComponent from "../Pagination/PaginationComponent";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
-import { Modal, Button, Form, Col,Row } from "react-bootstrap";
-
+import { Modal, Button, Form, Col, Row } from "react-bootstrap";
 
 const LeadCompany = () => {
-      const navigate = useNavigate();
+  const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(5);
@@ -108,12 +106,11 @@ const LeadCompany = () => {
     }
   };
 
-
-    const handleUpdate = (lead) => {
-      navigate(`/updateLead/${lead.leadId}`, {
-        state: { lead },
-      });
-    };
+  const handleUpdate = (lead) => {
+    navigate(`/updateLead/${lead.leadId}`, {
+      state: { lead },
+    });
+  };
 
   return (
     <>
@@ -122,12 +119,10 @@ const LeadCompany = () => {
         <CompanySidebar />
 
         <div className="slidebar-main-div-right-section">
-
-
           <div className="Companalist-main-card">
             <div className="row m-0 p-0 w-100 d-flex justify-content-between mb-2">
               <div className="col-md-3">
-                <h4>Employee List</h4>
+                <h4>Lead</h4>
               </div>
               <div className="col-md-3">
                 <div className="input-group">
@@ -386,8 +381,7 @@ const LeadCompany = () => {
                       <td>
                         <button
                           className="btn btn-outline-primary btn-sm"
-                                onClick={() => handleUpdate(lead)}
-                          
+                          onClick={() => handleUpdate(lead)}
                         >
                           <i className="bi bi-pencil-square"></i> Edit
                         </button>
@@ -397,7 +391,9 @@ const LeadCompany = () => {
                 )}
               </tbody>
             </table>
+          </div>
 
+          <div className="pagination-main-crd">
             <PaginationComponent
               currentPage={page}
               pageSize={size}

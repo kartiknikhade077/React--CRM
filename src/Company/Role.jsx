@@ -111,11 +111,13 @@ const RoleModel = () => {
         <CompanySidebar />
 
         <div className="slidebar-main-div-right-section">
-          <h2 className="mb-3">Roles List</h2>
-
           <div className="Companalist-main-card">
-            <div className="row m-0 p-0 w-100">
-              <div className="col-md-12 d-flex justify-content-end">
+            <div className="row m-0 p-0 w-100  d-flex justify-content-between">
+              <div className="col-md-3 d-flex">
+                <h2 className="">Roles List</h2>
+              </div>
+
+              <div className="col-md-3 d-flex justify-content-end">
                 <Button
                   variant="btn btn-dark "
                   onClick={() => handleShowRoleModel(false)}
@@ -157,17 +159,6 @@ const RoleModel = () => {
                 )}
               </tbody>
             </table>
-
-            <PaginationComponent
-              currentPage={page}
-              pageSize={size}
-              pageCount={totalPages}
-              onPageChange={(newPage) => setPage(newPage)}
-              onPageSizeChange={(newSize) => {
-                setSize(newSize);
-                setPage(0); // Reset to first page when size changes
-              }}
-            />
 
             {/* Pagination Controls */}
             {/* <div className="d-flex justify-content-between">
@@ -285,6 +276,19 @@ const RoleModel = () => {
               </form>
             </Modal.Body>
           </Modal>
+
+          <div className="pagination-main-crd">
+            <PaginationComponent
+              currentPage={page}
+              pageSize={size}
+              pageCount={totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newSize) => {
+                setSize(newSize);
+                setPage(0); // Reset to first page when size changes
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

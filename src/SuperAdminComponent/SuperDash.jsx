@@ -199,10 +199,11 @@ const SuperDash = () => {
         <SidebarSuperAdmin />
 
         <div className="slidebar-main-div-right-section">
-          <h4>Company</h4>
           <div className="Companalist-main-card">
             <div className="row m-0 p-0 w-100 d-flex justify-content-between mb-2">
-              <div className=""></div>
+              <div className="col-md-3">
+                <h4>Company</h4>
+              </div>
               <div className="col-md-3">
                 <div className="input-group">
                   <span className="input-group-text bg-white border-end-0">
@@ -407,8 +408,6 @@ const SuperDash = () => {
               </tbody>
             </table>
 
-    
-
             {/* <nav>
               <ul className="pagination justify-content-center">
                 <li
@@ -452,7 +451,9 @@ const SuperDash = () => {
                 </li>
               </ul>
             </nav> */}
+          </div>
 
+          <div className="pagination-main-crd">
             <PaginationComponent
               currentPage={currentPage}
               pageSize={pageSize}

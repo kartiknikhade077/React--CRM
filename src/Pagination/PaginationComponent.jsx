@@ -9,7 +9,7 @@ const PaginationComponent = ({
   onPageSizeChange,
 }) => {
   return (
-    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mt-3">
+    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
       {/* Rows per page */}
       <div className="d-flex align-items-center gap-2">
         <label htmlFor="pageSizeInput" className="form-label mb-0">
