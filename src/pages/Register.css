@@ -75,7 +75,13 @@
 /* Right section (Purple) */
 .crm-register-right {
     flex: 1;
-    background: linear-gradient(135deg, #6b00f5, #a100ff);
+    /* background: linear-gradient(135deg, #6b00f5, #a100ff); */
+   background: 
+    linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), /* black overlay */
+    url('/src/Assets/crm-login-left-bg2.jpg');  
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
     display: flex;
     justify-content: center;
     align-items: center;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
-import animateLeft from "../Assets/login-left1.png";
+import animateLeft from "../Assets/CRM-login-icon1.png";
 import axios from "axios";
 
 const Login = () => {
@@ -54,14 +54,14 @@ const Login = () => {
           Immerse yourself in a hassle-free login journey with our intuitively
           designed login form. Effortlessly access your account.
         </p>
-        <img
+        {/* <img
           src={animateLeft}
           alt="Animation"
           className="crm-login-left-illustration"
-        />
-        <p className="crm-login-register-link">
+        /> */}
+        {/* <p className="crm-login-register-link">
           Don't have an account? <a href="/register">Register here</a>
-        </p>
+        </p> */}
       </div>
 
       <div className="crm-login-right">
@@ -97,6 +97,9 @@ const Login = () => {
             Sign in
           </button>
 
+          <p className="crm-register-link text-center">
+            Don't have an account? <a href="/Register">Register Here</a>
+          </p>
           <p className="crm-login-or-text">or continue with</p>
 
           <div className="crm-login-social-icons">
