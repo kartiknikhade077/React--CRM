@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
-import animateLeft from "../Assets/CRM-login-icon1.png";
-import axios from "axios";
+
 import axiosInstance from "../BaseComponet/axiosInstance";
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
