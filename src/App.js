@@ -36,7 +36,6 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
         {/* Role-based Layout Route */}
         <Route
           path="/superDash"
@@ -46,7 +45,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         {/* Protected Routes */}
         <Route
           path="/dashboard"
@@ -72,7 +70,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/compDash"
           element={
@@ -105,7 +102,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/UpdateEmployeeList/:id"
           element={
@@ -114,7 +110,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/Projectlist"
           element={
@@ -123,15 +118,15 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/Staffmember"
           element={
             <ProtectedRoute>
-              <StaffMembersgit />
+              <StaffMembers />
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/department"
           element={
@@ -140,7 +135,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/CompRole"
           element={
@@ -149,7 +143,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/Leaddash"
           element={
@@ -158,7 +151,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/UpdateLead/:leadId"
           element={
