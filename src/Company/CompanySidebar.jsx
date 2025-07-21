@@ -8,6 +8,9 @@ import {
   FaCog,
   FaSignOutAlt,
   FaUserTie,
+  FaProjectDiagram,
+  FaRProject,
+  FaRandom,
 } from "react-icons/fa";
 import "./CompanySidebar.css";
 
@@ -50,6 +53,18 @@ const CompanySidebar = () => {
         <li className={location.pathname === "/CompRole" ? "active" : ""}>
           <Link to="/CompRole">
             <FaUserTag /> Role
+          </Link>
+        </li>
+
+        <li className={location.pathname === "/Projectlist" ? "active" : ""}>
+          <Link to="/Projectlist">
+            <FaRandom /> Project 
+          </Link>
+        </li>
+
+        <li className={location.pathname === "/Staffmember" ? "active" : ""}>
+          <Link to="/Staffmember">
+            <FaUsers /> Staff
           </Link>
         </li>
         <li className={location.pathname === "/CompSettings" ? "active" : ""}>

@@ -6,8 +6,7 @@ const CompanyTopbar = () => {
   return (
     <div className="company-topbar">
       <div className="topbar-search">
-        <FaSearch />
-        <input type="text" placeholder="Search..." />
+      LOGO
       </div>
       <div className="topbar-icons">
         <FaBell className="icon" />

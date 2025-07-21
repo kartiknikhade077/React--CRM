@@ -1,74 +1,76 @@
-/* .sidebar-superadmin {
-
-    top: 0;
-    left: 0;
-    width: 230px;
-   
-    background-color: #2c3e50;
-    padding-top: 20px;
-    color: white;
-    z-index: 1000;
+.sidebar-superadmin {
+  top: 0;
+  left: 0;
+  width: 230px;
+  background: #f4f4f5;
+  padding-top: 20px;
+  color: black;
+  z-index: 1000;
+  border-right: 1px solid rgba(17, 24, 39, 0.2);
+  padding: 0 10px 0% 10px;
 }
 
 .sidebar-superadmin .brand {
-    font-size: 22px;
-    font-weight: bold;
-    text-align: center;
-    padding: 15px 0;
-    color: #fff;
-    border-bottom: 1px solid #3f5771;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  padding: 15px 0;
+  color: black;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.2);
 }
 
 .nav-links {
-    list-style: none;
-    padding: 0;
-    margin: 20px 0;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
 }
 
 .nav-links li {
-    padding: 12px 20px;
-    transition: background 0.3s ease;
+  padding: 12px 20px;
+  transition: background 0.3s ease;
 }
 
 .nav-links li a {
-    color: #ecf0f1;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 15px;
+  color: black;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
 }
 
 .nav-links li:hover,
 .nav-links li.active {
-    background-color: #34495e;
-    border-left: 4px solid #1abc9c;
+  font-weight: 700;
+  background: #fff;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  border: 1px solid rgb(15 23 42 / 0.15);
+  cursor: pointer;
 }
 
-
-
 .logout-link {
-    padding: 20px;
-    border-top: 1px solid #3f5771;
-    margin-top: auto;
+  padding: 20px;
+  border-top: 1px solid rgba(17, 24, 39, 0.2);
+  margin-top: auto;
 }
 
 .logout-link button {
-    width: 100%;
-    background: none;
-    border: none;
-    color: #ecf0f1;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    padding: 12px 20px;
-    text-align: left;
+  background: #fff;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  border: 1px solid rgb(15 23 42 / 0.15);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px 20px;
+  text-align: left;
 }
 
 .logout-link button:hover {
-    background-color: #34495e;
-    border-left: 4px solid #e74c3c;
-    color: #e74c3c;
-} */
+  background-color: #34495e;
+  border-left: 4px solid #e74c3c;
+  color: #e74c3c;
+}

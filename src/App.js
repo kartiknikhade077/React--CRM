@@ -22,6 +22,8 @@ import Department from "./Company/Department";
 import LeadCompany from "./Company/LeadCompany";
 import UpdateLead from "./Company/UpdateLead";
 
+import CompanyProject from "./Company/CompanyProject";
+import StaffMembers from "./Company/StaffMembers";
 // import RoleLayout from "./navbar/RoleLayout";
 import CompRole from "./Company/Role";
 const App = () => {
@@ -113,6 +115,23 @@ const App = () => {
           }
         />
 
+        <Route
+          path="/Projectlist"
+          element={
+            <ProtectedRoute>
+              <CompanyProject />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/Staffmember"
+          element={
+            <ProtectedRoute>
+              <StaffMembersgit />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/department"
           element={
