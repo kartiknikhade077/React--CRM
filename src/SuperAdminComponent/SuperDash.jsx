@@ -46,7 +46,39 @@ const SuperDash = () => {
     }
   }, [navigate]);
 
-  const fetchCompanies = async () => {
+  // const fetchCompanies = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) {
+  //       navigate("/login");
+  //       return;
+  //     }
+
+  //     const response = await axiosInstance.get(
+  //       `/super/getCompanyList/${currentPage}/${pageSize}`
+  //     );
+
+  //     console.log("📦 Full API Response:", response); // ✅ Log full response
+  //     console.log("📄 Data from API:", response.data); // ✅ Log just data
+
+  //     const allData = response.data.companyList ?? [];
+
+  //     setAllCompanies(allData);
+
+  //     const totalPages = Math.ceil(response.data.totalPages ?? 1);
+  //     setPageCount(totalPages);
+  //     setCompanies(allData);
+  //   } catch (error) {
+  //     console.error("Error fetching companies:", error);
+  //     if (error.response?.status === 401) {
+  //       navigate("/login");
+  //     }
+  //   }
+  // };
+
+
+
+  const fetchCompanies = async (page = 0, size = 10) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -54,19 +86,16 @@ const SuperDash = () => {
         return;
       }
 
-      const response = await axiosInstance.get(`/super/getCompanyList/0/1000`);
+      const response = await axiosInstance.get(
+        `/super/getCompanyList/${page}/${size}`
+      );
 
-      console.log("📦 Full API Response:", response); // ✅ Log full response
-      console.log("📄 Data from API:", response.data); // ✅ Log just data
+      const data = response.data.companyList ?? [];
 
-      const allData = response.data ?? [];
-      setAllCompanies(allData);
-
-      // Set page count and current page data
-      const totalPages = Math.ceil(allData.length / pageSize);
-      setPageCount(totalPages);
-      setCurrentPage(0);
-      setCompanies(allData.slice(0, pageSize)); // First page
+      setCompanies(data);
+      setCurrentPage(page);
+      setPageSize(size);
+      setPageCount(response.data.totalPages || 1); // or use Math.ceil(response.data.totalElements / size)
     } catch (error) {
       console.error("Error fetching companies:", error);
       if (error.response?.status === 401) {
@@ -75,23 +104,17 @@ const SuperDash = () => {
     }
   };
 
-  useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role !== "ROLE_SUPERADMIN") {
-      navigate("/");
-    } else {
-      fetchCompanies(0); // Load first page
-    }
-  }, [navigate]);
+ useEffect(() => {
+   const role = localStorage.getItem("role");
+   if (role !== "ROLE_SUPERADMIN") {
+     navigate("/");
+   } else {
+     fetchCompanies(currentPage, pageSize); // use state
+   }
+ }, [navigate, currentPage, pageSize]);
 
-  const paginateData = (page, size) => {
-    const startIndex = page * size;
-    const endIndex = startIndex + size;
-    const paginated = allCompanies.slice(startIndex, endIndex);
-    setCompanies(paginated);
-    setCurrentPage(page);
-    setPageCount(Math.ceil(allCompanies.length / size));
-  };
+
+
 
   const handleInputChange = async (e) => {
     const { name, value, type, checked } = e.target;
@@ -169,22 +192,22 @@ const SuperDash = () => {
   };
 
   // For searching data
-  const searchCompanies = async (term) => {
-    try {
-      const response = await axiosInstance.get(
-        `/super/getCompanyList/0/1000?companyName=${term}`
-      );
-      const data = response.data ?? [];
+const searchCompanies = async (term, page = 0, size = 10) => {
+  try {
+    const response = await axiosInstance.get(
+      `/super/getCompanyList/${page}/${size}?companyName=${term}`
+    );
 
-      setAllCompanies(data);
-      setCompanies(data.slice(0, pageSize));
-      setPageCount(Math.ceil(data.length / pageSize));
-      setCurrentPage(0);
-    } catch (error) {
-      console.error("Error searching companies:", error);
-      toast.error("Failed to search companies");
-    }
-  };
+    const data = response.data.companyList ?? [];
+    setCompanies(data);
+    setPageCount(response.data.totalPages || 1);
+    setCurrentPage(page);
+  } catch (error) {
+    console.error("Error searching companies:", error);
+    toast.error("Failed to search companies");
+  }
+};
+
 
   const handleUpdate = (company) => {
     navigate(`/updateCompany/${company.companyId}`, {
@@ -407,50 +430,6 @@ const SuperDash = () => {
                 )}
               </tbody>
             </table>
-
-            {/* <nav>
-              <ul className="pagination justify-content-center">
-                <li
-                  className={`page-item ${currentPage === 0 ? "disabled" : ""}`}
-                >
-                  <button
-                    className="page-link"
-                    onClick={() => paginateData(currentPage - 1, pageSize)}
-                  >
-                    Previous
-                  </button>
-                </li>
-
-                {[...Array(pageCount).keys()].map((number) => (
-                  <li
-                    key={number}
-                    className={`page-item ${
-                      currentPage === number ? "active" : ""
-                    }`}
-                  >
-                    <button
-                      className="page-link"
-                      onClick={() => paginateData(number, pageSize)}
-                    >
-                      {number + 1}
-                    </button>
-                  </li>
-                ))}
-
-                <li
-                  className={`page-item ${
-                    currentPage === pageCount - 1 ? "disabled" : ""
-                  }`}
-                >
-                  <button
-                    className="page-link"
-                    onClick={() => paginateData(currentPage + 1, pageSize)}
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav> */}
           </div>
 
           <div className="pagination-main-crd">
@@ -458,10 +437,13 @@ const SuperDash = () => {
               currentPage={currentPage}
               pageSize={pageSize}
               pageCount={pageCount}
-              onPageChange={(newPage) => paginateData(newPage, pageSize)}
+              onPageChange={(newPage) => setCurrentPage(newPage)}
               onPageSizeChange={(newSize) => {
-                setPageSize(newSize);
-                paginateData(0, newSize); // Reset to page 0 on size change
+                const size = Number(newSize);
+                if (!isNaN(size) && size > 0) {
+                  setPageSize(size);
+                  setCurrentPage(0); // Reset to first page on size change
+                }
               }}
             />
           </div>

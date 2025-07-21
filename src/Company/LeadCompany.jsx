@@ -247,7 +247,12 @@ const LeadCompany = () => {
               </div>
               <div className="col-md-3 d-flex justify-content-between">
                 <button className="btn btn-dark">+ Sourace</button>
-                <button className="btn btn-dark">+ Status</button>
+                <button
+                  className="btn btn-dark"
+                  onClick={() => setShowStatusModal(true)}
+                >
+                  + Status
+                </button>
 
                 <button className="btn btn-dark" onClick={toggleModal}>
                   + Lead
@@ -512,7 +517,6 @@ const LeadCompany = () => {
                           <i className="bi bi-pencil-square"></i> Edit
                         </button>
                       </td>
-             
                     </tr>
                   ))
                 )}
@@ -534,6 +538,29 @@ const LeadCompany = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal for Creating Status */}
+      <Modal show={showStatusModal} onHide={() => setShowStatusModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Create Lead Status</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Control
+            type="text"
+            value={newStatus}
+            onChange={(e) => setNewStatus(e.target.value)}
+            placeholder="Enter new status"
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowStatusModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleAddStatus}>
+            Add Status
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };

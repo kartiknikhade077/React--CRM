@@ -47,18 +47,21 @@ const RoleModel = () => {
     }
   };
 
-  const fetchRoles = async () => {
-    try {
-      const response = await axiosInstance.get(
-        `company/getRoleByCompanyId/${page}/${size}`
-      );
-      setRoles(response.data.roles);
-      // setTotalPages(response.data.totolPages);
-      setTotalPages(response.data.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch employees:", error);
-    }
-  };
+const fetchRoles = async () => {
+  try {
+    const response = await axiosInstance.get(
+      `/company/getRoleByCompanyId/${page}/${size}`
+    );
+
+    const roleList = response.data.roles || response.data.content || [];
+
+    setRoles(Array.isArray(roleList) ? roleList : []);
+    setTotalPages(response.data.totalPages || 1);
+  } catch (error) {
+    console.error("Failed to fetch roles:", error);
+  }
+};
+
 
   const saveRole = async (e) => {
     e.preventDefault(); // Prevent form from refreshing the page

@@ -8,24 +8,19 @@ import { toast } from "react-toastify";
 import CompanySidebar from "./CompanySidebar";
 import CompanyTopbar from "./CompanyTopbar";
 
-import PaginationComponent
-
-from "../Pagination/PaginationComponent";
+import PaginationComponent from "../Pagination/PaginationComponent";
 
 const EmployeeList = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [employees, setEmployees] = useState([]);
 
-
-
-
   const [emailError, setEmailError] = useState("");
-  const [allEmployees, setAllEmployees] = useState([]); // store full list
 
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [pageCount, setPageCount] = useState(0);
+  const [page, setPage] = useState(0); // ✅ must match JSX
+  const [size, setSize] = useState(10); // ✅ must match JSX
+  const [totalPages, setTotalPages] = useState(1); // ✅ required by JSX
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const [departments, setDepartments] = useState([]);
@@ -33,6 +28,10 @@ const EmployeeList = () => {
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [selectedRoleId, setSelectedRoleId] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(0); // page index
+  const [pageSize, setPageSize] = useState(2); // default size
+  const [pageCount, setPageCount] = useState(0);
+  
   const defaultFormData = {
     name: "",
     email: "",
@@ -48,44 +47,48 @@ const EmployeeList = () => {
   };
   const [formData, setFormData] = useState(defaultFormData);
 
-useEffect(() => {
-  fetchEmployees();
-}, [currentPage, pageSize]);
+  useEffect(() => {
+    fetchEmployees();
+  }, [currentPage, pageSize]);
 
-const fetchEmployees = async () => {
-  try {
-    const response = await axiosInstance.get(
-      `/company/getEmployeeList/${currentPage}/${pageSize}`
-    );
+  const fetchEmployees = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/company/getEmployeeList/${currentPage}/${pageSize}`
+      );
+      const data = response.data;
 
-     const fetchedEmployees = response.data.content || response.data;
-
-    // Adjust according to your API structure
-    setEmployees(response.data.content || response.data);
-    setPageCount(response.data.totalPages || 1);
-
-      console.log("Employee List:", fetchedEmployees);
-
-  } catch (error) {
-    console.error("Failed to fetch employees:", error);
-    toast.error("Failed to fetch employees");
-  }
-};
-
+      setEmployees(data.employeeList || []);
+      setPageCount(data.totalPages || 1); // totalPages should come from backend
+    } catch (error) {
+      console.error("Error fetching employee list:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const res = await axiosInstance.get("/company/getDepartments");
-        setDepartments(res.data);
-      } catch (err) {
-        toast.error("Failed to load departments");
-      }
-    };
-
     fetchDepartments();
-  }, []);
+  }, [page, size]);
 
+  const fetchDepartments = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/company/getDepartments/${page}/${size}`
+      );
+
+      const departmentList =
+        response.data.departmentList || response.data.content || [];
+
+      // Always set departments to an array
+      setDepartments(Array.isArray(departmentList) ? departmentList : []);
+
+      setPage(response.data.currentPage || 0);
+      setTotalPages(response.data.totalPage || 1);
+
+      console.log("Department List:", departmentList);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
+  };
 
   const handleDepartmentChange = async (e) => {
     const departmentId = e.target.value;
@@ -144,17 +147,15 @@ const fetchEmployees = async () => {
   const searchEmployees = async (term) => {
     try {
       const response = await axiosInstance.get(
-        `/company/getEmployeeList/0/1000?name=${term}`
+        `/company/getEmployeeList/${page}/${size}?name=${term}`
       );
-      const data = response.data ?? [];
 
-      setAllEmployees(data);
-      setEmployees(data.slice(0, pageSize));
-      setPageCount(Math.ceil(data.length / pageSize));
-      setCurrentPage(0);
+      const data = response.data.employeeList ?? [];
+      setEmployees(data);
+      setTotalPages(response.data.totalPages || 1);
     } catch (error) {
-      console.error("Error searching companies:", error);
-      toast.error("Failed to search companies");
+      console.error("Error searching employees:", error);
+      toast.error("Failed to search employees");
     }
   };
 
@@ -278,7 +279,7 @@ const fetchEmployees = async () => {
                     onChange={(e) => {
                       const term = e.target.value;
                       setSearchTerm(term);
-                      searchEmployees(term);
+                      setPage(0); // always start from first page when search term changes
                     }}
                   />
                 </div>
@@ -501,7 +502,7 @@ const fetchEmployees = async () => {
                       <td>{emp.name}</td>
                       <td>{emp.email}</td>
                       <td>{emp.phone}</td>
-                      <td>{emp.department}</td>
+                      <td>{emp.department?.departmentName || "N/A"}</td>
                       <td>{emp.gender}</td>
                       <td className="text-end">
                         <button
@@ -529,10 +530,10 @@ const fetchEmployees = async () => {
               currentPage={currentPage}
               pageSize={pageSize}
               pageCount={pageCount}
-              onPageChange={(newPage) => setCurrentPage(newPage)}
-              onPageSizeChange={(newSize) => {
-                setPageSize(newSize);
-                setCurrentPage(0); // reset to first page
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setCurrentPage(0); // reset to first page when size changes
+                setPageSize(size);
               }}
             />
           </div>

@@ -7,13 +7,17 @@ import Modal from "react-bootstrap/Modal";
 import { toast } from "react-toastify";
 import CompanyTopbar from "./CompanyTopbar";
 import CompanySidebar from "./CompanySidebar";
-
+import PaginationComponent from "../Pagination/PaginationComponent";
 const Department = () => {
   const navigate = useNavigate();
   const [departments, setDepartments] = useState([]);
   const [show, setShow] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
 
   const handleCloseDepartment = () => {
     setShow(false);
@@ -27,16 +31,24 @@ const Department = () => {
 
   useEffect(() => {
     fetchDepartment();
-  }, []);
+  }, [page, size]);
 
-  const fetchDepartment = async () => {
-    try {
-      const response = await axiosInstance.get(`company/getDepartments`);
-      setDepartments(response.data);
-    } catch (error) {
-      console.error("Failed to fetch departments:", error);
-    }
-  };
+const fetchDepartment = async () => {
+  try {
+    const response = await axiosInstance.get(
+      `/company/getDepartments/${page}/${size}`
+    );
+
+    const departmentList =
+      response.data.departmentList || response.data.content || [];
+
+    setDepartments(Array.isArray(departmentList) ? departmentList : []);
+    setTotalPages(response.data.totalPages || response.data.totalPage || 1);
+  } catch (error) {
+    console.error("Error fetching departments:", error);
+  }
+};
+
 
   const fetchByDepartmentId = (departmentId) => {
     const dept = departments.find((d) => d.departmentId === departmentId);
@@ -81,18 +93,22 @@ const Department = () => {
         <CompanySidebar />
 
         <div className="slidebar-main-div-right-section">
-          {" "}
-          <h2 className="mb-3">Department</h2>
           <div className="Companalist-main-card">
-            <div>
-              <Button
-                className="btn btn-dark m-1 ml-auto"
-                variant=""
-                onClick={handleShowDepartment}
-              >
-                Create
-              </Button>
+            <div className="row m-0 p-0 w-100  d-flex justify-content-between">
+              <div className="col-md-3 d-flex">
+                <h2 className="">Department</h2>
+              </div>
+
+              <div className="col-md-3 d-flex justify-content-end">
+                <Button
+                  variant="btn btn-dark "
+                  onClick={() => handleShowDepartment(false)}
+                >
+                  Create
+                </Button>
+              </div>
             </div>
+
             <table className="table table-hover align-middle">
               <thead className="table-light">
                 <tr>
@@ -168,6 +184,19 @@ const Department = () => {
                 </form>
               </Modal.Body>
             </Modal>
+          </div>
+
+          <div className="pagination-main-crd">
+            <PaginationComponent
+              currentPage={page}
+              pageSize={size}
+              pageCount={totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newSize) => {
+                setSize(newSize);
+                setPage(0); // reset to first page when size changes
+              }}
+            />
           </div>
         </div>
       </div>
