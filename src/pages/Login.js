@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import animateLeft from "../Assets/CRM-login-icon1.png";
 import axios from "axios";
-
+import axiosInstance from "../BaseComponet/axiosInstance";
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
@@ -17,8 +17,9 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(
-        "http://localhost:8081/signin",
+
+      const response = await axiosInstance.post(
+        "/signin",
         formData,
         {
           headers: { "Content-Type": "application/json" },
