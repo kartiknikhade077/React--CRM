@@ -22,6 +22,15 @@ const LeadCompany = () => {
   const [companyName, setCompanyName] = useState("");
   const [editMode, setEditMode] = useState(false); // If you're editing existing record
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredLeads, setFilteredLeads] = useState([]);
+  const [allLeads, setAllLeads] = useState([]); // store all leads across pages
+  const [isSearching, setIsSearching] = useState(false);
+
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusList, setStatusList] = useState([]);
+
   // Modal & form state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,12 +50,52 @@ const LeadCompany = () => {
   });
 
   useEffect(() => {
-    fetchLeads(page, size);
+    fetchAllLeadsFromBackend(page, size);
   }, [page, size]);
+
+  const fetchAllLeadsFromBackend = async () => {
+    try {
+      let allData = [];
+      let pageIndex = 0;
+
+      // Get first page to find totalPages
+      const res = await axiosInstance.get(
+        `/company/getLeads/${pageIndex}/${size}`
+      );
+      const total = res.data.totalPages;
+      allData = [...res.data.Leads];
+
+      // Fetch remaining pages
+      for (let i = 1; i < total; i++) {
+        const resPage = await axiosInstance.get(
+          `/company/getLeads/${i}/${size}`
+        );
+        allData = [...allData, ...resPage.data.Leads];
+      }
+
+      return allData;
+    } catch (err) {
+      console.error("Failed to fetch all paginated leads", err);
+      return [];
+    }
+  };
+
+  //   const fetchLeads = async (page, size) => {
+  //     try {
+  //       // dynamic URL
+  //       const response = await axiosInstance.get(
+  //         `/company/getLeads/${page}/${size}`
+  //       );
+  //       setLeads(response.data.Leads);
+  //       setFilteredLeads(response.data.Leads); // By default, show all
+  //       setTotalPages(response.data.totalPages);
+  //     } catch (error) {
+  //       console.error("Failed to fetch Leads:", error);
+  //     }
+  //   };
 
   const fetchLeads = async (page, size) => {
     try {
-      // dynamic URL
       const response = await axiosInstance.get(
         `/company/getLeads/${page}/${size}`
       );
@@ -55,6 +104,46 @@ const LeadCompany = () => {
     } catch (error) {
       console.error("Failed to fetch Leads:", error);
     }
+  };
+
+  useEffect(() => {
+    if (!isSearching) {
+      fetchLeads(page, size);
+    }
+  }, [page, size, isSearching]);
+
+  const handleSearch = async (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+
+    if (term.trim() === "") {
+      // Reset to paginated view
+      setIsSearching(false);
+      setFilteredLeads([]);
+
+      return;
+    }
+
+    setIsSearching(true); // avoid showing pagination for now
+
+    // Load all data only once
+    let combinedLeads = allLeads;
+    if (allLeads.length === 0) {
+      const allData = await fetchAllLeadsFromBackend(0, size);
+      setAllLeads(allData);
+      setLeads(allData.slice(0, size)); // show first page
+    }
+
+    const lowerTerm = term.toLowerCase();
+    const filtered = combinedLeads.filter(
+      (lead) =>
+        lead.customerName?.toLowerCase().includes(lowerTerm) ||
+        lead.email?.toLowerCase().includes(lowerTerm) ||
+        lead.mobileNumber?.toLowerCase().includes(lowerTerm) ||
+        lead.companyName?.toLowerCase().includes(lowerTerm)
+    );
+
+    setFilteredLeads(filtered);
   };
 
   // Toggle modal visibility
@@ -81,7 +170,7 @@ const LeadCompany = () => {
       // Refresh table
       toggleModal();
       setPage(0);
-      fetchLeads(0, size);
+      fetchAllLeadsFromBackend(0, size);
 
       // Reset form
       setForm({
@@ -112,6 +201,24 @@ const LeadCompany = () => {
     });
   };
 
+
+    const handleAddStatus = () => {
+      if (newStatus.trim() === "") return;
+      if (!statusList.includes(newStatus)) {
+        setStatusList([...statusList, newStatus]);
+      }
+      setNewStatus("");
+      setShowStatusModal(false);
+    };
+
+    const handleStatusChange = (leadId, newStatusValue) => {
+      const updatedLeads = leads.map((lead) =>
+        lead.leadId === leadId ? { ...lead, status: newStatusValue } : lead
+      );
+      setLeads(updatedLeads);
+    };
+
+
   return (
     <>
       <CompanyTopbar />
@@ -133,18 +240,17 @@ const LeadCompany = () => {
                     type="text"
                     className="form-control border-start-0"
                     placeholder="Search..."
-                    // value={searchTerm}
-                    // onChange={(e) => {
-                    //   const term = e.target.value;
-                    //   setSearchTerm(term);
-                    //   searchEmployees(term);
-                    // }}
+                    value={searchTerm}
+                    onChange={handleSearch}
                   />
                 </div>
               </div>
-              <div className="col-md-3 d-flex justify-content-end">
+              <div className="col-md-3 d-flex justify-content-between">
+                <button className="btn btn-dark">+ Sourace</button>
+                <button className="btn btn-dark">+ Status</button>
+
                 <button className="btn btn-dark" onClick={toggleModal}>
-                  + Create Lead
+                  + Lead
                 </button>
 
                 {/* Create Lead Modal */}
@@ -347,19 +453,21 @@ const LeadCompany = () => {
                   <th>MobileNO</th>
                   <th>Email</th>
                   <th>Company Name</th>
+                  <th>Status</th>
+                  <th>Source</th>
                   <th>Edit</th>
                 </tr>
               </thead>
 
               <tbody>
-                {leads.length === 0 ? (
+                {(isSearching ? filteredLeads : leads).length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center">
                       No leads found.
                     </td>
                   </tr>
                 ) : (
-                  leads.map((lead, idx) => (
+                  (isSearching ? filteredLeads : leads).map((lead, idx) => (
                     <tr key={lead.leadId}>
                       <td>{idx + 1}</td>
                       <td>{lead.customerName}</td>
@@ -378,6 +486,24 @@ const LeadCompany = () => {
                       <td>{lead.mobileNumber}</td>
                       <td>{lead.email}</td>
                       <td>{lead.companyName}</td>
+
+                      <td>
+                        <Form.Select
+                          size="sm"
+                          value={lead.status || ""}
+                          onChange={(e) =>
+                            handleStatusChange(lead.leadId, e.target.value)
+                          }
+                        >
+                          <option value="">Select</option>
+                          {statusList.map((status, index) => (
+                            <option key={index} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </td>
+                      <td>{lead.source || "-"}</td>
                       <td>
                         <button
                           className="btn btn-outline-primary btn-sm"
@@ -386,6 +512,7 @@ const LeadCompany = () => {
                           <i className="bi bi-pencil-square"></i> Edit
                         </button>
                       </td>
+             
                     </tr>
                   ))
                 )}
