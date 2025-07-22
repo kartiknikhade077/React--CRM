@@ -26,6 +26,8 @@ import CompanyProject from "./Company/CompanyProject";
 import StaffMembers from "./Company/StaffMembers";
 // import RoleLayout from "./navbar/RoleLayout";
 import CompRole from "./Company/Role";
+
+import NotFound from "./NotFound";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -159,6 +161,8 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

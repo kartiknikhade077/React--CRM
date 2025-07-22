@@ -1,0 +1,40 @@
+/* src/NotFound.css */
+.notfound-container {
+  height: 100vh;
+  background-color: #0f1117;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.notfound-content {
+  text-align: center;
+}
+
+.notfound-content h1 {
+  font-size: 12rem;
+  margin: 0;
+}
+
+.notfound-content p {
+  font-size: 1.5rem;
+  margin: 1rem 0;
+}
+
+.go-home-btn {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 15px 30px;
+  background-color: #00ff84;
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+.go-home-btn:hover {
+  background-color: #00d96b;
+}
