@@ -60,7 +60,7 @@ const LeadCompany = () => {
 
       // Get first page to find totalPages
       const res = await axiosInstance.get(
-        `/company/getLeads/${pageIndex}/${size}`
+        `/lead/getLeads/${pageIndex}/${size}`
       );
       const total = res.data.totalPages;
       allData = [...res.data.Leads];
@@ -68,7 +68,7 @@ const LeadCompany = () => {
       // Fetch remaining pages
       for (let i = 1; i < total; i++) {
         const resPage = await axiosInstance.get(
-          `/company/getLeads/${i}/${size}`
+          `/lead/getLeads/${i}/${size}`
         );
         allData = [...allData, ...resPage.data.Leads];
       }
@@ -97,7 +97,7 @@ const LeadCompany = () => {
   const fetchLeads = async (page, size) => {
     try {
       const response = await axiosInstance.get(
-        `/company/getLeads/${page}/${size}`
+        `/lead/getLeads/${page}/${size}`
       );
       setLeads(response.data.Leads);
       setTotalPages(response.data.totalPages);
@@ -131,7 +131,7 @@ const LeadCompany = () => {
     if (allLeads.length === 0) {
       const allData = await fetchAllLeadsFromBackend(0, size);
       setAllLeads(allData);
-      setLeads(allData.slice(0, size)); // show first page
+     combinedLeads = allData;
     }
 
     const lowerTerm = term.toLowerCase();
@@ -164,7 +164,7 @@ const LeadCompany = () => {
         leadCreatedDate: new Date(form.leadCreatedDate).toISOString(),
         leadUpdateDate: new Date(form.leadUpdateDate).toISOString(),
       };
-      const res = await axiosInstance.post("/company/createLead", payload);
+      const res = await axiosInstance.post("/lead/createLead", payload);
       toast.success("Lead created! ID: " + res.data.leadId);
 
       // Refresh table

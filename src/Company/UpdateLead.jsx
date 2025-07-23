@@ -35,7 +35,7 @@ const UpdateLead = () => {
   useEffect(() => {
     async function load() {
       try {
-        const res = await axiosInstance.get(`/company/getLead/${leadId}`);
+        const res = await axiosInstance.get(`/lead/getLead/${leadId}`);
         const toLocal = (iso) => iso?.slice(0, 16) || "";
         setForm({
           ...res.data,
@@ -58,7 +58,7 @@ const UpdateLead = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await axiosInstance.put("/company/updateLead", {
+      await axiosInstance.put("/lead/updateLead", {
         ...form,
         leadCreatedDate: new Date(form.leadCreatedDate).toISOString(),
         leadUpdateDate: new Date(form.leadUpdateDate).toISOString(),

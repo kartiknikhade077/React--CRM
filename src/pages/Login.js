@@ -18,7 +18,7 @@ const Login = () => {
     try {
 
       const response = await axiosInstance.post(
-        "/signin",
+        "/auth/login",
         formData,
         {
           headers: { "Content-Type": "application/json" },
