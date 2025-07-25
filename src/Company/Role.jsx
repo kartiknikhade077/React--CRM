@@ -40,8 +40,8 @@ const RoleModel = () => {
 
   const fetchDepartment = async () => {
     try {
-      const response = await axiosInstance.get(`company/getDepartments`);
-      setDepartments(response.data);
+      const response = await axiosInstance.get(`company/getDepartments/0/1000`);
+      setDepartments(response.data.content);
     } catch (error) {
       console.error("Failed to fetch employees:", error);
     }
