@@ -5,13 +5,13 @@ import "./EmployeeTopbar.css";
 const EmployeeTopbar = () => {
   return (
     <div className="employee-topbar">
-      <div className="topbar-search">
-        <FaSearch />
+      <div className="employee-topbar__search">
+        <FaSearch className="employee-topbar__icon" />
         <input type="text" placeholder="Search..." />
       </div>
-      <div className="topbar-icons">
-        <FaBell className="icon" />
-        <FaUser className="icon" />
+      <div className="employee-topbar__icons">
+        <FaBell className="employee-topbar__icon" />
+        <FaUser className="employee-topbar__icon" />
       </div>
     </div>
   );

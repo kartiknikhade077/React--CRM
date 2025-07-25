@@ -20,34 +20,47 @@ const SidebarSuperAdmin = () => {
 
   return (
     <div className="sidebar-superadmin">
-      <div className="brand">MTech CRM</div>
-      <ul className="nav-links">
-        <li className={location.pathname === "/superDash" ? "active" : ""}>
+      <div className="sidebar-superadmin__brand">MTech CRM</div>
+      <ul className="sidebar-superadmin__nav-links">
+        <li
+          className={`sidebar-superadmin__nav-item ${
+            location.pathname === "/superDash" ? "active" : ""
+          }`}
+        >
           <Link to="/superDash">
             <FaTachometerAlt /> Dashboard
           </Link>
         </li>
-        <li className={location.pathname === "/adminDashboard" ? "active" : ""}>
-          <Link to="/adminDashboard">
+        <li
+          className={`sidebar-superadmin__nav-item ${
+            location.pathname === "/adminDashboard" ? "active" : ""
+          }`}
+        >
+          <Link to="">
             <FaUserShield /> Manage Admins
           </Link>
         </li>
         <li
-          className={location.pathname === "/manageEmployees" ? "active" : ""}
+          className={`sidebar-superadmin__nav-item ${
+            location.pathname === "/manageEmployees" ? "active" : ""
+          }`}
         >
-          <Link to="/manageEmployees">
+          <Link to="">
             <FaUsers /> Manage Employees
           </Link>
         </li>
-        <li className={location.pathname === "/settings" ? "active" : ""}>
+        <li
+          className={`sidebar-superadmin__nav-item ${
+            location.pathname === "/settings" ? "active" : ""
+          }`}
+        >
           <Link to="/settings">
             <FaCog /> Settings
           </Link>
         </li>
       </ul>
 
-      {/* Logout Button */}
-      <div className="logout-link">
+      <div className="sidebar-superadmin__logout">
         <button onClick={handleLogout}>
           <FaSignOutAlt /> Logout
         </button>

@@ -14,27 +14,39 @@ const EmployeeSidebar = () => {
 
   return (
     <div className="sidebar-employee">
-      <div className="brand">CRM-Tech</div>
+      <div className="sidebar-employee__brand">CRM-Tech</div>
 
-      <ul className="nav-links">
-        <li className={location.pathname === "/empHome" ? "active" : ""}>
+      <ul className="sidebar-employee__nav-links">
+        <li
+          className={`sidebar-employee__nav-item ${
+            location.pathname === "/empHome" ? "active" : ""
+          }`}
+        >
           <Link to="/empHome">
             <FaHome /> Home
           </Link>
         </li>
-        <li className={location.pathname === "/empLink" ? "active" : ""}>
+        <li
+          className={`sidebar-employee__nav-item ${
+            location.pathname === "/empLink" ? "active" : ""
+          }`}
+        >
           <Link to="/empLink">
             <FaLink /> Link
           </Link>
         </li>
-        <li className={location.pathname === "/empDropdown" ? "active" : ""}>
+        <li
+          className={`sidebar-employee__nav-item ${
+            location.pathname === "/empDropdown" ? "active" : ""
+          }`}
+        >
           <Link to="/empDropdown">
             <FaListAlt /> Dropdown
           </Link>
         </li>
       </ul>
 
-      <div className="logout-link">
+      <div className="sidebar-employee__logout">
         <button onClick={handleLogout}>
           <FaSignOutAlt /> Logout
         </button>

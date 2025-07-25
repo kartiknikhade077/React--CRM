@@ -26,7 +26,8 @@ import CompanyProject from "./Company/CompanyProject";
 import StaffMembers from "./Company/StaffMembers";
 // import RoleLayout from "./navbar/RoleLayout";
 import CompRole from "./Company/Role";
-
+import CompanyBankDetailsSetting from "./Company/CompanyBankDetailsSetting";
+import CompanySetting from "./Company/CompanySetting"; 
 import NotFound from "./NotFound";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
@@ -158,6 +159,23 @@ const App = () => {
           element={
             <ProtectedRoute>
               <UpdateLead />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/CompanyBankDetailsSetting"
+          element={
+            <ProtectedRoute>
+              <CompanyBankDetailsSetting />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/CompanySetting"
+          element={
+            <ProtectedRoute>
+              <CompanySetting />
             </ProtectedRoute>
           }
         />

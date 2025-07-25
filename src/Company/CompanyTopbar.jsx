@@ -5,12 +5,10 @@ import "./CompanyTopbar.css";
 const CompanyTopbar = () => {
   return (
     <div className="company-topbar">
-      <div className="topbar-search">
-      LOGO
-      </div>
-      <div className="topbar-icons">
-        <FaBell className="icon" />
-        <FaUser className="icon" />
+      <div className="company-topbar__search">LOGO</div>
+      <div className="company-topbar__icons">
+        <FaBell className="company-topbar__icon" />
+        <FaUser className="company-topbar__icon" />
       </div>
     </div>
   );
