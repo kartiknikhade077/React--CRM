@@ -13,6 +13,13 @@ import SidebarSuperAdmin from "./SidebarSuperAdmin";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "./SuperDash.css";
 const SuperDash = () => {
+
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+     const handleToggle = () => {
+       setIsCollapsed(!isCollapsed);
+     };
+
   const navigate = useNavigate();
 
   const [emailError, setEmailError] = useState("");
@@ -219,9 +226,9 @@ const searchCompanies = async (term, page = 0, size = 10) => {
 
   return (
     <>
-      <NavbarTopSuperAdmin />
+      <NavbarTopSuperAdmin onToggle={handleToggle} />
       <div className="slidebar-main-div">
-        <SidebarSuperAdmin />
+        <SidebarSuperAdmin isCollapsed={isCollapsed} />
 
         <div className="slidebar-main-div-right-section">
           <div className="Companalist-main-card">
@@ -308,18 +315,6 @@ const searchCompanies = async (term, page = 0, size = 10) => {
                           <div className="invalid-feedback">{emailError}</div>
                         )}
                       </div>
-
-                      {/* <div className="mb-3">
-                        <label className="form-label">Password</label>
-                        <input
-                          type="password"
-                          name="password"
-                          className="form-control"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div> */}
 
                       <div className="mb-3">
                         <label className="form-label">Password</label>

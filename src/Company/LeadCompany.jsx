@@ -31,6 +31,13 @@ const LeadCompany = () => {
   const [newStatus, setNewStatus] = useState("");
   const [statusList, setStatusList] = useState([]);
 
+   const [isCollapsed, setIsCollapsed] = useState(false);
+
+   const handleToggle = () => {
+     setIsCollapsed(!isCollapsed);
+   };
+
+
   // Modal & form state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -221,9 +228,9 @@ const LeadCompany = () => {
 
   return (
     <>
-      <CompanyTopbar />
+      <CompanyTopbar onToggle={handleToggle} />
       <div className="slidebar-main-div">
-        <CompanySidebar />
+        <CompanySidebar isCollapsed={isCollapsed} />
 
         <div className="slidebar-main-div-right-section">
           <div className="Companalist-main-card">

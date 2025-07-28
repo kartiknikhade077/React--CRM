@@ -1,15 +1,21 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import CompanyTopbar from "./CompanyTopbar";
 import CompanySidebar from "./CompanySidebar";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 
 const CompanyProject = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
     <>
-      <CompanyTopbar />
+      <CompanyTopbar onToggle={handleToggle} />
       <div className="slidebar-main-div">
-        <CompanySidebar />
+        <CompanySidebar isCollapsed={isCollapsed} />
 
         <div className="slidebar-main-div-right-section">
           <div className="Companalist-main-card">
@@ -21,7 +27,7 @@ const CompanyProject = () => {
               <div className="col-md-3 d-flex justify-content-end">
                 <Button
                   variant="btn btn-dark "
-                //   onClick={() => handleShowDepartment(false)}
+                  //   onClick={() => handleShowDepartment(false)}
                 >
                   Create
                 </Button>

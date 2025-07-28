@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import "./SidebarSuperAdmin.css";
 
-const SidebarSuperAdmin = () => {
+const SidebarSuperAdmin = ({ isCollapsed }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -19,8 +19,10 @@ const SidebarSuperAdmin = () => {
   };
 
   return (
-    <div className="sidebar-superadmin">
-      <div className="sidebar-superadmin__brand">MTech CRM</div>
+    <div className={`sidebar-superadmin ${isCollapsed ? "collapsed" : ""}`}>
+      <div className="sidebar-superadmin__brand">
+        {!isCollapsed && "MTech CRM"}
+      </div>
       <ul className="sidebar-superadmin__nav-links">
         <li
           className={`sidebar-superadmin__nav-item ${
@@ -28,7 +30,8 @@ const SidebarSuperAdmin = () => {
           }`}
         >
           <Link to="/superDash">
-            <FaTachometerAlt /> Dashboard
+            <FaTachometerAlt />
+            {!isCollapsed && <span>Dashboard</span>}
           </Link>
         </li>
         <li
@@ -37,7 +40,8 @@ const SidebarSuperAdmin = () => {
           }`}
         >
           <Link to="">
-            <FaUserShield /> Manage Admins
+            <FaUserShield />
+            {!isCollapsed && <span>Manage Admins</span>}
           </Link>
         </li>
         <li
@@ -46,7 +50,8 @@ const SidebarSuperAdmin = () => {
           }`}
         >
           <Link to="">
-            <FaUsers /> Manage Employees
+            <FaUsers />
+            {!isCollapsed && <span>Manage Employees</span>}
           </Link>
         </li>
         <li
@@ -55,14 +60,16 @@ const SidebarSuperAdmin = () => {
           }`}
         >
           <Link to="/settings">
-            <FaCog /> Settings
+            <FaCog />
+            {!isCollapsed && <span>Settings</span>}
           </Link>
         </li>
       </ul>
 
       <div className="sidebar-superadmin__logout">
         <button onClick={handleLogout}>
-          <FaSignOutAlt /> Logout
+          <FaSignOutAlt />
+          {!isCollapsed && <span>Logout</span>}
         </button>
       </div>
     </div>

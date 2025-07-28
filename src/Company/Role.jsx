@@ -18,6 +18,13 @@ const RoleModel = () => {
   const [editMode, setEditMode] = useState(false);
   const [size, setSize] = useState(5);
 
+   const [isCollapsed, setIsCollapsed] = useState(false);
+
+   const handleToggle = () => {
+     setIsCollapsed(!isCollapsed);
+   };
+
+
   const [selectedRole, setSelectedRole] = useState({
     roleId: "",
     departmentId: "",
@@ -109,10 +116,9 @@ const fetchRoles = async () => {
 
   return (
     <div>
-      <CompanyTopbar />
+      <CompanyTopbar onToggle={handleToggle} />
       <div className="slidebar-main-div">
-        <CompanySidebar />
-
+        <CompanySidebar isCollapsed={isCollapsed} />
         <div className="slidebar-main-div-right-section">
           <div className="Companalist-main-card">
             <div className="row m-0 p-0 w-100  d-flex justify-content-between">

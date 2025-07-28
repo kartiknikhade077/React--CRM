@@ -40,7 +40,7 @@
   align-items: center;
   gap: 12px;
   font-size: 15px;
-  padding: 12px 20px;
+  padding: 12px 12px;
 }
 
 .company-sidebar__nav-links li:hover,
@@ -95,7 +95,7 @@ width: 100%;
     align-items: center;
     gap: 12px;
     font-size: 15px;
-    padding: 12px 20px;
+    padding: 12px 12px;
     border: none;
     background: none;
 }
@@ -126,3 +126,62 @@ width: 100%;
   padding: 0;
   margin: 0;
 }
+
+
+
+
+
+
+.company-sidebar.collapsed {
+  width: 70px;
+  transition: width 0.3s ease;
+      padding: 0 0px 10px 10px;
+}
+
+.company-sidebar.collapsed .company-sidebar__nav-links a span,
+.company-sidebar.collapsed .company-sidebar__brand,
+.company-sidebar.collapsed .company-sidebar__logout-link span
+ {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.company-sidebar.collapsed .company-sidebar__dropdown-menu{
+
+  top: 0;
+  opacity: 1;
+  visibility: visible;
+  width: auto;
+  height: auto;
+}
+
+.company-sidebar.collapsed .company-sidebar__logout-link button {
+  justify-content: center;
+  padding: 12px;
+  gap: 0;
+  font-size: 18px;
+}
+
+
+.company-sidebar.collapsed .company-sidebar__logout-link  {
+  padding: 0;
+  border-top: none;
+}
+
+.company-sidebar.collapsed .company-sidebar__logout button {
+  background: #fff;
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  border: 1px solid rgb(15 23 42 / 0.15);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 9px 12px;
+  text-align: left;
+}
+

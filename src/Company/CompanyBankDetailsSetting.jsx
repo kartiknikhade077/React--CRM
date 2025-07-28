@@ -6,6 +6,13 @@ import axiosInstance from "../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
 
 const CompanyBankDetailsSetting = () => {
+
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+   const handleToggle = () => {
+     setIsCollapsed(!isCollapsed);
+   };
+
   const [hasData, setHasData] = useState(false);
   const [formData, setFormData] = useState({
     companyBankId: null, // will be set if backend returns an ID
@@ -100,9 +107,9 @@ const CompanyBankDetailsSetting = () => {
 
   return (
     <>
-      <CompanyTopbar />
+      <CompanyTopbar onToggle={handleToggle} />
       <div className="slidebar-main-div d-flex">
-        <CompanySidebar />
+        <CompanySidebar isCollapsed={isCollapsed} />
         <div className="slidebar-main-div-right-section p-4 w-100">
           <div className="Companalist-main-card mb-4">
             <h2>Bank Details</h2>

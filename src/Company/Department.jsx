@@ -19,6 +19,12 @@ const Department = () => {
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   const handleCloseDepartment = () => {
     setShow(false);
     setIsEditMode(false);
@@ -33,22 +39,21 @@ const Department = () => {
     fetchDepartment();
   }, [page, size]);
 
-const fetchDepartment = async () => {
-  try {
-    const response = await axiosInstance.get(
-      `/company/getDepartments/${page}/${size}`
-    );
+  const fetchDepartment = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/company/getDepartments/${page}/${size}`
+      );
 
-    const departmentList =
-      response.data.departmentList || response.data.content || [];
+      const departmentList =
+        response.data.departmentList || response.data.content || [];
 
-    setDepartments(Array.isArray(departmentList) ? departmentList : []);
-    setTotalPages(response.data.totalPages || response.data.totalPage || 1);
-  } catch (error) {
-    console.error("Error fetching departments:", error);
-  }
-};
-
+      setDepartments(Array.isArray(departmentList) ? departmentList : []);
+      setTotalPages(response.data.totalPages || response.data.totalPage || 1);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
+  };
 
   const fetchByDepartmentId = (departmentId) => {
     const dept = departments.find((d) => d.departmentId === departmentId);
@@ -88,9 +93,9 @@ const fetchDepartment = async () => {
 
   return (
     <div>
-      <CompanyTopbar />
+      <CompanyTopbar onToggle={handleToggle} />
       <div className="slidebar-main-div">
-        <CompanySidebar />
+        <CompanySidebar isCollapsed={isCollapsed} />
 
         <div className="slidebar-main-div-right-section">
           <div className="Companalist-main-card">

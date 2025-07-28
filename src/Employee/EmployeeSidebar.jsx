@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaHome, FaLink, FaListAlt, FaSignOutAlt } from "react-icons/fa";
 import "./EmployeeSidebar.css";
 
-const EmployeeSidebar = () => {
+const EmployeeSidebar = ({ isCollapsed }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -13,8 +13,10 @@ const EmployeeSidebar = () => {
   };
 
   return (
-    <div className="sidebar-employee">
-      <div className="sidebar-employee__brand">CRM-Tech</div>
+    <div className={`sidebar-employee ${isCollapsed ? "collapsed" : ""}`}>
+      <div className="sidebar-employee__brand">
+        {!isCollapsed && "Employee Portal"}
+      </div>
 
       <ul className="sidebar-employee__nav-links">
         <li
@@ -23,7 +25,8 @@ const EmployeeSidebar = () => {
           }`}
         >
           <Link to="/empHome">
-            <FaHome /> Home
+            <FaHome />
+            {!isCollapsed && <span>Home</span>}
           </Link>
         </li>
         <li
@@ -32,7 +35,8 @@ const EmployeeSidebar = () => {
           }`}
         >
           <Link to="/empLink">
-            <FaLink /> Link
+            <FaLink />
+            {!isCollapsed && <span>Link</span>}
           </Link>
         </li>
         <li
@@ -41,14 +45,15 @@ const EmployeeSidebar = () => {
           }`}
         >
           <Link to="/empDropdown">
-            <FaListAlt /> Dropdown
+            <FaListAlt />
+            {!isCollapsed && <span>Dropdown</span>}
           </Link>
         </li>
       </ul>
-
       <div className="sidebar-employee__logout">
         <button onClick={handleLogout}>
-          <FaSignOutAlt /> Logout
+          <FaSignOutAlt />
+          {!isCollapsed && <span>Logout</span>}
         </button>
       </div>
     </div>

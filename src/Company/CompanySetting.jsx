@@ -6,6 +6,14 @@ import axiosInstance from "../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
 
 const CompanySetting = () => {
+
+    const [isCollapsed, setIsCollapsed] = useState(false);
+  
+     const handleToggle = () => {
+       setIsCollapsed(!isCollapsed);
+     };
+  
+
   const [isLoading, setIsLoading] = useState(true);
 
   // formValues now holds base64 strings for images
@@ -206,9 +214,9 @@ const CompanySetting = () => {
 
   return (
     <>
-      <CompanyTopbar />
+      <CompanyTopbar onToggle={handleToggle} />
       <div className="slidebar-main-div d-flex">
-        <CompanySidebar />
+        <CompanySidebar isCollapsed={isCollapsed} />
         <div className="slidebar-main-div-right-section p-4 w-100">
           <div className="Companalist-main-card mb-4">
             <h2>Company Settings</h2>
@@ -217,40 +225,7 @@ const CompanySetting = () => {
               <p>Loading…</p>
             ) : (
               <>
-                {/* IMAGE CHOOSERS */}
-                {/* <div className="row my-4">
-                  {[
-                    { label: "Favicon", field: "favicon" },
-                    { label: "Main Logo", field: "mainLogo" },
-                    { label: "App logo", field: "applogo" },
-                  ].map(({ label, field }) => (
-                    <div className="col-md-4" key={field}>
-                      <div className="border rounded p-3">
-                        <h6>{label}</h6>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="form-control mt-2"
-                          onChange={(e) => handleFileAsBase64(e, field)}
-                        />
-                        <div
-                          className="bg-light border rounded mt-2 d-flex justify-content-center align-items-center"
-                          style={{ height: 150 }}
-                        >
-                          {formValues[field] ? (
-                            <img
-                              src={formValues[field]}
-                              alt={label}
-                              style={{ maxHeight: "100%" }}
-                            />
-                          ) : (
-                            <span className="text-muted">No image</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div> */}
+             
 
                 <div className="row my-4">
                   {[

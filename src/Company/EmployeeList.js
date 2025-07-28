@@ -34,6 +34,11 @@ const EmployeeList = () => {
   const [pageSize, setPageSize] = useState(2); // default size
   const [pageCount, setPageCount] = useState(0);
 
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+   const handleToggle = () => {
+     setIsCollapsed(!isCollapsed);
+   };
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -264,9 +269,9 @@ const EmployeeList = () => {
 
   return (
     <div>
-      <CompanyTopbar />
+      <CompanyTopbar onToggle={handleToggle} />
       <div className="slidebar-main-div">
-        <CompanySidebar />
+        <CompanySidebar isCollapsed={isCollapsed} />
 
         <div className="slidebar-main-div-right-section">
           <div className="Companalist-main-card">
