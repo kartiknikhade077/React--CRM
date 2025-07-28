@@ -24,32 +24,71 @@ const UpdateEmployeeList = () => {
   const [roles, setRoles] = useState([]);
 
   // Fetch data
+  // useEffect(() => {
+  //   axiosInstance.get(`/company/getEmployee/${id}`).then((res) => {
+  //     setEmp(res.data.employeeInfo);
+  //     setInitialEmp(res.data.employeeInfo);
+  //     setAccess({
+  //       leadAccess: res.data.moduleAccess.leadAccess,
+  //       template: res.data.moduleAccess.template,
+  //       email: res.data.moduleAccess.email,
+  //     });
+
+  //     // Set default department and fetch roles
+  //     const deptId = res.data.employeeInfo.departmentId;
+  //     if (deptId) {
+  //       axiosInstance
+  //         .get(`/company/getRolesByDepartmentId/${deptId}`)
+  //         .then((roleRes) => {
+  //           setRoles(roleRes.data);
+  //         });
+  //     }
+  //   });
+
+  //   // Fetch department list
+  //   axiosInstance.get("/company/getDepartments").then((res) => {
+  //     setDepartments(res.data);
+  //   });
+  // }, [id]);
+
   useEffect(() => {
-    axiosInstance.get(`/company/getEmployee/${id}`).then((res) => {
-      setEmp(res.data.employeeInfo);
-      setInitialEmp(res.data.employeeInfo);
-      setAccess({
-        leadAccess: res.data.moduleAccess.leadAccess,
-        template: res.data.moduleAccess.template,
-        email: res.data.moduleAccess.email,
-      });
+    const fetchData = async () => {
+      try {
+        // Fetch employee details
+        const res = await axiosInstance.get(`/company/getEmployee/${id}`);
+        setEmp(res.data.employeeInfo);
+        setInitialEmp(res.data.employeeInfo);
+        setAccess({
+          leadAccess: res.data.moduleAccess.leadAccess,
+          template: res.data.moduleAccess.template,
+          email: res.data.moduleAccess.email,
+        });
 
-      // Set default department and fetch roles
-      const deptId = res.data.employeeInfo.departmentId;
-      if (deptId) {
-        axiosInstance
-          .get(`/company/getRolesByDepartmentId/${deptId}`)
-          .then((roleRes) => {
-            setRoles(roleRes.data);
-          });
+        // Fetch roles for the employee's current department
+        const deptId = res.data.employeeInfo.departmentId;
+        if (deptId) {
+          const roleRes = await axiosInstance.get(
+            `/company/getRolesByDepartmentId/${deptId}`
+          );
+          setRoles(roleRes.data);
+        }
+
+        // Fetch departments using updated paginated API
+        const deptRes = await axiosInstance.get(
+          `/company/getDepartments/0/1000`
+        );
+        // If your backend returns a `content` field (like Spring Boot pagination), use that:
+        const departmentsData = deptRes.data.content || deptRes.data;
+        setDepartments(departmentsData);
+      } catch (error) {
+        console.error("Error fetching employee or department data:", error);
+        toast.error("❌ Failed to load employee or department data");
       }
-    });
+    };
 
-    // Fetch department list
-    axiosInstance.get("/company/getDepartments").then((res) => {
-      setDepartments(res.data);
-    });
+    fetchData();
   }, [id]);
+
 
   const handleDepartmentChange = async (e) => {
     const departmentId = parseInt(e.target.value);
@@ -202,7 +241,7 @@ const UpdateEmployeeList = () => {
 
   return (
     <>
-       <CompanyTopbar />
+      <CompanyTopbar />
       <div className="slidebar-main-div">
         <CompanySidebar />
 
@@ -218,7 +257,7 @@ const UpdateEmployeeList = () => {
                   type="text"
                   name="name"
                   className="form-control"
-                  value={emp.name}
+                  value={emp.name }
                   onChange={handleChange}
                   disabled={!isEditing}
                 />
@@ -249,10 +288,7 @@ const UpdateEmployeeList = () => {
                 >
                   <option value="">-- Select Department --</option>
                   {departments.map((dept) => (
-                    <option
-                      key={dept.departmentId}
-                      value={dept.departmentId}
-                    >
+                    <option key={dept.departmentId} value={dept.departmentId}>
                       {dept.departmentName}
                     </option>
                   ))}
