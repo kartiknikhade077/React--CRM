@@ -31,7 +31,7 @@ const EmployeeList = () => {
   const [currentPage, setCurrentPage] = useState(0); // page index
   const [pageSize, setPageSize] = useState(2); // default size
   const [pageCount, setPageCount] = useState(0);
-  
+
   const defaultFormData = {
     name: "",
     email: "",
@@ -57,6 +57,8 @@ const EmployeeList = () => {
         `/company/getEmployeeList/${currentPage}/${pageSize}`
       );
       const data = response.data;
+
+      console.log("Employee List:", data.employeeList);
 
       setEmployees(data.employeeList || []);
       setPageCount(data.totalPages || 1); // totalPages should come from backend
@@ -296,14 +298,14 @@ const EmployeeList = () => {
             </div>
 
             {/* Modal */}
-            <div
+            {/* <div
               className="modal fade"
               id="createEmployeeModal"
               tabIndex="-1"
               aria-labelledby="createEmployeeModalLabel"
               aria-hidden="true"
             >
-              <div className="modal-dialog">
+              <div className="modal-dialog modal-lg">
                 <form onSubmit={handleSubmit}>
                   <div className="modal-content">
                     <div className="modal-header">
@@ -483,7 +485,225 @@ const EmployeeList = () => {
                   </div>
                 </form>
               </div>
+            </div> */}
+
+            <div
+              className="modal fade"
+              id="createEmployeeModal"
+              tabIndex="-1"
+              aria-labelledby="createEmployeeModalLabel"
+              aria-hidden="true"
+            >
+              <div className="modal-dialog modal-lg modal-dialog-centered">
+                <form onSubmit={handleSubmit}>
+                  <div className="modal-content shadow-lg rounded-4 border-0">
+                    <div
+                      className="modal-header text-dark"
+                      style={{ backgroundColor: "#f4f4f5" }}
+                    >
+                      <h5
+                        className="modal-title fw-semibold"
+                        id="createEmployeeModalLabel"
+                      >
+                        Create New Employee
+                      </h5>
+                      <button
+                        type="button"
+                        className="btn-close btn-close-dark"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                      ></button>
+                    </div>
+
+                    <div className="modal-body px-4 py-3">
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <label className="form-label">Employee Name</label>
+                          <input
+                            type="text"
+                            name="name"
+                            className="form-control"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+
+                        <div className="col-md-6">
+                          <label className="form-label">Email</label>
+                          <input
+                            type="email"
+                            name="email"
+                            className={`form-control ${
+                              emailError ? "is-invalid" : ""
+                            }`}
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            required
+                          />
+                          {emailError && (
+                            <div className="invalid-feedback">{emailError}</div>
+                          )}
+                        </div>
+
+                        <div className="col-md-6">
+                          <label className="form-label">Password</label>
+                          <input
+                            type="password"
+                            name="password"
+                            className="form-control"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+
+                        <div className="col-md-6">
+                          <label className="form-label">Phone Number</label>
+                          <input
+                            type="number"
+                            name="phone"
+                            className="form-control"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+
+                        <div className="col-md-6">
+                          <label className="form-label">Department</label>
+                          <select
+                            className="form-select"
+                            value={selectedDepartmentId}
+                            onChange={handleDepartmentChange}
+                            required
+                          >
+                            <option value="">-- Select Department --</option>
+                            {departments.map((dept) => (
+                              <option
+                                key={dept.departmentId}
+                                value={dept.departmentId}
+                              >
+                                {dept.departmentName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="col-md-6">
+                          <label className="form-label">Role</label>
+                          <select
+                            className="form-select"
+                            value={selectedRoleId}
+                            onChange={handleRoleChange}
+                            required
+                          >
+                            <option value="">-- Select Role --</option>
+                            {roles.map((role) => (
+                              <option key={role.roleId} value={role.roleId}>
+                                {role.roleName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="col-md-6">
+                          <label className="form-label">Gender</label>
+                          <select
+                            className="form-select"
+                            name="gender"
+                            value={formData.gender}
+                            onChange={handleInputChange}
+                            required
+                          >
+                            <option value="">-- Select Gender --</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+
+                        <div className="col-md-12">
+                          <label className="form-label">Description</label>
+                          <textarea
+                            name="description"
+                            className="form-control"
+                            value={formData.description}
+                            onChange={handleInputChange}
+                            rows={2}
+                          ></textarea>
+                        </div>
+
+                        <div className="col-md-4 form-check ms-2">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="leadAccess"
+                            checked={formData.leadAccess}
+                            onChange={handleInputChange}
+                            id="leadAccess"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="leadAccess"
+                          >
+                            Lead Access
+                          </label>
+                        </div>
+
+                        <div className="col-md-4 form-check ms-2">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="templateAccess"
+                            checked={formData.templateAccess}
+                            onChange={handleInputChange}
+                            id="templateAccess"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="templateAccess"
+                          >
+                            Template Access
+                          </label>
+                        </div>
+
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="emailAccess"
+                            checked={formData.emailAccess}
+                            onChange={handleInputChange}
+                            id="emailAccess"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="emailAccess"
+                          >
+                            Email Access
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="modal-footer">
+                      <button type="submit" className="btn btn-success px-4">
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
+
             <table className="table table-hover align-middle">
               <thead className="table-light">
                 <tr>
@@ -502,7 +722,7 @@ const EmployeeList = () => {
                       <td>{emp.name}</td>
                       <td>{emp.email}</td>
                       <td>{emp.phone}</td>
-                      <td>{emp.department?.departmentName || "N/A"}</td>
+                      <td>{emp.department || "N/A"}</td>
                       <td>{emp.gender}</td>
                       <td className="text-end">
                         <button
