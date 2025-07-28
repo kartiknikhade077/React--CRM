@@ -157,3 +157,23 @@
 }
 
 
+
+.crm-register-password-wrapper {
+  position: relative;
+}
+
+.crm-register-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #999;
+  font-size: 1.1rem;
+}
+
+.crm-register-password-wrapper .crm-register-input {
+  padding-right: 40px; /* space for the icon */
+}
+
+

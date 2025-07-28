@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./Register.css";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Register = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -48,7 +51,26 @@ const Register = () => {
               required
               className="crm-register-input"
             />
-            <input
+
+            <div className="crm-register-password-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="crm-register-input"
+              />
+              <span
+                className="crm-register-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
+
+            {/* <input
               type="password"
               name="password"
               placeholder="Password"
@@ -56,7 +78,7 @@ const Register = () => {
               onChange={handleChange}
               required
               className="crm-register-input"
-            />
+            /> */}
             <button type="submit" className="crm-register-button">
               Register
             </button>

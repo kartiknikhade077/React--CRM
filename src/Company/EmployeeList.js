@@ -9,6 +9,8 @@ import CompanySidebar from "./CompanySidebar";
 import CompanyTopbar from "./CompanyTopbar";
 
 import PaginationComponent from "../Pagination/PaginationComponent";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
 
 const EmployeeList = () => {
   const navigate = useNavigate();
@@ -31,6 +33,10 @@ const EmployeeList = () => {
   const [currentPage, setCurrentPage] = useState(0); // page index
   const [pageSize, setPageSize] = useState(2); // default size
   const [pageCount, setPageCount] = useState(0);
+
+
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const defaultFormData = {
     name: "",
@@ -546,7 +552,7 @@ const EmployeeList = () => {
                           )}
                         </div>
 
-                        <div className="col-md-6">
+                        {/* <div className="col-md-6">
                           <label className="form-label">Password</label>
                           <input
                             type="password"
@@ -556,6 +562,28 @@ const EmployeeList = () => {
                             onChange={handleInputChange}
                             required
                           />
+                        </div> */}
+
+                        <div className="col-md-6">
+                          <label className="form-label">Password</label>
+                          <div className="input-group">
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              name="password"
+                              className="form-control"
+                              value={formData.password}
+                              onChange={handleInputChange}
+                              required
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={() => setShowPassword(!showPassword)}
+                              tabIndex={-1}
+                            >
+                              {showPassword ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                          </div>
                         </div>
 
                         <div className="col-md-6">

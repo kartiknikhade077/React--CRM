@@ -10,7 +10,7 @@ import PaginationComponent from "../Pagination/PaginationComponent";
 
 import NavbarTopSuperAdmin from "./NavbarTopSuperAdmin";
 import SidebarSuperAdmin from "./SidebarSuperAdmin";
-
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "./SuperDash.css";
 const SuperDash = () => {
   const navigate = useNavigate();
@@ -24,6 +24,8 @@ const SuperDash = () => {
   const [pageCount, setPageCount] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
 
   // for creating companies
   const [formData, setFormData] = useState({
@@ -307,7 +309,7 @@ const searchCompanies = async (term, page = 0, size = 10) => {
                         )}
                       </div>
 
-                      <div className="mb-3">
+                      {/* <div className="mb-3">
                         <label className="form-label">Password</label>
                         <input
                           type="password"
@@ -317,7 +319,29 @@ const searchCompanies = async (term, page = 0, size = 10) => {
                           onChange={handleInputChange}
                           required
                         />
+                      </div> */}
+
+                      <div className="mb-3">
+                        <label className="form-label">Password</label>
+                        <div className="input-group">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            className="form-control"
+                            value={formData.password}
+                            onChange={handleInputChange}
+                            required
+                          />
+                          <span
+                            className="input-group-text"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                          </span>
+                        </div>
                       </div>
+
                       <div className="mb-3">
                         <label className="form-label">Expiray Date</label>
                         <input

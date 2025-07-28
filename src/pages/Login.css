@@ -227,3 +227,25 @@
         height: 100vh;
     }
 }
+
+
+
+.crm-login-password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.crm-login-password-input {
+  width: 100%;
+  padding-right: 40px; /* Space for the eye icon */
+}
+
+.crm-login-password-toggle {
+  position: absolute;
+  top: 0%;
+  right: 12px;
+  transform: translateY(40%);
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #888;
+}

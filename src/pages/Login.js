@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 import axiosInstance from "../BaseComponet/axiosInstance";
 const Login = () => {
@@ -8,6 +9,8 @@ const Login = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -54,14 +57,6 @@ const Login = () => {
           Immerse yourself in a hassle-free login journey with our intuitively
           designed login form. Effortlessly access your account.
         </p>
-        {/* <img
-          src={animateLeft}
-          alt="Animation"
-          className="crm-login-left-illustration"
-        /> */}
-        {/* <p className="crm-login-register-link">
-          Don't have an account? <a href="/register">Register here</a>
-        </p> */}
       </div>
 
       <div className="crm-login-right">
@@ -79,15 +74,23 @@ const Login = () => {
             onChange={handleChange}
             required
           />
-
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
+          <div className="crm-login-password-wrapper">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="crm-login-password-input"
+            />
+            <span
+              className="crm-login-password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
+          </div>
 
           <div className="crm-login-forgot-password">
             <a href="/forgot-password">Forgot your password?</a>
