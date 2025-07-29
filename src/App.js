@@ -28,7 +28,10 @@ import StaffMembers from "./CompanyComponent/StaffMembers";
 import CompRole from "./CompanyComponent/Role";
 import CompanyBankDetailsSetting from "./CompanyComponent/CompanyBankDetailsSetting";
 import CompanySetting from "./CompanyComponent/CompanySetting"; 
+import LeadsList from "./CompanyComponent/Lead/LeadsList"
 import NotFound from "./NotFound";
+
+
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -147,10 +150,10 @@ const App = () => {
           }
         />
         <Route
-          path="/Leaddash"
+          path="/Leadlist"
           element={
             <ProtectedRoute>
-              <LeadCompany />
+              <LeadsList />
             </ProtectedRoute>
           }
         />

@@ -37,8 +37,8 @@ const CompanySidebar = ({ isCollapsed }) => {
             {!isCollapsed && <span>Dashboard</span>}
           </Link>
         </li>
-        <li className={location.pathname === "/lead" ? "active" : ""}>
-          <Link to="/leadDash">
+        <li className={location.pathname === "/Leadlist" ? "active" : ""}>
+          <Link to="/Leadlist">
             <FaUserTie />
             {!isCollapsed && <span>Lead</span>}
           </Link>
@@ -94,7 +94,7 @@ const CompanySidebar = ({ isCollapsed }) => {
             {!isCollapsed && <span>Settings</span>}
           </button>
 
-          {settingsOpen  && (
+          {settingsOpen && (
             <ul className="company-sidebar__dropdown-menu">
               <li
                 className={`p-0 ${
