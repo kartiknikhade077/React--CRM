@@ -157,6 +157,15 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/Leadcompany"
+          element={
+            <ProtectedRoute>
+              <LeadCompany />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/UpdateLead/:leadId"
           element={
