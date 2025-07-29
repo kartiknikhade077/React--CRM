@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Modal, Button } from "react-bootstrap";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import axiosInstance from "../../BaseComponet/axiosInstance";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const CreateLead = ({ show, onClose, onSave }) => {
   const [lead, setLead] = useState({});
   const [columnList, setColumnList] = useState([]);
   const [showCustomization, setShowCustomization] = useState(false); // toggle for customization
+  const [originalColumnNames, setOriginalColumnNames] = useState({});
 
   const defaultColumns = [
     { name: "Customer Name", sequence: 1 },
@@ -49,11 +52,78 @@ const CreateLead = ({ show, onClose, onSave }) => {
     setColumnList(updated.map((col, idx) => ({ ...col, sequence: idx + 1 })));
   };
 
-  const handleColumnNameChange = (index, newName) => {
-    const updated = [...columnList];
-    updated[index].name = newName;
-    setColumnList(updated);
-  };
+
+
+const getLeadInfo = async () => {
+  try {
+    const response = await axiosInstance.get(`/lead/your-endpoint`);
+    const { leadColumn, lead } = response.data;
+
+    setOriginalColumnNames(
+      (leadColumn || []).reduce((acc, col) => {
+        acc[col.name] = col.name;
+        return acc;
+      }, {})
+    );
+
+    setColumnList(leadColumn || []);
+    setLead(lead.fields || {});
+  } catch (error) {
+    console.error("Error fetching lead info", error);
+  }
+};
+
+
+const handleColumnNameChange = async (index, newName) => {
+  const trimmedName = newName.trim();
+  const currentCol = columnList[index];
+  const oldName = currentCol.name;
+
+  // Check if name is unchanged
+  if (oldName === trimmedName) return;
+
+  // Check if name is duplicate
+  const isDuplicate = columnList.some(
+    (col, i) =>
+      i !== index && col.name.toLowerCase() === trimmedName.toLowerCase()
+  );
+  if (isDuplicate) {
+    toast.error("Column name must be unique!");
+    return;
+  }
+
+  // Update the local state
+  const updated = [...columnList];
+  updated[index].name = trimmedName;
+  setColumnList(updated);
+
+  // Check if this is a previously saved column
+  const wasSaved = Object.keys(originalColumnNames).includes(oldName);
+
+  // Only call rename API if it's a saved column
+  if (wasSaved) {
+    try {
+      await axiosInstance.post("/lead/leadColumnRename", {
+        oldName: oldName,
+        newName: trimmedName,
+      });
+
+      // Update the original names map after successful rename
+      setOriginalColumnNames((prev) => {
+        const updatedMap = { ...prev };
+        delete updatedMap[oldName];
+        updatedMap[trimmedName] = trimmedName;
+        return updatedMap;
+      });
+
+      toast.success(`Renamed "${oldName}" to "${trimmedName}"`);
+    } catch (error) {
+      toast.error("Failed to rename column");
+      console.error("Rename column error:", error);
+    }
+  }
+};
+
 
   const handleFieldChange = (name, value) => {
     setLead((prev) => ({ ...prev, [name]: value }));
@@ -67,9 +137,22 @@ const CreateLead = ({ show, onClose, onSave }) => {
     setColumnList([...columnList, newColumn]);
   };
 
-  const removeColumn = (index) => {
-    const updated = columnList.filter((_, i) => i !== index);
-    setColumnList(updated.map((col, idx) => ({ ...col, sequence: idx + 1 })));
+  const removeColumn = async (index) => {
+    const columnToRemove = columnList[index];
+
+    try {
+      await axiosInstance.delete(
+        `/lead/deletColumn/${encodeURIComponent(columnToRemove.name)}`
+      );
+
+      const updated = columnList.filter((_, i) => i !== index);
+      setColumnList(updated.map((col, idx) => ({ ...col, sequence: idx + 1 })));
+
+      toast.success(`Column "${columnToRemove.name}" deleted successfully`);
+    } catch (error) {
+      console.error("Error deleting column:", error);
+      toast.error("Failed to delete column");
+    }
   };
 
   const createLead = () => {
@@ -92,17 +175,44 @@ const CreateLead = ({ show, onClose, onSave }) => {
 
   return (
     <Modal show={show} onHide={onClose} size="lg" centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Create New Lead</Modal.Title>
-        {!showCustomization && (
-          <Button
-            variant="btn btn-dark"
-            className="ms-auto"
-            onClick={() => setShowCustomization(true)}
-          >
-            Edit
-          </Button>
-        )}
+      <Modal.Header className="align-items-start flex-column">
+        <div className="d-flex w-100 justify-content-between align-items-center">
+          <div className=" align-items-center">
+            <Modal.Title>Create New Lead</Modal.Title>
+          </div>
+
+          <div className="d-flex">
+            {!showCustomization ? (
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={() => setShowCustomization(true)}
+              >
+                Edit
+              </Button>
+            ) : (
+              <div className="d-flex gap-2">
+                <Button variant="outline-primary" size="sm" onClick={addColumn}>
+                  + Add Column
+                </Button>
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => setShowCustomization(false)}
+                >
+                  Switch to Simple Mode
+                </Button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="btn-close ms-2"
+              aria-label="Close"
+              onClick={onClose}
+            ></button>
+          </div>
+        </div>
       </Modal.Header>
 
       {/* <Modal.Body>
@@ -213,18 +323,6 @@ const CreateLead = ({ show, onClose, onSave }) => {
         ) : (
           // CUSTOMIZATION MODE
           <>
-            <div className="d-flex justify-content-between mb-3">
-              <Button variant="outline-primary" size="sm" onClick={addColumn}>
-                + Add Column
-              </Button>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={() => setShowCustomization(false)}
-              >
-                Switch to Simple Mode
-              </Button>
-            </div>
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="columns" direction="vertical">
                 {(provided) => (

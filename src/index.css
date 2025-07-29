@@ -65,11 +65,16 @@ code {
 
 .company-sidebar.collapsed ~ .slidebar-main-div-right-section,
 .company-sidebar.collapsed + .slidebar-main-div-right-section {
-  width: 100%;
+  width: 95%;
 }
 
-.company-sidebar.collapsed ~ .slidebar-main-div-right-section .Companalist-main-card,
+.company-sidebar.collapsed ~ .slidebar-main-div-right-section .Companalist-main-card ,
 .company-sidebar.collapsed + .slidebar-main-div-right-section .Companalist-main-card {
+max-width: 95vw;
+
+}
+.company-sidebar.collapsed ~ .slidebar-main-div-right-section .Companalist-main-card .table-main-div,
+.company-sidebar.collapsed + .slidebar-main-div-right-section .Companalist-main-card .table-main-div{
 max-width: 95vw;
 
 }
