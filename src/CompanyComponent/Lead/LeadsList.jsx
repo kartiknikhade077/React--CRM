@@ -9,6 +9,9 @@ import EditLead from "./EditLead";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 const LeadsList = () => {
+
+
+    
     const [leads, setLeads] = useState([]);
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(50);
@@ -27,6 +30,12 @@ const LeadsList = () => {
         setShowEditModal(false);
         fetchLeads(page, size);
     };
+
+   const [isCollapsed, setIsCollapsed] = useState(false);
+
+   const handleToggle = () => {
+     setIsCollapsed(!isCollapsed);
+   };
 
 
     // Fetch leads and column configuration
@@ -108,9 +117,9 @@ const handleColumnDragEnd = (result) => {
 
     return (
         <div>
-            <CompanyTopbar />
+             <CompanyTopbar onToggle={handleToggle} />
             <div className="slidebar-main-div">
-                <CompanySidebar />
+               <CompanySidebar isCollapsed={isCollapsed} />
                 <div className="slidebar-main-div-right-section">
                     <div className="Companalist-main-card">
                         <div className="row m-0 p-0 w-100 d-flex justify-content-between mb-2">
