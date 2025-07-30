@@ -17,6 +17,7 @@ import EmployeeList from "./CompanyComponent/EmployeeList";
 import UpdateEmployeeList from "./CompanyComponent/UpdateEmployeeList";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import Department from "./CompanyComponent/Department";
 
 import LeadCompany from "./CompanyComponent/LeadCompany";
@@ -30,7 +31,7 @@ import CompanyBankDetailsSetting from "./CompanyComponent/CompanyBankDetailsSett
 import CompanySetting from "./CompanyComponent/CompanySetting"; 
 import LeadsList from "./CompanyComponent/Lead/LeadsList"
 import NotFound from "./NotFound";
-
+import CustomerList from "./CompanyComponent/Customer/CustomerList";
 
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
@@ -154,6 +155,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <LeadsList />
+            </ProtectedRoute>
+          }
+        />
+
+            <Route
+          path="/Customer"
+          element={
+            <ProtectedRoute>
+              <CustomerList />
             </ProtectedRoute>
           }
         />
