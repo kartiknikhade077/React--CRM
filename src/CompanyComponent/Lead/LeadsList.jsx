@@ -7,6 +7,9 @@ import CompanyTopbar from "../CompanyTopbar";
 import CreateLead from "./CreateLead";
 import EditLead from "./EditLead";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import "./CompanyLeadList.css";
+
+import ConvertToCustomerLead from "./ConvertToCustomerLead";
 
 const LeadsList = () => {
   const [leads, setLeads] = useState([]);
@@ -17,6 +20,13 @@ const LeadsList = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusList, setStatusList] = useState([]);
+  const [newStatus, setNewStatus] = useState("");
+
+  const [showConvertModal, setShowConvertModal] = useState(false);
+  const [convertLeadData, setConvertLeadData] = useState(null);
 
   const handleEditClick = (lead) => {
     setSelectedLead(lead);
@@ -108,6 +118,47 @@ const LeadsList = () => {
     }
   };
 
+  const fetchLeadStatuses = async () => {
+    try {
+      const response = await axiosInstance.get("/lead/getLeadStaus");
+      setStatusList(response.data);
+    } catch (error) {
+      console.error("Failed to fetch lead statuses:", error);
+    }
+  };
+
+  const handleCreateStatus = async () => {
+    if (!newStatus.trim()) return;
+
+    try {
+      await axiosInstance.post("/lead/addLeadStatus", {
+        leadStatus: newStatus,
+        sequence: statusList.length + 1, // or dynamically based on your need
+      });
+      setNewStatus("");
+      fetchLeadStatuses(); // Refresh list
+    } catch (error) {
+      console.error("Failed to create status:", error);
+    }
+  };
+
+  const handleDeleteStatus = async (id) => {
+    try {
+      await axiosInstance.delete(`/lead/deleteLeadStatus/${id}`);
+      fetchLeadStatuses(); // Refresh status list
+    } catch (error) {
+      console.error("Failed to delete status:", error);
+    }
+  };
+
+
+const handleConvertToCustomer = (lead) => {
+  setShowEditModal(false); // Close Edit modal
+  setConvertLeadData(lead); // Pass selected lead
+  setShowConvertModal(true); // Open Convert modal
+};
+
+
   return (
     <div>
       <CompanyTopbar onToggle={handleToggle} />
@@ -134,7 +185,16 @@ const LeadsList = () => {
               </div>
               <div className="col-md-6 d-flex justify-content-end">
                 <button className="btn btn-dark">+ Source</button>
-                <button className="btn btn-dark mx-1">+ Status</button>
+                <button
+                  className="btn btn-dark mx-1"
+                  onClick={() => {
+                    setShowStatusModal(true);
+                    fetchLeadStatuses(); // fetch when modal opens
+                  }}
+                >
+                  + Status
+                </button>
+
                 <button
                   className="btn btn-dark"
                   onClick={() => setShowModal(true)}
@@ -247,8 +307,79 @@ const LeadsList = () => {
       <EditLead
         show={showEditModal}
         onClose={() => setShowEditModal(false)}
+        setShow={setShowEditModal}
         onSave={handleUpdateLead}
         leadData={selectedLead}
+        onConvert={handleConvertToCustomer}
+      />
+
+      {/* Lead Status Modal          */}
+      {showStatusModal && (
+        <div
+          className="modal fade show d-block company-lead-create-modal-overlay"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog company-lead-create-modal-dialog">
+            <div className="modal-content company-lead-create-modal-content">
+              <div className="modal-header company-lead-create-modal-header">
+                <h5 className="modal-title">Add Lead Status</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowStatusModal(false)}
+                ></button>
+              </div>
+
+              <div className="modal-body company-lead-create-modal-body">
+                <div className="mb-3 company-lead-create-modal-input-row">
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control company-lead-create-modal-input"
+                      placeholder="Enter new status"
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value)}
+                    />
+                    <button
+                      className="btn btn-primary company-lead-create-modal-btn"
+                      onClick={handleCreateStatus}
+                    >
+                      Create
+                    </button>
+                  </div>
+                </div>
+
+                <hr />
+                <h6 className="company-lead-create-modal-title">
+                  Saved Statuses:
+                </h6>
+                <ul className="list-group company-lead-create-modal-status-list">
+                  {statusList.map((status) => (
+                    <li
+                      className="list-group-item d-flex justify-content-between align-items-center company-lead-create-modal-status-item"
+                      key={status.id}
+                    >
+                      {status.leadStatus}
+                      <button
+                        className="btn btn-sm btn-danger company-lead-create-modal-delete-btn"
+                        onClick={() => handleDeleteStatus(status.id)}
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConvertToCustomerLead
+        show={showConvertModal}
+        onClose={() => setShowConvertModal(false)}
+        leadData={convertLeadData}
       />
     </div>
   );

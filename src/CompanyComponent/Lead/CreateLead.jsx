@@ -11,18 +11,18 @@ const CreateLead = ({ show, onClose, onSave }) => {
   const [showCustomization, setShowCustomization] = useState(false); // toggle for customization
   const [originalColumnNames, setOriginalColumnNames] = useState({});
 
-  const defaultColumns = [
-    { name: "Customer Name", sequence: 1 },
-    { name: "Company Name", sequence: 2 },
-    { name: "Mobile Number", sequence: 3 },
-    { name: "Phone Number", sequence: 4 },
-    { name: "Email", sequence: 5 },
-    { name: "Address", sequence: 6 },
-    { name: "Country", sequence: 7 },
-    { name: "State", sequence: 8 },
-    { name: "City", sequence: 9 },
-    { name: "Zip Code", sequence: 10 },
+  const fixedColumnNames = [
+    "Company Name",
+    "Customer Name",
+    "Email",
+    "Mobile Number",
+    "Address",
   ];
+
+  const defaultColumns = fixedColumnNames.map((name, index) => ({
+    name,
+    sequence: index + 1,
+  }));
 
   useEffect(() => {
     if (show) {
@@ -35,9 +35,14 @@ const CreateLead = ({ show, onClose, onSave }) => {
     try {
       const response = await axiosInstance.get("/lead/getAllColumns");
       const fetchedColumns = response.data?.columns || [];
-      setColumnList(
-        fetchedColumns.length > 0 ? fetchedColumns : defaultColumns
-      );
+      const hasServerColumns = fetchedColumns && fetchedColumns.length > 0;
+      const onlyCustomColumns = hasServerColumns
+        ? fetchedColumns.filter((col) => !fixedColumnNames.includes(col.name))
+        : [];
+
+      const combinedColumns = [...defaultColumns, ...onlyCustomColumns];
+      setColumnList(combinedColumns);
+
     } catch (error) {
       console.error("Failed to fetch columns:", error);
       setColumnList(defaultColumns);
@@ -52,78 +57,82 @@ const CreateLead = ({ show, onClose, onSave }) => {
     setColumnList(updated.map((col, idx) => ({ ...col, sequence: idx + 1 })));
   };
 
-
-
-const getLeadInfo = async () => {
-  try {
-    const response = await axiosInstance.get(`/lead/your-endpoint`);
-    const { leadColumn, lead } = response.data;
-
-    setOriginalColumnNames(
-      (leadColumn || []).reduce((acc, col) => {
-        acc[col.name] = col.name;
-        return acc;
-      }, {})
-    );
-
-    setColumnList(leadColumn || []);
-    setLead(lead.fields || {});
-  } catch (error) {
-    console.error("Error fetching lead info", error);
-  }
-};
-
-
-const handleColumnNameChange = async (index, newName) => {
-  const trimmedName = newName.trim();
-  const currentCol = columnList[index];
-  const oldName = currentCol.name;
-
-  // Check if name is unchanged
-  if (oldName === trimmedName) return;
-
-  // Check if name is duplicate
-  const isDuplicate = columnList.some(
-    (col, i) =>
-      i !== index && col.name.toLowerCase() === trimmedName.toLowerCase()
-  );
-  if (isDuplicate) {
-    toast.error("Column name must be unique!");
-    return;
-  }
-
-  // Update the local state
-  const updated = [...columnList];
-  updated[index].name = trimmedName;
-  setColumnList(updated);
-
-  // Check if this is a previously saved column
-  const wasSaved = Object.keys(originalColumnNames).includes(oldName);
-
-  // Only call rename API if it's a saved column
-  if (wasSaved) {
+  const getLeadInfo = async () => {
     try {
-      await axiosInstance.post("/lead/leadColumnRename", {
-        oldName: oldName,
-        newName: trimmedName,
-      });
+      const response = await axiosInstance.get(`/lead/your-endpoint`);
+      const { leadColumn, lead } = response.data;
 
-      // Update the original names map after successful rename
-      setOriginalColumnNames((prev) => {
-        const updatedMap = { ...prev };
-        delete updatedMap[oldName];
-        updatedMap[trimmedName] = trimmedName;
-        return updatedMap;
-      });
+      setOriginalColumnNames(
+        (leadColumn || []).reduce((acc, col) => {
+          acc[col.name] = col.name;
+          return acc;
+        }, {})
+      );
 
-      toast.success(`Renamed "${oldName}" to "${trimmedName}"`);
+      setColumnList(leadColumn || []);
+      setLead(lead.fields || {});
     } catch (error) {
-      toast.error("Failed to rename column");
-      console.error("Rename column error:", error);
+      console.error("Error fetching lead info", error);
     }
-  }
-};
+  };
 
+  const handleColumnNameChange = async (index, newName) => {
+    const trimmedName = newName.trim();
+    const currentCol = columnList[index];
+    const oldName = currentCol.name;
+
+    if (fixedColumnNames.includes(columnList[index].name)) {
+      toast.error(
+        `"${columnList[index].name}" is a fixed column and cannot be renamed`
+      );
+      return;
+    }
+
+
+    // Check if name is unchanged
+    if (oldName === trimmedName) return;
+
+    // Check if name is duplicate
+    const isDuplicate = columnList.some(
+      (col, i) =>
+        i !== index && col.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error("Column name must be unique!");
+      return;
+    }
+
+    // Update the local state
+    const updated = [...columnList];
+    updated[index].name = trimmedName;
+    setColumnList(updated);
+
+    // Check if this is a previously saved column
+    const wasSaved = Object.keys(originalColumnNames).includes(oldName);
+
+    // Only call rename API if it's a saved column
+    if (wasSaved) {
+      try {
+        await axiosInstance.put("/lead/leadColumnRename", {
+          oldName: oldName,
+          newName: trimmedName,
+        });
+
+        // Update the original names map after successful rename
+        setOriginalColumnNames((prev) => {
+          const updatedMap = { ...prev };
+          delete updatedMap[oldName];
+          updatedMap[trimmedName] = trimmedName;
+          return updatedMap;
+        });
+
+        toast.success(`Renamed "${oldName}" to "${trimmedName}"`);
+      } catch (error) {
+        toast.error("Failed to rename column");
+        console.error("Rename column error:", error);
+      }
+    }
+  };
 
   const handleFieldChange = (name, value) => {
     setLead((prev) => ({ ...prev, [name]: value }));
@@ -139,6 +148,13 @@ const handleColumnNameChange = async (index, newName) => {
 
   const removeColumn = async (index) => {
     const columnToRemove = columnList[index];
+
+    if (fixedColumnNames.includes(columnToRemove.name)) {
+      toast.error(
+        `"${columnToRemove.name}" is a fixed column and cannot be deleted`
+      );
+      return;
+    }
 
     try {
       await axiosInstance.delete(
@@ -200,7 +216,7 @@ const handleColumnNameChange = async (index, newName) => {
                   size="sm"
                   onClick={() => setShowCustomization(false)}
                 >
-                  Switch to Simple Mode
+                 Exit Customization
                 </Button>
               </div>
             )}
@@ -346,21 +362,43 @@ const handleColumnNameChange = async (index, newName) => {
                                   <input
                                     type="text"
                                     value={col.name}
-                                    className="form-control form-control-sm me-2"
+                                    className="form-control form-control-sm"
                                     onChange={(e) =>
                                       handleColumnNameChange(
                                         index,
                                         e.target.value
                                       )
                                     }
+                                    disabled={fixedColumnNames.includes(
+                                      col.name
+                                    )}
                                   />
-                                  <Button
+                                  {/* <Button
                                     variant="outline-danger"
                                     size="sm"
                                     onClick={() => removeColumn(index)}
+                                    disabled={fixedColumnNames.includes(
+                                      col.name
+                                    )}
+                                    title={
+                                      fixedColumnNames.includes(col.name)
+                                        ? "This column cannot be deleted"
+                                        : "Delete column"
+                                    }
                                   >
                                     ✕
-                                  </Button>
+                                  </Button> */}
+
+                                  {!fixedColumnNames.includes(col.name) && (
+                                    <Button
+                                      variant="outline-danger"
+                                      size="sm"
+                                      className="ms-2"
+                                      onClick={() => removeColumn(index)}
+                                    >
+                                      ✕
+                                    </Button>
+                                  )}
                                 </div>
                                 <input
                                   type="text"

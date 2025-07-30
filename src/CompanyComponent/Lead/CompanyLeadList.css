@@ -1,0 +1,44 @@
+.company-lead-create-modal-input-row .input-group {
+  display: flex;
+}
+
+.company-lead-create-modal-input {
+  border-radius: 4px 0 0 4px;
+}
+
+.company-lead-create-modal-btn {
+  border-radius: 0 4px 4px 0;
+}
+
+.company-lead-create-modal-status-list {
+  margin-top: 10px;
+  max-height: 200px; /* Limit height */
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+/* Optional: custom scrollbar for better UI */
+.company-lead-create-modal-status-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.company-lead-create-modal-status-list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.company-lead-create-modal-status-list::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+.company-lead-create-modal-status-item {
+  font-size: 15px;
+  padding: 6px 12px;
+}
+
+.company-lead-create-modal-delete-btn {
+  font-size: 14px;
+  padding: 2px 8px;
+  line-height: 1;
+}
