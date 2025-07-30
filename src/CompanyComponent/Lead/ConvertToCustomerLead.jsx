@@ -24,23 +24,68 @@ const ConvertToCustomerLead = ({
     panNumber: "",
   });
 
-  useEffect(() => {
-    if (fixedData) {
-      setFormData({
-        customerName: fixedData.customerName || "",
-        companyName: fixedData.company || "",
-        email: fixedData.email || "",
-        phoneNumber: fixedData.phone || "",
-        website: fixedData.website || "",
-        address: fixedData.address || "",
-        city: fixedData.city || "",
-        state: fixedData.state || "",
-        country: fixedData.country || "",
-        gstinNumer: fixedData.gstNumber || "",
-        panNumber: fixedData.panNumber || "",
+//   useEffect(() => {
+//     if (fixedData) {
+//       setFormData({
+//         customerName: fixedData.customerName || "",
+//         companyName: fixedData.company || "",
+//         email: fixedData.email || "",
+//         phoneNumber: fixedData.phone || "",
+//         website: fixedData.website || "",
+//         address: fixedData.address || "",
+//         city: fixedData.city || "",
+//         state: fixedData.state || "",
+//         country: fixedData.country || "",
+//         gstinNumer: fixedData.gstNumber || "",
+//         panNumber: fixedData.panNumber || "",
+//       });
+//     }
+//   }, [fixedData]);
+
+useEffect(() => {
+  if (fixedData) {
+    const baseData = {
+      customerName: fixedData.customerName || "",
+      companyName: fixedData.company || "",
+      email: fixedData.email || "",
+      phoneNumber: fixedData.phone || "",
+      website: fixedData.website || "",
+      address: fixedData.address || "",
+      city: fixedData.city || "",
+      state: fixedData.state || "",
+      country: fixedData.country || "",
+      gstinNumer: fixedData.gstNumber || "",
+      panNumber: fixedData.panNumber || "",
+    };
+
+    // Map dynamic fields (if available)
+    if (Array.isArray(fixedData.customFields)) {
+      fixedData.customFields.forEach(({ fieldName, fieldValue }) => {
+        const normalizedField = fieldName.trim().toLowerCase();
+
+        if (normalizedField === "pan no") baseData.panNumber = fieldValue;
+        else if (normalizedField === "gst no") baseData.gstinNumer = fieldValue;
+        else if (normalizedField === "website") baseData.website = fieldValue;
+        else if (normalizedField === "company")
+          baseData.companyName = fieldValue;
+        else if (normalizedField === "email") baseData.email = fieldValue;
+        else if (
+          normalizedField === "phone" ||
+          normalizedField === "phone number"
+        )
+          baseData.phoneNumber = fieldValue;
+        else if (normalizedField === "city") baseData.city = fieldValue;
+        else if (normalizedField === "state") baseData.state = fieldValue;
+        else if (normalizedField === "country") baseData.country = fieldValue;
+        else if (normalizedField === "address") baseData.address = fieldValue;
+        else if (normalizedField === "customer name")
+          baseData.customerName = fieldValue;
       });
     }
-  }, [fixedData]);
+
+    setFormData(baseData);
+  }
+}, [fixedData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
