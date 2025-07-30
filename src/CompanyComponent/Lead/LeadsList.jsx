@@ -47,6 +47,7 @@ const LeadsList = () => {
   // Fetch leads and column configuration
   useEffect(() => {
     fetchLeads(page, size);
+    fetchLeadStatuses(); 
   }, [page, size]);
 
   const fetchLeads = async (page, size) => {
@@ -253,7 +254,35 @@ const handleConvertToCustomer = (lead) => {
                         {columnSequence.map((col, i) => (
                           <td key={i}>{lead.fields?.[col.name] || "-"}</td>
                         ))}
-                        <td>{lead.status || "New Lead"}</td>
+
+                        <td>
+                          <select
+                            className="form-select"
+                            value={lead.status || ""}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              try {
+                                await axiosInstance.put(
+                                  `/lead/updateLeadStatus/${lead.id}/${newStatus}`
+                                );
+                                fetchLeads(page, size); // Refresh leads after update
+                              } catch (error) {
+                                console.error(
+                                  "Failed to update lead status:",
+                                  error
+                                );
+                              }
+                            }}
+                          >
+                            <option value="">Select Status</option>
+                            {statusList.map((status) => (
+                              <option key={status.id} value={status.leadStatus}>
+                                {status.leadStatus}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+
                         <td>
                           <Button
                             variant="primary"
