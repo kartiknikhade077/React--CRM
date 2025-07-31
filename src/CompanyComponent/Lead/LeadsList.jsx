@@ -185,7 +185,7 @@ const handleConvertToCustomer = (lead) => {
                 </div>
               </div>
               <div className="col-md-6 d-flex justify-content-end">
-                <button className="btn btn-dark">+ Source</button>
+            
                 <button
                   className="btn btn-dark mx-1"
                   onClick={() => {
