@@ -184,6 +184,8 @@ const CreateLead = ({ show, onClose, onSave }) => {
     try {
       await axiosInstance.post("/lead/createLead", payload);
       onSave(payload);
+      // ✅ Clear form data after successful save
+      setLead({});
     } catch (error) {
       console.error("Error saving lead:", error);
     }
@@ -231,93 +233,7 @@ const CreateLead = ({ show, onClose, onSave }) => {
         </div>
       </Modal.Header>
 
-      {/* <Modal.Body>
-        {!showCustomization ? (
-          // SIMPLE MODE
-          <div className="row">
-            {defaultColumns.map((col, index) => (
-              <div className="col-md-6 mb-3" key={index}>
-                <label className="form-label fw-semibold">{col.name}</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder={`Enter ${col.name}`}
-                  value={lead[col.name] || ""}
-                  onChange={(e) => handleFieldChange(col.name, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          // CUSTOMIZATION MODE
-          <>
-            <div className="d-flex justify-content-end mb-3">
-              <Button variant="success" size="sm" onClick={addColumn}>
-                + Add Column
-              </Button>
-            </div>
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="columns" direction="vertical">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef}>
-                    <div className="row">
-                      {columnList.map((col, index) => (
-                        <Draggable
-                          key={index}
-                          draggableId={`col-${index}`}
-                          index={index}
-                        >
-                          {(provided) => (
-                            <div
-                              className="col-md-6 mb-3"
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <div className="p-2 border rounded bg-light">
-                                <div className="d-flex justify-content-between mb-1">
-                                  <input
-                                    type="text"
-                                    value={col.name}
-                                    className="form-control form-control-sm me-2"
-                                    onChange={(e) =>
-                                      handleColumnNameChange(
-                                        index,
-                                        e.target.value
-                                      )
-                                    }
-                                  />
-                                  <Button
-                                    variant="outline-danger"
-                                    size="sm"
-                                    onClick={() => removeColumn(index)}
-                                  >
-                                    ✕
-                                  </Button>
-                                </div>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  placeholder={`Enter ${col.name}`}
-                                  value={lead[col.name] || ""}
-                                  onChange={(e) =>
-                                    handleFieldChange(col.name, e.target.value)
-                                  }
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                    </div>
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          </>
-        )}
-      </Modal.Body> */}
+    
 
       <Modal.Body>
         {!showCustomization ? (
@@ -373,21 +289,7 @@ const CreateLead = ({ show, onClose, onSave }) => {
                                       col.name
                                     )}
                                   />
-                                  {/* <Button
-                                    variant="outline-danger"
-                                    size="sm"
-                                    onClick={() => removeColumn(index)}
-                                    disabled={fixedColumnNames.includes(
-                                      col.name
-                                    )}
-                                    title={
-                                      fixedColumnNames.includes(col.name)
-                                        ? "This column cannot be deleted"
-                                        : "Delete column"
-                                    }
-                                  >
-                                    ✕
-                                  </Button> */}
+                           
 
                                   {!fixedColumnNames.includes(col.name) && (
                                     <Button

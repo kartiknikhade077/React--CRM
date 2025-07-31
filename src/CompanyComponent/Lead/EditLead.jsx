@@ -164,7 +164,7 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
         <Modal.Header className="align-items-start flex-column">
           <div className="d-flex w-100 justify-content-between align-items-center">
             <div className=" align-items-center">
-              <Modal.Title>Create New Lead</Modal.Title>
+              <Modal.Title>Update Lead</Modal.Title>
             </div>
 
             <div className="d-flex">
@@ -335,6 +335,8 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
           gstNumber: lead["GST No"] || "",
           panNumber: lead["PAN No"] || "",
         }}
+        leadData={{ id: leadData }} // ✅ Pass lead ID properly
+        onSuccess={onSave}
       />
     </>
   );

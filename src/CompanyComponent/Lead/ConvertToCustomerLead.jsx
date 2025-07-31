@@ -9,6 +9,8 @@ const ConvertToCustomerLead = ({
   onClose,
   fixedData,
   handleBackToEdit,
+  leadData, // ✅ Add this
+  onSuccess,
 }) => {
   const [formData, setFormData] = useState({
     customerName: "",
@@ -24,82 +26,97 @@ const ConvertToCustomerLead = ({
     panNumber: "",
   });
 
-//   useEffect(() => {
-//     if (fixedData) {
-//       setFormData({
-//         customerName: fixedData.customerName || "",
-//         companyName: fixedData.company || "",
-//         email: fixedData.email || "",
-//         phoneNumber: fixedData.phone || "",
-//         website: fixedData.website || "",
-//         address: fixedData.address || "",
-//         city: fixedData.city || "",
-//         state: fixedData.state || "",
-//         country: fixedData.country || "",
-//         gstinNumer: fixedData.gstNumber || "",
-//         panNumber: fixedData.panNumber || "",
-//       });
-//     }
-//   }, [fixedData]);
 
-useEffect(() => {
-  if (fixedData) {
-    const baseData = {
-      customerName: fixedData.customerName || "",
-      companyName: fixedData.company || "",
-      email: fixedData.email || "",
-      phoneNumber: fixedData.phone || "",
-      website: fixedData.website || "",
-      address: fixedData.address || "",
-      city: fixedData.city || "",
-      state: fixedData.state || "",
-      country: fixedData.country || "",
-      gstinNumer: fixedData.gstNumber || "",
-      panNumber: fixedData.panNumber || "",
-    };
 
-    // Map dynamic fields (if available)
-    if (Array.isArray(fixedData.customFields)) {
-      fixedData.customFields.forEach(({ fieldName, fieldValue }) => {
-        const normalizedField = fieldName.trim().toLowerCase();
+  useEffect(() => {
+    if (fixedData) {
+      const baseData = {
+        customerName: fixedData.customerName || "",
+        companyName: fixedData.company || "",
+        email: fixedData.email || "",
+        phoneNumber: fixedData.phone || "",
+        website: fixedData.website || "",
+        address: fixedData.address || "",
+        city: fixedData.city || "",
+        state: fixedData.state || "",
+        country: fixedData.country || "",
+        gstinNumer: fixedData.gstNumber || "",
+        panNumber: fixedData.panNumber || "",
+      };
 
-        if (normalizedField === "pan no") baseData.panNumber = fieldValue;
-        else if (normalizedField === "gst no") baseData.gstinNumer = fieldValue;
-        else if (normalizedField === "website") baseData.website = fieldValue;
-        else if (normalizedField === "company")
-          baseData.companyName = fieldValue;
-        else if (normalizedField === "email") baseData.email = fieldValue;
-        else if (
-          normalizedField === "phone" ||
-          normalizedField === "phone number"
-        )
-          baseData.phoneNumber = fieldValue;
-        else if (normalizedField === "city") baseData.city = fieldValue;
-        else if (normalizedField === "state") baseData.state = fieldValue;
-        else if (normalizedField === "country") baseData.country = fieldValue;
-        else if (normalizedField === "address") baseData.address = fieldValue;
-        else if (normalizedField === "customer name")
-          baseData.customerName = fieldValue;
-      });
+      // Map dynamic fields (if available)
+      if (Array.isArray(fixedData.customFields)) {
+        fixedData.customFields.forEach(({ fieldName, fieldValue }) => {
+          const normalizedField = fieldName.trim().toLowerCase();
+
+          if (normalizedField === "pan no") baseData.panNumber = fieldValue;
+          else if (normalizedField === "gst no")
+            baseData.gstinNumer = fieldValue;
+          else if (normalizedField === "website") baseData.website = fieldValue;
+          else if (normalizedField === "company")
+            baseData.companyName = fieldValue;
+          else if (normalizedField === "email") baseData.email = fieldValue;
+          else if (
+            normalizedField === "phone" ||
+            normalizedField === "phone number"
+          )
+            baseData.phoneNumber = fieldValue;
+          else if (normalizedField === "city") baseData.city = fieldValue;
+          else if (normalizedField === "state") baseData.state = fieldValue;
+          else if (normalizedField === "country") baseData.country = fieldValue;
+          else if (normalizedField === "address") baseData.address = fieldValue;
+          else if (normalizedField === "customer name")
+            baseData.customerName = fieldValue;
+        });
+      }
+
+      setFormData(baseData);
     }
-
-    setFormData(baseData);
-  }
-}, [fixedData]);
+  }, [fixedData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     await axiosInstance.post("customer/createCustomer", formData);
+  //     toast.success("Customer created successfully!");
+  //     onClose(); // close modal
+  //   } catch (err) {
+  //     toast.error("Failed to create customer.");
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
+      // Step 1: Create customer
       await axiosInstance.post("customer/createCustomer", formData);
       toast.success("Customer created successfully!");
-      onClose(); // close modal
+
+      console.log("Deleting lead with ID:", leadData?.id);
+
+      // Step 2: Delete lead
+      if (leadData?.id) {
+        await axiosInstance.delete(`/lead/deleteLead/${leadData.id}`);
+      } else {
+        console.warn("No lead ID found, cannot delete lead.");
+      }
+      console.log("Deleting lead with ID:", leadData?.id);
+
+
+      // Step 3: Close modal and refresh lead list
+      onClose();
+      if (typeof onSuccess === "function") {
+        onSuccess(); // refresh list in parent
+      }
     } catch (err) {
-      toast.error("Failed to create customer.");
+      toast.error("Failed to convert lead to customer.");
+      console.error(err);
     }
   };
 

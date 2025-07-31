@@ -185,7 +185,6 @@ const handleConvertToCustomer = (lead) => {
                 </div>
               </div>
               <div className="col-md-6 d-flex justify-content-end">
-            
                 <button
                   className="btn btn-dark mx-1"
                   onClick={() => {
@@ -405,10 +404,26 @@ const handleConvertToCustomer = (lead) => {
         </div>
       )}
 
-      <ConvertToCustomerLead
+      {/* <ConvertToCustomerLead
         show={showConvertModal}
         onClose={() => setShowConvertModal(false)}
         leadData={convertLeadData}
+        
+      /> */}
+
+      <ConvertToCustomerLead
+        show={showConvertModal}
+        onClose={() => setShowConvertModal(false)}
+        fixedData={convertLeadData}
+        leadData={convertLeadData} // ✅ required to delete the lead
+        onSuccess={() => {
+          fetchLeads(page, size); // ✅ refresh lead table
+          setShowConvertModal(false);
+        }}
+        handleBackToEdit={() => {
+          setShowConvertModal(false);
+          setShowEditModal(true);
+        }}
       />
     </div>
   );
