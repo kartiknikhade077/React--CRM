@@ -33,6 +33,7 @@ import LeadsList from "./CompanyComponent/Lead/LeadsList";
 import NotFound from "./NotFound";
 import CustomerList from "./CompanyComponent/Customer/CustomerList";
 import CompanyTimesheetList from "./CompanyComponent/Timesheet/CompanyTimesheetList";
+import WorkOrderList from "./CompanyComponent/WorkOrder/WorkOrderList";
 
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
@@ -208,6 +209,16 @@ const App = () => {
           element={
             <ProtectedRoute>
               <CompanyTimesheetList />
+            </ProtectedRoute>
+          }
+        />
+
+        
+         <Route
+          path="/WorkOrder"
+          element={
+            <ProtectedRoute>
+              <WorkOrderList />
             </ProtectedRoute>
           }
         />

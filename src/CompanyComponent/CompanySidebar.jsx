@@ -51,6 +51,12 @@ const CompanySidebar = ({ isCollapsed }) => {
             {!isCollapsed && <span>Customers</span>}
           </Link>
         </li>
+        <li className={location.pathname === "/WorkOrder" ? "active" : ""}>
+          <Link to="/WorkOrder">
+            <FaUserTie />
+            {!isCollapsed && <span>Work Order</span>}
+          </Link>
+        </li>
         <li className={location.pathname === "/EmployeeList" ? "active" : ""}>
           <Link to="/EmployeeList">
             <FaUsers />
