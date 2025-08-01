@@ -8,7 +8,7 @@ import AdminDashboard from "./AdminComponet/AdminDashboard";
 import StudentList from "./AdminComponet/StudentList";
 import ProtectedRoute from "./BaseComponet/ProtectedRoute";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min";  
+import "bootstrap/dist/js/bootstrap.bundle.min";
 import SuperDash from "./SuperAdminComponent/SuperDash";
 import CompDash from "./CompanyComponent/Company";
 import EmpDash from "./EmployeeComponent/EmpDash";
@@ -23,13 +23,13 @@ import Department from "./CompanyComponent/Department";
 import LeadCompany from "./CompanyComponent/LeadCompany";
 import UpdateLead from "./CompanyComponent/UpdateLead";
 
-import CompanyProject from "./CompanyComponent/CompanyProject";
+import CompanyProject from "./CompanyComponent/Project/CompanyProject";
 import StaffMembers from "./CompanyComponent/StaffMembers";
 // import RoleLayout from "./navbar/RoleLayout";
 import CompRole from "./CompanyComponent/Role";
 import CompanyBankDetailsSetting from "./CompanyComponent/CompanyBankDetailsSetting";
-import CompanySetting from "./CompanyComponent/CompanySetting"; 
-import LeadsList from "./CompanyComponent/Lead/LeadsList"
+import CompanySetting from "./CompanyComponent/CompanySetting";
+import LeadsList from "./CompanyComponent/Lead/LeadsList";
 import NotFound from "./NotFound";
 import CustomerList from "./CompanyComponent/Customer/CustomerList";
 
@@ -159,7 +159,7 @@ const App = () => {
           }
         />
 
-            <Route
+        <Route
           path="/Customer"
           element={
             <ProtectedRoute>
