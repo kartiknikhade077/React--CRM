@@ -9,6 +9,8 @@ import {
   FaSignOutAlt,
   FaUserTie,
   FaRandom,
+  FaTimes,
+  FaTimesCircle,
 } from "react-icons/fa";
 import "./CompanySidebar.css";
 
@@ -79,6 +81,17 @@ const CompanySidebar = ({ isCollapsed }) => {
             {!isCollapsed && <span>Staff</span>}
           </Link>
         </li>
+        <li
+          className={
+            location.pathname === "/CompanyTimeSheetList" ? "active" : ""
+          }
+        >
+          <Link to="/CompanyTimeSheetList">
+            <FaTimesCircle />
+            {!isCollapsed && <span>TimeSheetList</span>}
+          </Link>
+        </li>
+
         {/* Settings Dropdown */}
         <li
           className={`company-sidebar__settings-dropdown ${

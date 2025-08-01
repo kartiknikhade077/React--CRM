@@ -32,6 +32,7 @@ import CompanySetting from "./CompanyComponent/CompanySetting";
 import LeadsList from "./CompanyComponent/Lead/LeadsList";
 import NotFound from "./NotFound";
 import CustomerList from "./CompanyComponent/Customer/CustomerList";
+import CompanyTimesheetList from "./CompanyComponent/Timesheet/CompanyTimesheetList";
 
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
@@ -198,6 +199,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <CompanySetting />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/CompanyTimeSheetList"
+          element={
+            <ProtectedRoute>
+              <CompanyTimesheetList />
             </ProtectedRoute>
           }
         />
