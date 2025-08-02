@@ -63,7 +63,7 @@ const RoleModel = () => {
       setDepartments(response.data.content);
     } catch (error) {
       console.error("Failed to fetch employees:", error);
-    }
+    } `       `
   };
 
 const fetchRoles = async () => {
