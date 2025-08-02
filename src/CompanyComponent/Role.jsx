@@ -38,6 +38,9 @@ const RoleModel = () => {
     fetchRoles();
   }, [page, size]); // ✅ so data fetches again when page size changes
 
+  useEffect(() => {
+    fetchDepartment(); // ✅ Ensure departments are fetched on first load
+  }, []);
   const handleCloseRoleModel = () => setShow(false);
   const handleShowRoleModel = (edit = false) => {
     setShow(true);
@@ -166,6 +169,7 @@ const fetchRoles = async () => {
               <thead className="table-light">
                 <tr>
                   <th>Role Name</th>
+                  <th>Department</th>
                   <th className="text-center">Action</th>
                 </tr>
               </thead>
@@ -174,8 +178,12 @@ const fetchRoles = async () => {
                   roles.map((role) => (
                     <tr key={role.roleId}>
                       <td>{role.roleName}</td>
+                      <td>
+                        {departments.find(
+                          (d) => d.departmentId === role.departmentId
+                        )?.departmentName || "-"}
+                      </td>
                       <td className="text-center">
-                        {" "}
                         <button
                           className="btn btn-outline-primary btn-sm"
                           onClick={() => fetchByRoleId(role.roleId)}
