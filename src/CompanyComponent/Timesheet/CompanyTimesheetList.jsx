@@ -5,6 +5,7 @@ import PaginationComponent from "../../Pagination/PaginationComponent";
 import Button from "react-bootstrap/Button";
 import CompanyCreateTimesheet from "./CompanyCreateTimesheet";
 import CompanyTimesheetFilter from "./CompanyTimesheetFilter";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 
 const CompanyTimesheetList = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -30,6 +31,25 @@ const CompanyTimesheetList = () => {
     setFilters({});
   };
 
+  const downloadExcel = async () => {
+  try {
+    const response = await axiosInstance.get("githttp://localhost:8080/timesheet/exportTimeSheet", {
+      responseType: "blob", // VERY important to get binary data
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "timesheet.xlsx");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (error) {
+    console.error("Excel download failed:", error);
+  }
+};
+
+
   return (
     <>
       <CompanyTopbar onToggle={handleToggle} />
@@ -51,6 +71,12 @@ const CompanyTimesheetList = () => {
                 >
                   Create
                 </Button>
+
+                <Button
+                  variant="outline-primary"
+                  className="me-2 ms-2"
+                  onClick={() => downloadExcel()}
+                >Export</Button>
                 <Button
                   variant="outline-primary"
                   className="me-2 ms-2"
