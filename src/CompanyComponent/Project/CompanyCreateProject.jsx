@@ -54,7 +54,7 @@ const CompanyCreateProject = ({ show, onClose, onProjectCreated }) => {
   };
 
   const handleCheckboxChange = (e, emp) => {
-    const id = emp.employeeId;
+    const id = String(emp.employeeId);
     setSelectedMembers((prev) =>
       prev.includes(id) ? prev.filter((empId) => empId !== id) : [...prev, id]
     );
@@ -121,7 +121,10 @@ const filteredCustomers = customerList.filter((c) =>
   c.companyName.toLowerCase().includes(searchTermCustomer.toLowerCase())
 );
 
-const selectedCustomer = customerList.find((c) => c.id === formData.customerid);
+const selectedCustomer = customerList.find(
+  (c) => String(c.id) === String(formData.customerid)
+);
+
 
 
 
@@ -183,12 +186,14 @@ const selectedCustomer = customerList.find((c) => c.id === formData.customerid);
                             console.log("Selected Customer:", customer);
                             setFormData({
                               ...formData,
-                              customerid: customer.id, // Set only the ID as number/string
+                              customerid: String(customer.id), // Set only the ID as number/string
                             });
                             setSearchTermCustomer("");
                             document.body.click(); // force close the dropdown
                           }}
-                          active={formData.customerid === customer.id}
+                          active={
+                            String(formData.customerid) === String(customer.id)
+                          }
                         >
                           {customer.companyName}
                         </Dropdown.Item>
@@ -328,7 +333,9 @@ const selectedCustomer = customerList.find((c) => c.id === formData.customerid);
                           <Form.Check
                             type="checkbox"
                             label={emp.name}
-                            checked={selectedMembers.includes(emp.employeeId)}
+                            checked={selectedMembers.includes(
+                              String(emp.employeeId)
+                            )}
                             onChange={(e) => handleCheckboxChange(e, emp)}
                           />
                         </div>

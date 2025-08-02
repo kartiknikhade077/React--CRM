@@ -49,7 +49,7 @@ const CompanyEditProject = ({ show, onClose, projectId, onProjectUpdated }) => {
         endDate: data.endDate || "",
         projectMembers: data.projectMembers || "",
       });
-      setSelectedMembers(data.projectMembers?.split(",").map(Number) || []);
+      setSelectedMembers(data.projectMembers?.split(",").map(String) || []);
     } catch (err) {
       console.error("Error fetching project:", err);
     }
@@ -70,7 +70,7 @@ const CompanyEditProject = ({ show, onClose, projectId, onProjectUpdated }) => {
   };
 
 const handleCheckboxChange = (e, emp) => {
-  const id = emp.employeeId;
+  const id = String(emp.employeeId);
   setSelectedMembers((prev) =>
     prev.includes(id) ? prev.filter((empId) => empId !== id) : [...prev, id]
   );
@@ -164,7 +164,10 @@ useEffect(() => {
   );
 
 
-const selectedCustomer = customerList.find((c) => c.id === formData.customerid);
+const selectedCustomer = customerList.find(
+  (c) => String(c.id) === String(formData.customerid)
+);
+
 
 
   return (
@@ -224,7 +227,7 @@ const selectedCustomer = customerList.find((c) => c.id === formData.customerid);
                           onClick={() => {
                             setFormData({
                               ...formData,
-                              customerid: customer.id,
+                              customerid: String(customer.id),
                             });
                             setSearchTermCustomer("");
                             document.body.click(); // force close dropdown
@@ -359,7 +362,9 @@ const selectedCustomer = customerList.find((c) => c.id === formData.customerid);
                           <Form.Check
                             type="checkbox"
                             label={emp.name}
-                            checked={selectedMembers.includes(emp.employeeId)}
+                            checked={selectedMembers.includes(
+                              String(emp.employeeId)
+                            )}
                             onChange={(e) => handleCheckboxChange(e, emp)}
                           />
                         </div>
