@@ -33,7 +33,8 @@ import LeadsList from "./CompanyComponent/Lead/LeadsList";
 import NotFound from "./NotFound";
 import CustomerList from "./CompanyComponent/Customer/CustomerList";
 import CompanyTimesheetList from "./CompanyComponent/Timesheet/CompanyTimesheetList";
-
+import KickOffList from "./CompanyComponent/KickOff/CompanyKickOffList";
+import CompanyCreateKickoffSheet from "./CompanyComponent/KickOff/CompanyCreateKickoffSheet";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -212,6 +213,23 @@ const App = () => {
           }
         />
 
+        <Route
+          path="/KickOffList"
+          element={
+            <ProtectedRoute>
+              <KickOffList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/KickOffCreate"
+          element={
+            <ProtectedRoute>
+              <CompanyCreateKickoffSheet />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

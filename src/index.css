@@ -85,3 +85,10 @@ max-width: 95vw;
 
 
 
+.table-heading {
+  background-color: #007bff;  /* Bootstrap primary blue */
+  color: #fff;                /* White text */
+  font-weight: 600;
+  width: 20%;
+  white-space: nowrap;
+}
