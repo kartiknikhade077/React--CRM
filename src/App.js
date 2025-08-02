@@ -33,6 +33,7 @@ import LeadsList from "./CompanyComponent/Lead/LeadsList";
 import NotFound from "./NotFound";
 import CustomerList from "./CompanyComponent/Customer/CustomerList";
 import CompanyTimesheetList from "./CompanyComponent/Timesheet/CompanyTimesheetList";
+import WorkOrderList from "./CompanyComponent/WorkOrder/WorkOrderList";
 import KickOffList from "./CompanyComponent/KickOff/CompanyKickOffList";
 import CompanyCreateKickoffSheet from "./CompanyComponent/KickOff/CompanyCreateKickoffSheet";
 const App = () => {
@@ -212,6 +213,19 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
+        
+         <Route
+          path="/WorkOrder"
+          element={
+            <ProtectedRoute>
+              <WorkOrderList />
+            </ProtectedRoute>
+          }
+        />
+
+        
+   
 
         <Route
           path="/KickOffList"
