@@ -43,6 +43,18 @@ const RoleModel = () => {
     setShow(true);
     fetchDepartment();
     setEditMode(edit);
+
+    // Reset form if creating new role
+    if (!edit) {
+      setSelectedRole({
+        roleId: "",
+        departmentId: "",
+        roleName: "",
+        templateAccess: false,
+        emailAccess: false,
+        leadAccess: false,
+      });
+    }
   };
 
   const fetchDepartment = async () => {
@@ -72,12 +84,26 @@ const fetchRoles = async () => {
 
   const saveRole = async (e) => {
     e.preventDefault(); // Prevent form from refreshing the page
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
+   const formData = new FormData(e.target);
+   const rawData = Object.fromEntries(formData.entries());
+
+   const data = {
+     ...rawData,
+     roleId: rawData.roleId ? rawData.roleId : null,
+     departmentId: rawData.departmentId,
+     roleName: rawData.roleName,
+     templateAccess: e.target.templateAccess.checked,
+     emailAccess: e.target.emailAccess.checked,
+     leadAccess: e.target.leadAccess.checked,
+   };
+
+
 
     try {
       if (editMode) {
         // Ensure roleId is sent for update
+     
+
         await axiosInstance.put("/company/updateRole", data);
       } else {
         await axiosInstance.post("/company/createRole", data);
@@ -91,7 +117,7 @@ const fetchRoles = async () => {
   };
 
   const fetchByRoleId = async (roleId) => {
-    console.log("Fetching role with ID:", roleId);
+ 
 
     try {
       const response = await axiosInstance.get(
@@ -168,27 +194,6 @@ const fetchRoles = async () => {
                 )}
               </tbody>
             </table>
-
-            {/* Pagination Controls */}
-            {/* <div className="d-flex justify-content-between">
-              <button
-                className="btn btn-primary"
-                onClick={() => setPage((prev) => (prev > 0 ? prev - 1 : 0))}
-              >
-                Previous
-              </button>
-
-              <span className="align-self-center">
-                Page {page + 1} of {totalPages}
-              </span>
-
-              <button
-                className="btn btn-primary"
-                onClick={() => setPage((prev) => prev + 1)}
-              >
-                Next
-              </button>
-            </div> */}
           </div>
           <Modal
             show={show}
@@ -236,7 +241,13 @@ const fetchRoles = async () => {
                     className="form-control"
                     name="roleName"
                     required
-                    defaultValue={selectedRole.roleName || ""}
+                    value={selectedRole.roleName || ""}
+                    onChange={(e) =>
+                      setSelectedRole((prev) => ({
+                        ...prev,
+                        roleName: e.target.value,
+                      }))
+                    }
                   />
                 </div>
 
