@@ -6,6 +6,9 @@ import Button from "react-bootstrap/Button";
 import CompanyCreateTimesheet from "./CompanyCreateTimesheet";
 import CompanyTimesheetFilter from "./CompanyTimesheetFilter";
 import axiosInstance from "../../BaseComponet/axiosInstance";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import CompanyUpdateTimesheet from "./CompanyUpdateTimesheet";
 
 const CompanyTimesheetList = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -22,6 +25,15 @@ const CompanyTimesheetList = () => {
 
   const [filters, setFilters] = useState({});
 
+  const [timesheetData, setTimesheetData] = useState([]);
+
+  const [selectedTimesheet, setSelectedTimesheet] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  const [designerList, setDesignerList] = useState([]); // For filter dropdown
+  const [itemNumberList, setItemNumberList] = useState([]);
+  const [workOrderList, setWorkOrderList] = useState([]);
+
   const handleFilterChange = (updatedFilters) => {
     setFilters(updatedFilters);
     // Filter table data here if needed
@@ -32,23 +44,101 @@ const CompanyTimesheetList = () => {
   };
 
   const downloadExcel = async () => {
-  try {
-    const response = await axiosInstance.get("githttp://localhost:8080/timesheet/exportTimeSheet", {
-      responseType: "blob", // VERY important to get binary data
-    });
+    try {
+      const response = await axiosInstance.get("/timesheet/exportTimeSheet", {
+        params: {
+          designer: filters.designer || "",
+          startDate: filters.startDate || "",
+          endDate: filters.endDate || "",
+          itemNumber: filters.itemNumber || "",
+          workOrderNumber: filters.workOrder || "",
+        },
 
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "timesheet.xlsx");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } catch (error) {
-    console.error("Excel download failed:", error);
-  }
-};
+        responseType: "blob",
+      });
 
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "timesheet.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Excel download failed:", error);
+    }
+  };
+
+  // Fetch Designer list for Filter
+  const fetchDropdownData = async () => {
+    try {
+      // Fetch designers
+      const designerRes = await axiosInstance.get(
+        "/company/getEmployeeList/0/1000"
+      );
+      const designers =
+        designerRes.data.employeeList?.map((emp) => emp.name) || [];
+      setDesignerList(designers);
+
+      // Fetch item numbers
+      // const itemRes = await axiosInstance.get("/timesheet/getItemNumbers");
+      // setItemNumberList(itemRes.data || []);
+
+      // Fetch work orders
+      // const workOrderRes = await axiosInstance.get("/timesheet/getWorkOrders");
+      // setWorkOrderList(workOrderRes.data || []);
+    } catch (error) {
+      console.error("Error fetching filter dropdown data:", error);
+    }
+  };
+
+  const fetchTimesheetData = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/timesheet/getAllTimeSheets/${currentPage}/${pageSize}`,
+        {
+          params: {
+            designer: filters.designer || "",
+            startDate: filters.startDate || "",
+            endDate: filters.endDate || "",
+            itemNumber: filters.itemNumber || "",
+            workOrderNumber: filters.workOrder || "",
+          },
+        }
+      );
+
+      // setTimesheetData(response.data.timeSheetList || []);
+      const data = response.data.timeSheetList || [];
+      setTimesheetData(data);
+      setPageCount(response.data.totalPages || 0);
+
+      // Extract unique Designers, Item Numbers, and Work Orders
+      // const designers = [
+      //   ...new Set(data.map((item) => item.designerName)),
+      // ].filter(Boolean);
+      // const itemNumbers = [
+      //   ...new Set(data.map((item) => item.itemNumber)),
+      // ].filter(Boolean);
+      // const workOrders = [
+      //   ...new Set(data.map((item) => item.workOrderNo)),
+      // ].filter(Boolean);
+
+      // setDesignerList(designers);
+      // setItemNumberList(itemNumbers);
+      // setWorkOrderList(workOrders);
+    } catch (error) {
+      console.error("Error fetching timesheet data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTimesheetData();
+  }, [currentPage, pageSize, filters]);
+
+  // Load designer list once
+  useEffect(() => {
+    fetchDropdownData();
+  }, []);
 
   return (
     <>
@@ -76,7 +166,9 @@ const CompanyTimesheetList = () => {
                   variant="outline-primary"
                   className="me-2 ms-2"
                   onClick={() => downloadExcel()}
-                >Export</Button>
+                >
+                  Export
+                </Button>
                 <Button
                   variant="outline-primary"
                   className="me-2 ms-2"
@@ -87,10 +179,6 @@ const CompanyTimesheetList = () => {
               </div>
             </div>
 
-            <CompanyTimesheetFilter
-              onFilterChange={handleFilterChange}
-              onClear={handleClearFilter}
-            />
             <div className="table-main-div">
               <table className="table table-hover align-middle">
                 <thead className="table-light">
@@ -101,12 +189,44 @@ const CompanyTimesheetList = () => {
                     <th>Designer</th>
                     <th>From</th>
                     <th>To</th>
-                    <th>Toatal Time</th>
+                    <th>Total Time</th>
                     <th>Remarks</th>
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                  {timesheetData.length > 0 ? (
+                    timesheetData.map((sheet, index) => (
+                      <tr key={index}>
+                        <td>{sheet.createDate}</td>
+                        <td>{sheet.itemNumber}</td>
+                        <td>{sheet.workOrderNo}</td>
+                        <td>{sheet.designerName}</td>
+                        <td>{sheet.startTime}</td>
+                        <td>{sheet.endTime}</td>
+                        <td>{sheet.totalTime}</td>
+                        <td>{sheet.remarks}</td>
+                        <td>
+                          <button
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => {
+                              setSelectedTimesheet(sheet);
+                              setShowUpdateModal(true);
+                            }}
+                          >
+                            <i className="bi bi-pencil-square"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="9" className="text-center">
+                        No data found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
               </table>
             </div>
           </div>
@@ -129,13 +249,32 @@ const CompanyTimesheetList = () => {
       <CompanyCreateTimesheet
         show={showModal}
         handleClose={() => setShowModal(false)}
+        onSuccess={() => {
+          fetchTimesheetData();
+          setShowModal(false);
+        }}
+        showToast={toast}
       />
-
       <CompanyTimesheetFilter
         show={showFilterModal}
         handleClose={() => setShowFilterModal(false)}
-        onFilterChange={handleFilterChange}
-        onClear={handleClearFilter}
+        onFilterChange={(updatedFilters) => setFilters(updatedFilters)}
+        onClear={() => setFilters({})}
+        designers={designerList}
+        itemNumbers={itemNumberList}
+        workOrders={workOrderList}
+        activeFilters={filters}
+      />
+
+      <CompanyUpdateTimesheet
+        show={showUpdateModal}
+        handleClose={() => setShowUpdateModal(false)}
+        timeSheetId={selectedTimesheet?.timeSheetId}
+        timesheetData={selectedTimesheet} // optional if needed later
+        onSuccess={() => {
+          fetchTimesheetData();
+          setShowUpdateModal(false);
+        }}
       />
     </>
   );

@@ -1,40 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Form, Row, Col, Dropdown } from "react-bootstrap";
 import axiosInstance from "../../BaseComponet/axiosInstance";
-
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
 
-const CompanyCreateTimesheet = ({
+const CompanyUpdateTimesheet = ({
   show,
   handleClose,
-  employeeId,
+  timeSheetId,
   onSuccess,
 }) => {
-
-
   const [employeeList, setEmployeeList] = useState([]);
   const [searchTermDesigner, setSearchTermDesigner] = useState("");
   const [timeError, setTimeError] = useState("");
 
-  const handleDesignerChange = (e) => {
-    const selectedDesignerId = e.target.value;
-    const selectedDesigner = employeeList.find(
-      (designer) => designer.id === selectedDesignerId
-    );
-
-    if (selectedDesigner) {
-      setFormData((prevData) => ({
-        ...prevData,
-        designer: selectedDesigner.name, // or selectedDesigner.fullName if you have that
-        employeeId: selectedDesigner.id,
-      }));
-    }
-  };
-
   const [formData, setFormData] = useState({
     date: "",
+    itemNumber: "",
     workOrder: "",
     designer: "",
     designerId: "",
@@ -42,31 +24,6 @@ const CompanyCreateTimesheet = ({
     toTime: "",
     remarks: "",
   });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const calculateTotalTime = (start, end) => {
-    if (!start || !end) {
-      console.error("Start time or end time is undefined", { start, end });
-      return 0;
-    }
-
-    const [startHour, startMinute] = start.split(":").map(Number);
-    const [endHour, endMinute] = end.split(":").map(Number);
-
-    const startDate = new Date(0, 0, 0, startHour, startMinute);
-    const endDate = new Date(0, 0, 0, endHour, endMinute);
-
-    let diff = (endDate - startDate) / 1000 / 60 / 60; // convert milliseconds to hours
-
-    if (diff < 0) {
-      diff += 24; // handle crossing midnight
-    }
-
-    return parseFloat(diff.toFixed(2)); // return hours with 2 decimal points
-  };
 
   const resetForm = () => {
     setFormData({
@@ -81,94 +38,114 @@ const CompanyCreateTimesheet = ({
     });
   };
 
-const handleSubmit = async () => {
-  const {
-    date,
-    itemNumber,
-    workOrder,
-    designer,
-    designerId: employeeId,
-    fromTime,
-    toTime,
-    remarks,
-  } = formData;
-
-  if (!date || !workOrder || !designer || !employeeId || !fromTime || !toTime) {
-      toast.error("Please fill in all required fields.");
-    return;
-  }
-
-  const from = new Date(`1970-01-01T${fromTime}`);
-  const to = new Date(`1970-01-01T${toTime}`);
-
-  if (to <= from) {
-    setTimeError("To Time must be greater than From Time.");
-    return;
-  } else {
-    setTimeError("");
-  }
-
-  // Append seconds if missing
-  const formattedFromTime = fromTime.length === 5 ? `${fromTime}:00` : fromTime;
-  const formattedToTime = toTime.length === 5 ? `${toTime}:00` : toTime;
-
-  const payload = {
-    employeeId: employeeId,
-    itemNumber: itemNumber,
-    workOrderNo: workOrder,
-    designerName: designer,
-    startTime: formattedFromTime,
-    endTime: formattedToTime,
-    totalTime: calculateTotalTime(fromTime, toTime),
-    remarks: remarks,
-    createDate: date,
-  };
-
-  try {
-    const response = await axiosInstance.post(
-      "/timesheet/createTimeSheet",
-      payload
-    );
-
-    if (response.status === 200 || response.status === 201) {
-           toast.success("Timesheet Created Successfully");
-      if (onSuccess) onSuccess();
-      resetForm();
-      setTimeError("");
-      handleClose();
-    }
-  } catch (error) {
-    console.error("Failed to create timesheet:", error);
-     toast.error("Error creating timesheet");
-  }
-};
-
-
   useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const response = await axiosInstance.get(
-          "/company/getEmployeeList/0/1000"
-        );
-        setEmployeeList(response.data.employeeList || []);
-      } catch (error) {
-        console.error("Failed to fetch employees:", error);
-        setEmployeeList([]);
-      }
-    };
+    if (show && timeSheetId) {
+      console.log("Fetching Timesheet for ID:", timeSheetId); // Debug log
 
-    fetchEmployees();
-  }, []);
+      axiosInstance
+        .get(`/timesheet/getTimeSheetbyId/${timeSheetId}`)
+        .then((res) => {
+
+              console.log("API Response:", res.data);
+          const data = res.data;
+          setFormData({
+            date: data.createDate || "",
+            itemNumber: data.itemNumber || "",
+            workOrder: data.workOrderNo || "",
+            designer: data.designerName || "",
+            designerId: data.employeeId || "",
+            fromTime: data.startTime?.slice(0, 5) || "",
+            toTime: data.endTime?.slice(0, 5) || "",
+            remarks: data.remarks || "",
+          });
+               console.log("FormData after setting:", {
+                 date: data.createDate || "",
+                 itemNumber: data.itemNumber || "",
+                 workOrder: data.workOrderNo || "",
+                 designer: data.designerName || "",
+                 designerId: data.employeeId || "",
+                 fromTime: data.startTime?.slice(0, 5) || "",
+                 toTime: data.endTime?.slice(0, 5) || "",
+                 remarks: data.remarks || "",
+               });
+        })
+        .catch(() => toast.error("Failed to fetch timesheet."));
+    }
+  }, [show, timeSheetId]);
 
   useEffect(() => {
     if (show) {
-      resetForm();
+      axiosInstance
+        .get("/company/getEmployeeList/0/1000")
+        .then((res) => setEmployeeList(res.data.employeeList || []))
+        .catch(() => setEmployeeList([]));
     }
   }, [show]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const calculateTotalTime = (start, end) => {
+    if (!start || !end) return 0;
+    const [sh, sm] = start.split(":"),
+      [eh, em] = end.split(":"),
+      startMin = +sh * 60 + +sm,
+      endMin = +eh * 60 + +em;
+    return ((endMin - startMin) / 60).toFixed(2);
+  };
+
+  const handleSubmit = async () => {
+    const { date, workOrder, designer, designerId, itemNumber, fromTime, toTime, remarks } =
+      formData;
+    if (
+      !date ||
+      !workOrder ||
+      !designer ||
+      !designerId ||
+      !fromTime ||
+      !toTime
+    ) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    const from = new Date(`1970-01-01T${fromTime}`);
+    const to = new Date(`1970-01-01T${toTime}`);
+    if (to <= from) {
+      setTimeError("To Time must be greater than From Time.");
+      return;
+    } else {
+      setTimeError("");
+    }
+
+    const payload = {
+      timeSheetId: timeSheetId,
+      employeeId: designerId,
+      itemNumber: itemNumber,
+      itemNumber: itemNumber,
+      workOrderNo: workOrder,
+      designerName: designer,
+      startTime: `${fromTime}:00`,
+      endTime: `${toTime}:00`,
+      totalTime: calculateTotalTime(fromTime, toTime),
+      remarks: remarks,
+      createDate: date,
+    };
+
+    try {
+      await axiosInstance.put("/timesheet/updateTimeSheet", payload);
+      toast.success("Timesheet updated successfully!");
+      if (onSuccess) onSuccess();
+      handleClose();
+    } catch (error) {
+      toast.error("Error updating timesheet.");
+    }
+  };
+
   const filteredDesigners = employeeList.filter((emp) =>
     emp.name.toLowerCase().includes(searchTermDesigner.toLowerCase())
   );
-
   const selectedDesigner = employeeList.find(
     (emp) => emp.name === formData.designer
   );
@@ -178,17 +155,16 @@ const handleSubmit = async () => {
       <Modal show={show} onHide={handleClose} size="lg" centered>
         <Modal.Header closeButton className="bg-light border-bottom-0">
           <Modal.Title className="fw-semibold fs-4 text-primary">
-            🕒 Create Timesheet
+            ✏️ Update Timesheet
           </Modal.Title>
         </Modal.Header>
 
         <Modal.Body className="px-4 pt-3 pb-0">
           <Form>
-            {/* Row 1 - Date / Work Order / Designer */}
             <Row className="gy-3">
               <Col md={4}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold">
+                  <Form.Label>
                     <span className="text-danger">*</span> Date
                   </Form.Label>
                   <Form.Control
@@ -199,46 +175,40 @@ const handleSubmit = async () => {
                   />
                 </Form.Group>
               </Col>
-
               <Col md={4}>
-                <Form.Group className="mb-2">
+                <Form.Group>
                   <Form.Label>
-                    {" "}
-                    <span className="text-danger">*</span>Work Order No.
+                    <span className="text-danger">*</span> Work Order
                   </Form.Label>
                   <Form.Control
                     type="text"
-                    placeholder="Enter Work Order No."
+                    name="workOrder"
                     value={formData.workOrder}
-                    onChange={(e) =>
-                      setFormData({ ...formData, workOrder: e.target.value })
-                    }
+                    onChange={handleChange}
                   />
                 </Form.Group>
               </Col>
 
               <Col md={4}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold">
+                  <Form.Label>
                     <span className="text-danger">*</span> Item Number
                   </Form.Label>
                   <Form.Control
                     type="text"
                     name="itemNumber"
-                    placeholder="Enter Item Number"
                     value={formData.itemNumber}
+                    placeholder="Enter Item Number"
                     onChange={handleChange}
                   />
                 </Form.Group>
               </Col>
             </Row>
 
-            {/* Row 2 - Time & Remarks */}
-            {/* Row 2 - Time & Remarks */}
             <Row className="gy-3 mt-2">
               <Col md={4}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold">
+                  <Form.Label>
                     <span className="text-danger">*</span> From
                   </Form.Label>
                   <Form.Control
@@ -249,40 +219,27 @@ const handleSubmit = async () => {
                   />
                 </Form.Group>
               </Col>
-
               <Col md={4}>
-                <Form.Group controlId="formToTime">
+                <Form.Group>
                   <Form.Label>
-                    {" "}
-                    <span className="text-danger">*</span>To Time
+                    <span className="text-danger">*</span> To
                   </Form.Label>
                   <Form.Control
                     type="time"
+                    name="toTime"
                     value={formData.toTime}
-                    onChange={(e) =>
-                      setFormData({ ...formData, toTime: e.target.value })
-                    }
-                    required
+                    onChange={handleChange}
                   />
                   {timeError && (
-                    <div
-                      style={{
-                        color: "red",
-                        fontSize: "0.9rem",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {timeError}
-                    </div>
+                    <div className="text-danger small mt-1">{timeError}</div>
                   )}
                 </Form.Group>
               </Col>
 
               <Col md={4}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold">
-                    {" "}
-                    <span className="text-danger">*</span>Designer
+                  <Form.Label>
+                    <span className="text-danger">*</span> Designer
                   </Form.Label>
                   <Dropdown>
                     <Dropdown.Toggle
@@ -293,7 +250,6 @@ const handleSubmit = async () => {
                         ? selectedDesigner.name
                         : "Select Designer"}
                     </Dropdown.Toggle>
-
                     <Dropdown.Menu
                       style={{ maxHeight: "300px", overflowY: "auto" }}
                     >
@@ -308,11 +264,10 @@ const handleSubmit = async () => {
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
-
                       {filteredDesigners.length > 0 ? (
-                        filteredDesigners.map((emp, index) => (
+                        filteredDesigners.map((emp, idx) => (
                           <Dropdown.Item
-                            key={emp.employeeId || `designer-${index}`}
+                            key={emp.employeeId || `emp-${idx}`}
                             onClick={() => {
                               setFormData((prev) => ({
                                 ...prev,
@@ -320,17 +275,14 @@ const handleSubmit = async () => {
                                 designerId: emp.employeeId,
                               }));
                               setSearchTermDesigner("");
-                              document.body.click(); // Close dropdown
+                              document.body.click();
                             }}
-                            active={formData.designer === emp.name}
                           >
                             {emp.name}
                           </Dropdown.Item>
                         ))
                       ) : (
-                        <Dropdown.Item disabled className="text-muted">
-                          No results found
-                        </Dropdown.Item>
+                        <Dropdown.Item disabled>No results</Dropdown.Item>
                       )}
                     </Dropdown.Menu>
                   </Dropdown>
@@ -338,19 +290,17 @@ const handleSubmit = async () => {
               </Col>
             </Row>
 
-            {/* Row 3 - Remarks */}
             <Row className="gy-3 mt-2 mb-2">
               <Col md={12}>
                 <Form.Group>
-                  <Form.Label className="fw-semibold">
-                    {" "}
-                    <span className="text-danger">*</span>Remarks
+                  <Form.Label>
+                    <span className="text-danger">*</span> Remarks
                   </Form.Label>
                   <Form.Control
                     as="textarea"
                     name="remarks"
-                    placeholder="Enter remarks here..."
                     rows={3}
+                    placeholder="Enter remarks here..."
                     value={formData.remarks}
                     onChange={handleChange}
                   />
@@ -358,10 +308,9 @@ const handleSubmit = async () => {
               </Col>
             </Row>
 
-            {/* Optional: Total Time Display */}
             {formData.fromTime && formData.toTime && (
               <Row className="mt-3">
-                <Col md={12} className="text-end text-muted">
+                <Col className="text-end text-muted">
                   ⏱ Total Hours:{" "}
                   <strong>
                     {calculateTotalTime(formData.fromTime, formData.toTime)} hrs
@@ -377,13 +326,12 @@ const handleSubmit = async () => {
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSubmit}>
-            Save
+            Update
           </Button>
         </Modal.Footer>
       </Modal>
-      <ToastContainer position="top-right" autoClose={3000} />
     </>
   );
 };
 
-export default CompanyCreateTimesheet;
+export default CompanyUpdateTimesheet;

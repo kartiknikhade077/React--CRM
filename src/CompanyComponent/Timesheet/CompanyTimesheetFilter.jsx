@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 
 const CompanyTimesheetFilter = ({
@@ -6,6 +6,10 @@ const CompanyTimesheetFilter = ({
   handleClose,
   onFilterChange,
   onClear,
+  designers = [], // dynamic designer list from parent
+  itemNumbers = [], // dynamic item numbers
+  workOrders = [], // dynamic work orders
+  activeFilters = {}, // <-- pass current filters from parent
 }) => {
   const [filters, setFilters] = useState({
     startDate: "",
@@ -15,14 +19,20 @@ const CompanyTimesheetFilter = ({
     workOrder: "",
   });
 
+  // Sync modal filters with parent's active filters whenever modal is opened
+  useEffect(() => {
+    if (show) {
+      setFilters(activeFilters);
+    }
+  }, [show, activeFilters]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const updated = { ...filters, [name]: value };
-    setFilters(updated);
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleApply = () => {
-    onFilterChange(filters);
+    onFilterChange(filters); // send updated filters to parent
     handleClose();
   };
 
@@ -35,7 +45,7 @@ const CompanyTimesheetFilter = ({
       workOrder: "",
     };
     setFilters(cleared);
-    onClear();
+    onClear(); // clear filters in parent
     handleClose();
   };
 
@@ -76,9 +86,12 @@ const CompanyTimesheetFilter = ({
                 value={filters.designer}
                 onChange={handleChange}
               >
-                <option value="">Select Designers</option>
-                <option value="John">John</option>
-                <option value="Alice">Alice</option>
+                <option value="">Select All Designer</option>
+                {designers.map((d, idx) => (
+                  <option key={idx} value={d}>
+                    {d}
+                  </option>
+                ))}
               </Form.Select>
             </Form.Group>
           </Col>
@@ -88,32 +101,65 @@ const CompanyTimesheetFilter = ({
           <Col md={6}>
             <Form.Group>
               <Form.Label>Item Number</Form.Label>
-              <Form.Select
+              <Form.Control
+                type="text"
                 name="itemNumber"
+                placeholder="Enter Item Number"
                 value={filters.itemNumber}
                 onChange={handleChange}
-              >
-                <option value="">Select Item Numbers</option>
-                <option value="Item001">Item001</option>
-                <option value="Item002">Item002</option>
-              </Form.Select>
+              />
             </Form.Group>
           </Col>
           <Col md={6}>
             <Form.Group>
               <Form.Label>Work Order No</Form.Label>
+              <Form.Control
+                type="text"
+                name="workOrder"
+                placeholder="Enter Work Order No"
+                value={filters.workOrder}
+                onChange={handleChange}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        {/* <Row>
+          <Col md={6}>
+            <Form.Group>
+              <Form.Label>Item Number</Form.Label>
+              <Form.Select
+                name="itemNumber"
+                value={filters.itemNumber}
+                onChange={handleChange}
+              >
+                <option value="">Select All Item Number</option>
+                {itemNumbers.map((item, idx) => (
+                  <option key={idx} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group>
+              <Form.Label>Work All Order No</Form.Label>
               <Form.Select
                 name="workOrder"
                 value={filters.workOrder}
                 onChange={handleChange}
               >
-                <option value="">Select Work Orders</option>
-                <option value="WO001">WO001</option>
-                <option value="WO002">WO002</option>
+                <option value="">Select All Work Order</option>
+                {workOrders.map((wo, idx) => (
+                  <option key={idx} value={wo}>
+                    {wo}
+                  </option>
+                ))}
               </Form.Select>
             </Form.Group>
           </Col>
-        </Row>
+        </Row> */}
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={handleReset}>
