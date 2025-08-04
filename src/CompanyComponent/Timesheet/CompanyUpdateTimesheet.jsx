@@ -123,7 +123,6 @@ const CompanyUpdateTimesheet = ({
       timeSheetId: timeSheetId,
       employeeId: designerId,
       itemNumber: itemNumber,
-      itemNumber: itemNumber,
       workOrderNo: workOrder,
       designerName: designer,
       startTime: `${fromTime}:00`,
