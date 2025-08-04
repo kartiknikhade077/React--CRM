@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from "react";
 import { Modal, Button, Form, Table } from "react-bootstrap";
 import { FaTrash } from "react-icons/fa";
 import Select from "react-select";
+import axiosInstance from "../../BaseComponet/axiosInstance";
+
 
 // The master list of predefined processes for the dropdown
 const processOptions = [
@@ -20,6 +22,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   const [selectedProcesses, setSelectedProcesses] = useState([]);
   const [tableData, setTableData] = useState({});
   const nextId = useRef(1);
+  const [itemNo, setItemNo]=useState(3000);
 
   // State for the main form fields
   const [formData, setFormData] = useState({
@@ -32,13 +35,16 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     partWeight: '',
   });
 
+  const [projectOptions, setProjectOptions] = useState([]);
+
+
   // --- Syncing Dropdown with Main Process Table ---
   useEffect(() => {
     const manualProcesses = processes.filter(p => p.type === 'manual');
     const selectedFromDropdown = selectedProcesses.map(option => ({
       id: option.value,
       type: 'select',
-      woNo: `PT-1541${option.value}`,
+      woNo: `PT-${itemNo}${option.value}`,
       opNo: 'XX',
     }));
     setProcesses([...manualProcesses, ...selectedFromDropdown]);
@@ -87,42 +93,105 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     }));
   };
 
-  const handleSaveClick = () => {
-    const processDetails = processes.map(p => {
-      const manualIndex = processes.filter(proc => proc.type === 'manual').findIndex(proc => proc.id === p.id);
-      const woNo = p.type === 'select' ? p.woNo : `PT-1541${String.fromCharCode(65 + manualIndex)}`;
-      const rowData = tableData[p.id] || {};
+  const handleSaveClick = async () => {
+    const processDetails = processes.map((p, idx) => {
+    const manualIndex = processes.filter(proc => proc.type === 'manual').findIndex(proc => proc.id === p.id);
+    const woNo = p.type === 'select' ? p.woNo : `2001${String.fromCharCode(65 + manualIndex)}`;
+    const rowData = tableData[p.id] || {};
 
-      return {
-        cancel: rowData.cancel || false,
-        scope: rowData.scope || false,
-        woNo: woNo,
-        opNo: p.type === 'select' ? 'XX' : rowData.opNo || '',
-        process: rowData.process || '',
-        quotedDieSizes: {
-          l: rowData.l || '',
-          w: rowData.w || '',
-          h: rowData.h || '',
-        },
-        remarks: rowData.remarks || '',
-        type: p.type,
-      };
-    });
-
-    const finalPayload = {
-      itemNo: '1541',
-      ...formData,
-      images: images.map(img => ({ name: img.file.name, size: img.file.size, type: img.file.type })),
-      workorderProcesses: processDetails,
+    return {
+      itemNo: itemNo,
+      workOrderNo: woNo,
+      cancel: rowData.cancel || false,
+      scope: rowData.scope || false,
+      operationNumber: parseInt(rowData.opNo || '0'),
+      proceess: rowData.process || '',
+      length: parseFloat(rowData.l || '0'),
+      width: parseFloat(rowData.w || '0'),
+      height: parseFloat(rowData.h || '0'),
+      remark: rowData.remarks || '',
     };
+  });
 
-    console.log("---- WORK ORDER PAYLOAD ----");
-    console.log(JSON.stringify(finalPayload, null, 2));
+  const workOrderPayload = {
+    partName: formData.partName,
+    customerName: formData.customer,
+    material: formData.material,
+    projectName: formData.project,
+    thickness: parseFloat(formData.thickness),
+    partSize: formData.partSize,
+    partWeight: formData.partWeight,
+    itemNo: itemNo,
+  };
 
-    if (onSave) {
-      onSave(finalPayload);
+  const formDataToSend = new FormData();
+  formDataToSend.append("workOrder", JSON.stringify(workOrderPayload));
+  formDataToSend.append("workOrderItems", JSON.stringify(processDetails));
+  images.forEach(img => {
+    formDataToSend.append("images", img.file); 
+  });
+
+  // 🧪 Optional debug log
+  console.log("--- FINAL PAYLOAD ---");
+  console.log("workOrder:", workOrderPayload);
+  console.log("workOrderItems:", processDetails);
+  console.log("Images:", images.map(i => i.file.name));
+
+  try {
+    const response = await axiosInstance.post("/work/createWorkOrder", formDataToSend, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    
+    if(response.data){
+      resetForm();
+      if(onSave){
+        onSave();
+      }
+    }
+  } catch (error) {
+    console.error("❌ Submission failed:", error);
+  }
+};
+
+
+  // fetching the project lish 
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const response = await axiosInstance.get(`/project/getByAllProjectNames`);
+      const data = response.data;
+      console.log(data);  
+      setProjectOptions(data);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
     }
   };
+
+  const resetForm = () => {
+    setFormData({
+      partName: '',
+      customer: 'Customer Name',
+      project: '',
+      thickness: '',
+      material: '',
+      partSize: '',
+      partWeight: '',
+    });
+    setImages([]);
+    setProcesses([]);
+    setSelectedProcesses([]);
+    setTableData({});
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+  };
+
+
 
   return (
     <Modal show={show} onHide={onClose} size="xl">
@@ -185,14 +254,25 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
               <Form.Control as="select" name="customer" value={formData.customer} onChange={handleFormChange} required>
                 <option>Customer Name</option>
                 <option>Customer A</option>
+                <option>Customer B</option>
+                <option>Customer C</option>
+                <option>Customer D</option>
+                <option>Customer E</option>
               </Form.Control>
             </Form.Group>
             <Form.Group className="col-md-4 mb-3">
               <Form.Label>Project</Form.Label>
               <Form.Control as="select" name="project" value={formData.project} onChange={handleFormChange} required>
-                <option>Project Name</option>
-                <option>Project X</option>
+                <option value="" disabled={formData.project !== ''}>
+                  -- Select a project --
+                </option>
+                {projectOptions.map((project, index) => (
+                  <option key={index} value={project}>
+                    {project}
+                  </option>
+                ))}
               </Form.Control>
+
             </Form.Group>
             <Form.Group className="col-md-4 mb-3">
               <Form.Label>Thickness</Form.Label>
@@ -217,7 +297,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
 
         {/* Workorder Process Section */}
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <strong>Item No.: 1541</strong>
+          <strong>Item No.: {itemNo}</strong>
           <div className="d-flex align-items-center gap-2">
             <strong className="me-2">Workorder Process</strong>
             <Select
@@ -265,7 +345,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
           <tbody className="text-center">
             {processes.map((p) => {
               const manualIndex = processes.filter(proc => proc.type === 'manual').findIndex(proc => proc.id === p.id);
-              const woNo = p.type === 'select' ? p.woNo : `PT-1541${String.fromCharCode(65 + manualIndex)}`;
+              const woNo = p.type === 'select' ? p.woNo : `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
 
               return (
                 <tr key={p.id}>
@@ -304,7 +384,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                         })}
                         </select>
                     )}
-                    </td>
+                  </td>
 
                   <td className="align-middle">
                     <Form.Control size="sm" type="text" value={tableData[p.id]?.process || ''} onChange={e => handleTableInputChange(p.id, 'process', e.target.value)} />
@@ -333,7 +413,15 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
         </Table>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>Close</Button>
+        <Button variant="outline-secondary" onClick={onClose}>Close</Button>
+        <Button variant="danger"
+            onClick={() => {
+              resetForm(); 
+              onClose(); 
+            }}
+          >
+          Discard
+        </Button>
         <Button variant="primary" onClick={handleSaveClick}>Save</Button>
       </Modal.Footer>
     </Modal>
