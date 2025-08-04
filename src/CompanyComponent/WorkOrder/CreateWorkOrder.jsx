@@ -87,17 +87,39 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   };
 
   const handleTableInputChange = (id, field, value) => {
-    setTableData(prevData => ({
-      ...prevData,
-      [id]: { ...(prevData[id] || {}), [field]: value }
-    }));
+    setTableData(prevData => {
+      const currentRow = prevData[id] || {};
+      const updated = { ...currentRow, [field]: value };
+
+      if (field === 'cancel' && value === true) {
+        updated.scope = false;
+      }
+
+      if (field === 'scope' && value === true) {
+        updated.cancel = false;
+      }
+
+      return {
+        ...prevData,
+        [id]: updated
+      };
+    });
   };
 
   const handleSaveClick = async () => {
     const processDetails = processes.map((p, idx) => {
     const manualIndex = processes.filter(proc => proc.type === 'manual').findIndex(proc => proc.id === p.id);
-    const woNo = p.type === 'select' ? p.woNo : `2001${String.fromCharCode(65 + manualIndex)}`;
     const rowData = tableData[p.id] || {};
+    
+    let woNo = "";
+    
+    if (rowData.scope) {
+      woNo = "XX";
+    } else if (p.type === "select") {
+      woNo = p.woNo;
+    } else {
+      woNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
+    }
 
     return {
       itemNo: itemNo,
@@ -131,12 +153,6 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     formDataToSend.append("images", img.file); 
   });
 
-  // 🧪 Optional debug log
-  console.log("--- FINAL PAYLOAD ---");
-  console.log("workOrder:", workOrderPayload);
-  console.log("workOrderItems:", processDetails);
-  console.log("Images:", images.map(i => i.file.name));
-
   try {
     const response = await axiosInstance.post("/work/createWorkOrder", formDataToSend, {
       headers: {
@@ -165,7 +181,6 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     try {
       const response = await axiosInstance.get(`/project/getByAllProjectNames`);
       const data = response.data;
-      console.log(data);  
       setProjectOptions(data);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -344,8 +359,12 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
           </thead>
           <tbody className="text-center">
             {processes.map((p) => {
+              const isScoped = tableData[p.id]?.scope || false;
+
               const manualIndex = processes.filter(proc => proc.type === 'manual').findIndex(proc => proc.id === p.id);
-              const woNo = p.type === 'select' ? p.woNo : `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
+              const originalWoNo = p.type === 'select' ? p.woNo : `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
+              const displayWoNo = isScoped ? 'XX' : originalWoNo;
+
 
               return (
                 <tr key={p.id}>
@@ -353,6 +372,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                     <Form.Check 
                       type="checkbox" 
                       checked={tableData[p.id]?.cancel || false}
+                      disabled={p.type === 'select' || tableData[p.id]?.scope || false}
                       onChange={e => handleTableInputChange(p.id, 'cancel', e.target.checked)}
                     />
                   </td>
@@ -360,10 +380,11 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                     <Form.Check 
                       type="checkbox" 
                       checked={tableData[p.id]?.scope || false}
+                      disabled={p.type === 'select' || tableData[p.id]?.cancel || false}
                       onChange={e => handleTableInputChange(p.id, 'scope', e.target.checked)}
                     />
                   </td>
-                  <td className="align-middle">{woNo}</td>
+                  <td className="align-middle">{displayWoNo}</td>
                   <td className="align-middle">
                     {p.type === 'select' ? (
                         'XX'
