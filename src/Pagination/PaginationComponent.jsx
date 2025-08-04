@@ -33,6 +33,7 @@ const PaginationComponent = ({
       {/* Pagination */}
       <nav>
         <ul className="pagination mb-0">
+          {/* Previous button */}
           <li className={`page-item ${currentPage === 0 ? "disabled" : ""}`}>
             <button
               className="page-link"
@@ -43,20 +44,80 @@ const PaginationComponent = ({
             </button>
           </li>
 
-          {[...Array(pageCount).keys()].map((number) => (
+          {/* First page */}
+          <li className={`page-item ${currentPage === 0 ? "active" : ""}`}>
+            <button className="page-link" onClick={() => onPageChange(0)}>
+              1
+            </button>
+          </li>
+
+          {/* Left ellipsis */}
+          {currentPage > 2 && (
+            <li className="page-item disabled">
+              <span className="page-link">...</span>
+            </li>
+          )}
+
+          {/* Previous page */}
+          {currentPage > 1 && currentPage < pageCount - 1 && (
+            <li className="page-item">
+              <button
+                className="page-link"
+                onClick={() => onPageChange(currentPage - 1)}
+              >
+                {currentPage}
+              </button>
+            </li>
+          )}
+
+          {/* Current page */}
+          {currentPage !== 0 && currentPage !== pageCount - 1 && (
+            <li className="page-item active">
+              <button
+                className="page-link"
+                onClick={() => onPageChange(currentPage)}
+              >
+                {currentPage + 1}
+              </button>
+            </li>
+          )}
+
+          {/* Next page */}
+          {currentPage < pageCount - 2 && (
+            <li className="page-item">
+              <button
+                className="page-link"
+                onClick={() => onPageChange(currentPage + 1)}
+              >
+                {currentPage + 2}
+              </button>
+            </li>
+          )}
+
+          {/* Right ellipsis */}
+          {currentPage < pageCount - 3 && (
+            <li className="page-item disabled">
+              <span className="page-link">...</span>
+            </li>
+          )}
+
+          {/* Last page */}
+          {pageCount > 1 && (
             <li
-              key={number}
-              className={`page-item ${currentPage === number ? "active" : ""}`}
+              className={`page-item ${
+                currentPage === pageCount - 1 ? "active" : ""
+              }`}
             >
               <button
                 className="page-link"
-                onClick={() => onPageChange(number)}
+                onClick={() => onPageChange(pageCount - 1)}
               >
-                {number + 1}
+                {pageCount}
               </button>
             </li>
-          ))}
+          )}
 
+          {/* Next button */}
           <li
             className={`page-item ${
               currentPage === pageCount - 1 ? "disabled" : ""
