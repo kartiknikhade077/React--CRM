@@ -11,6 +11,7 @@ import ProjectRegistrationKickoffSheet from "../KickOff/ProjectRegistrationKicko
 import CompanyKickOffSignature from "../KickOff/CompanyKickOffSignature";
 
 const CustomToggle = ({ children, eventKey, activeKey, onClick }) => (
+  
   <div
     onClick={onClick}
     style={{
@@ -44,6 +45,9 @@ const CompanyCreateKickoffSheet = () => {
     );
   };
 
+    const [customerId, setCustomerId] = useState(null);
+
+
   return (
     <>
       <CompanyTopbar onToggle={() => setIsCollapsed(!isCollapsed)} />
@@ -57,12 +61,14 @@ const CompanyCreateKickoffSheet = () => {
                 activeKey={activeKeys}
                 CustomToggle={CustomToggle}
                 handleAccordionClick={handleAccordionClick}
+                setCustomerId={setCustomerId}
               />
               <ProjectRegistrationKickoffSheet
                 eventKey="1"
                 activeKey={activeKeys}
                 CustomToggle={CustomToggle}
                 handleAccordionClick={handleAccordionClick}
+                customerId={customerId}
               />
               <CompanyKickOffCustomerRequirements
                 eventKey="2"

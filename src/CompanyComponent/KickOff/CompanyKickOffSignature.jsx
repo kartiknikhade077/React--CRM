@@ -25,7 +25,7 @@ const CompanyKickOffSignature = ({
     </CustomToggle>
     <Accordion.Collapse eventKey={eventKey}>
       <Card.Body>
-        <Form>
+    
           <Table bordered hover responsive>
             <thead className="bg-light">
               <tr>
@@ -51,7 +51,7 @@ const CompanyKickOffSignature = ({
               ))}
             </tbody>
           </Table>
-        </Form>
+        
       </Card.Body>
     </Accordion.Collapse>
   </Card>

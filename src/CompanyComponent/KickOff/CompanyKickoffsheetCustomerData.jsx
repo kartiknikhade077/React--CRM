@@ -8,6 +8,7 @@ const CompanyKickoffsheetCustomerData = ({
   activeKey,
   CustomToggle,
   handleAccordionClick,
+  setCustomerId,
 }) => {
   const [customerList, setCustomerList] = useState([]);
   const [searchTermCustomer, setSearchTermCustomer] = useState("");
@@ -17,28 +18,41 @@ const CompanyKickoffsheetCustomerData = ({
 
   const [formData, setFormData] = useState({
     customerid: "",
-    // Add other fields here if needed
+    contactPerson: "",
+    phoneNumber: "",
+    website: "",
+    billingAddress: "",
+    shippingAddress: "",
   });
 
   const filteredCustomers = customerList.filter((c) =>
     c.companyName.toLowerCase().includes(searchTermCustomer.toLowerCase())
   );
 
-useEffect(() => {
-  const fetchCustomers = async () => {
-    try {
-      const response = await axiosInstance.get(
-        `/customer/getAllCustomer/${currentPage}/${pageSize}`
-      );
-      setCustomerList(response.data.customerList || []);
-    } catch (error) {
-      console.error("Failed to fetch customers:", error);
-      setCustomerList([]);
-    }
-  };
-  fetchCustomers();
-}, []);
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await axiosInstance.get("/customer/getCustomerList");
+        setCustomerList(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch customers:", error);
+        setCustomerList([]);
+      }
+    };
+    fetchCustomers();
+  }, []);
 
+
+  useEffect(() => {
+    if (formData.customerid) {
+      setCustomerId(formData.customerid);
+    }
+  }, [formData.customerid, setCustomerId]);
+
+
+  const selectedCustomerName =
+    customerList.find((c) => c.id === formData.customerid)?.companyName ||
+    "Select Customer";
 
   return (
     <Card className="mb-3 shadow-sm border-0">
@@ -96,11 +110,24 @@ useEffect(() => {
                         <Dropdown.Item
                           key={customer.id || `customer-${index}`}
                           onClick={() => {
-                            setFormData({
-                              ...formData,
-                              customerid: customer.id, // Store only the ID!
-                            });
-                            setSearchTermCustomer(""); // Clear search bar after selection
+                            const selectedCustomer = customerList.find(
+                              (c) => c.id === customer.id
+                            );
+                            if (selectedCustomer) {
+                              setFormData({
+                                customerid: selectedCustomer.id,
+                                contactPerson:
+                                  selectedCustomer.customerName || "",
+                                phoneNumber: selectedCustomer.phoneNumber || "",
+                                website: selectedCustomer.website || "",
+                                billingAddress:
+                                  selectedCustomer.billingAddress || "",
+                                shippingAddress:
+                                  selectedCustomer.shippingAddress || "",
+                              });
+                               setCustomerId(selectedCustomer.id);
+                            }
+                            setSearchTermCustomer(""); // Clear search
                             document.body.click(); // Close dropdown
                           }}
                           active={formData.customerid === customer.id}
@@ -122,7 +149,14 @@ useEffect(() => {
                 <Form.Label>
                   Contact Person Name <span className="text-danger">*</span>
                 </Form.Label>
-                <Form.Control type="text" placeholder="Customer Name" />
+                <Form.Control
+                  type="text"
+                  placeholder="Customer Name"
+                  value={formData.contactPerson}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contactPerson: e.target.value })
+                  }
+                />
               </Form.Group>
             </Col>
           </Row>
@@ -133,13 +167,27 @@ useEffect(() => {
                 <Form.Label>
                   <span className="text-danger">*</span> Mobile Number
                 </Form.Label>
-                <Form.Control type="text" placeholder="Enter Mobile Number" />
+                <Form.Control
+                  type="text"
+                  placeholder="Enter Mobile Number"
+                  value={formData.phoneNumber}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phoneNumber: e.target.value })
+                  }
+                />
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group controlId="companyWebsite">
                 <Form.Label>Company Website</Form.Label>
-                <Form.Control type="text" placeholder="Enter Company Website" />
+                <Form.Control
+                  type="text"
+                  placeholder="Enter Company Website"
+                  value={formData.website}
+                  onChange={(e) =>
+                    setFormData({ ...formData, website: e.target.value })
+                  }
+                />
               </Form.Group>
             </Col>
           </Row>
@@ -152,6 +200,10 @@ useEffect(() => {
                   as="textarea"
                   rows={2}
                   placeholder="Enter Billing Address"
+                  value={formData.billingAddress}
+                  onChange={(e) =>
+                    setFormData({ ...formData, billingAddress: e.target.value })
+                  }
                 />
               </Form.Group>
             </Col>
@@ -162,6 +214,13 @@ useEffect(() => {
                   as="textarea"
                   rows={2}
                   placeholder="Enter Shipping Address"
+                  value={formData.shippingAddress}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      shippingAddress: e.target.value,
+                    })
+                  }
                 />
               </Form.Group>
             </Col>
