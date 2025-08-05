@@ -16,15 +16,6 @@ const processOptions = [
   { value: 'TL', label: 'TL' },
 ];
 
-const customerOptions = [
-  { value: 'Customer A', label: 'Customer A' },
-  { value: 'Customer B', label: 'Customer B' },
-  { value: 'Customer C', label: 'Customer C' },
-  { value: 'Customer D', label: 'Customer D' },
-  { value: 'Customer E', label: 'Customer E' },
-];
-
-
 const CreateWorkOrder = ({ show, onClose, onSave }) => {
   const fileInputRef = useRef(null);
   const [images, setImages] = useState([]);
@@ -40,12 +31,15 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   const [materialOptions, setMaterialOptions] = useState([]);
   const [thicknessOptions, setThicknessOptions] = useState([]);
   const [projectLoading, setProjectLoading] = useState(false);
-  const [hasFetchedProjects, setHasFetchedProjects] = useState(false);
+  const [isCustomerLoading, setIsCustomerLoading] = useState(false);
+  const [customerOptions, setCustomerOptions] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState('');
 
   // State for the main form fields
   const [formData, setFormData] = useState({
     partName: '',
     customer: '',
+    customerId: '',
     project: '',
     projectId: '',
     thickness: '',
@@ -193,6 +187,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   const workOrderPayload = {
     partName: formData.partName,
     customerName: formData.customer,
+    customerId: formData.customerId,
     material: formData.material,
     projectName: formData.project,
     projectId: formData.projectId,
@@ -217,6 +212,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     });
     
     if(response.data){
+      fetchItemNo(); // Refresh item number after successful save
       resetForm();
       if(onSave){
         onSave();
@@ -229,10 +225,16 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
 
 
   const fetchProjects = async () => {
+    if (!selectedCustomer) {
+      setProjectOptions([]);
+      toast.error("Please select a customer first");
+      return;
+    }
+
     try {
       setProjectLoading(true); 
 
-      const response = await axiosInstance.get(`/project/getByAllProjectNames`);
+      const response = await axiosInstance.get(`/project/getProjectByCustomerId/${selectedCustomer}`);
       const options = response.data.map(proj => ({
         label: proj.projectName,
         value: proj.projectName,
@@ -398,15 +400,11 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
       setLoadingThickness(false);
     }
   };
-
-  const handleOpen = () => {
-    if (!hasFetchedProjects) {
-      fetchProjects();
-      setHasFetchedProjects(true);
-    }
-  };
   
   useEffect(() => {
+    fetchItemNo();
+  }, []);
+
   const fetchItemNo = async () => {
     try {
       const res = await axiosInstance.get('/work/getMaxItemNumber');
@@ -419,8 +417,25 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     }
   };
 
-  fetchItemNo();
-}, []);
+  const fetchCustomers = async () => {
+    if (customerOptions.length > 0) {
+      return;
+    }
+    
+    try {
+      const response = await axiosInstance.get("/customer/getCustomerList");  
+      const formattedOptions = response.data.map(customer => ({
+        value: customer.customerName,
+        label: customer.customerName,
+        id: customer.id
+      }));
+      setCustomerOptions(formattedOptions);
+    } catch (error) {
+      console.error("Failed to fetch customers:", error);
+    } finally {
+      setIsCustomerLoading(false);
+    }
+  };
 
 
 
@@ -481,15 +496,19 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
               <Form.Label>Customer <span className="text-danger">*</span></Form.Label>
               <Select
                 options={customerOptions}
-                value={customerOptions.find(opt => opt.value === formData.customer) || null}
-                onChange={selected =>
+                value={customerOptions.find(opt => opt.value === formData.customer) ||null}
+                onChange={selected =>{
+                  setSelectedCustomer(selected ? selected.id : '');
                   setFormData(prev => ({
                     ...prev,
-                    customer: selected ? selected.value : ''
-                  }))
+                    customer: selected ? selected.value : '',
+                    customerId: selected ? selected.id : ''
+                  }))}
                 }
                 placeholder="Select a customer..."
                 isClearable
+                onMenuOpen={fetchCustomers}
+                isLoading={isCustomerLoading}
               />
             </Form.Group>
             
@@ -505,7 +524,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                     projectId: selected ? selected.id : ''
                   }));
                 }}
-                onMenuOpen={handleOpen}
+                onMenuOpen={fetchProjects}
                 placeholder="Select a project..."
                 isClearable
                 isLoading={projectLoading}

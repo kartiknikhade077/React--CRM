@@ -14,13 +14,6 @@ import CreatableSelect from "react-select/creatable";
     { value: 'TL', label: 'TL' },
   ];
 
-  const customerOptions = [
-  { value: 'Customer A', label: 'Customer A' },
-  { value: 'Customer B', label: 'Customer B' },
-  { value: 'Customer C', label: 'Customer C' },
-  { value: 'Customer D', label: 'Customer D' },
-  { value: 'Customer E', label: 'Customer E' },
-];
 
   const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
     const fileInputRef = useRef(null);
@@ -38,10 +31,14 @@ import CreatableSelect from "react-select/creatable";
     const [materialOptions, setMaterialOptions] = useState([]);
     const [thicknessOptions, setThicknessOptions] = useState([]);
     const [projectLoading, setProjectLoading] = useState(false);
+    const [isCustomerLoading, setIsCustomerLoading] = useState(false);
+    const [customerOptions, setCustomerOptions] = useState([]);
+    const [selectedCustomer, setSelectedCustomer] = useState('');
 
     const [formData, setFormData] = useState({
       partName: '',
       customer: '',
+      customerId: '',
       project: '',
       projectId: '',
       thickness: '',
@@ -102,6 +99,7 @@ import CreatableSelect from "react-select/creatable";
         });
 
         setItemNo(workOrder.itemNo);
+        setSelectedCustomer(workOrder.customerId || '');
 
         // Pre-fill image blobs
         setExistingImages(workImages || []);
@@ -286,6 +284,7 @@ import CreatableSelect from "react-select/creatable";
       const payload = {
         partName: formData.partName,
         customerName: formData.customer,
+        customerId: formData.customerId,
         material: formData.material,
         projectName: formData.project,
         projectId: formData.projectId, 
@@ -338,10 +337,14 @@ import CreatableSelect from "react-select/creatable";
     };
 
     const fetchProjects = async () => {
+        if (!selectedCustomer) {
+          toast.error("Please select a customer first");
+          return;
+        }
         try {
           setProjectLoading(true); 
     
-          const response = await axiosInstance.get(`/project/getByAllProjectNames`);
+          const response = await axiosInstance.get(`/project/getProjectByCustomerId/${selectedCustomer}`);
           const options = response.data.map(project => ({
             label: project.projectName,
             value: project.projectName,
@@ -488,6 +491,26 @@ import CreatableSelect from "react-select/creatable";
           }
         };
 
+        const fetchCustomers = async () => {
+          if (customerOptions.length > 0) {
+            return;
+          }
+          
+          try {
+            const response = await axiosInstance.get("/customer/getCustomerList");  
+            const formattedOptions = response.data.map(customer => ({
+              value: customer.customerName,
+              label: customer.customerName,
+              id: customer.id
+            }));
+            setCustomerOptions(formattedOptions);
+          } catch (error) {
+            console.error("Failed to fetch customers:", error);
+          } finally {
+            setIsCustomerLoading(false);
+          }
+        };
+
 
     return (
       <Modal show={show} onHide={onClose} size="xl">
@@ -566,113 +589,118 @@ import CreatableSelect from "react-select/creatable";
                 <Form.Label>Customer <span className="text-danger">*</span></Form.Label>
                 <Select
                   options={customerOptions}
-                  value={customerOptions.find(opt => opt.value === formData.customer) || null}
-                  onChange={selected =>
+                  value={customerOptions.find(opt => opt.value === formData.customer) || { label: formData.customer, value: formData.customer }}
+                  onChange={selected =>{
+                    setSelectedCustomer(selected ? selected.id : '');  
                     setFormData(prev => ({
-                      ...prev,
-                      customer: selected ? selected.value : ''
-                    }))
+                        ...prev,
+                        customer: selected ? selected.value : '',
+                        customerId: selected ? selected.id : ''
+                      }))
+                    }
                   }
                   placeholder="Select a customer..."
                   isClearable
+                  onMenuOpen={fetchCustomers}
+                  isLoading={isCustomerLoading}
                 />
-            </Form.Group>
+              </Form.Group>
 
-            <Form.Group className="col-md-4 mb-3">
-              <Form.Label>Project <span className="text-danger">*</span></Form.Label>
-              <Select
-                options={projectOptions}
-                value={projectOptions.find(opt => opt.value === formData.project) || { label: formData.project, value: formData.project }}
-                onChange={(selected) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    project: selected ? selected.value : "",
-                    projectId: selected ? selected.id : ''
-                  }))
-                }
-                onMenuOpen={fetchProjects}
-                placeholder="-- Select a project --"
-                isClearable
-                isLoading={projectLoading}
-              />
-
-
-            </Form.Group>
-
-
-
-            <Form.Group className="col-md-4 mb-3">
-              <Form.Label>Part Name <span className="text-danger">*</span></Form.Label>
-              <div style={{ width: "100%" }}>
-                <CreatableSelect
-                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
-                  isClearable
-                  onMenuOpen={fetchParts}
-                  onChange={handlePartsSelect}
-                  onCreateOption={handlePartsCreateOption}
-                  options={partOptions}
-                  isLoading={loadingPart}
-                  placeholder="Search or create part..."
-                  value={
-                    formData.partName
-                      ? { label: formData.partName, value: formData.partName }
-                      : null
+              <Form.Group className="col-md-4 mb-3">
+                <Form.Label>Project <span className="text-danger">*</span></Form.Label>
+                <Select
+                  options={projectOptions}
+                  value={projectOptions.find(opt => opt.value === formData.project) || { label: formData.project, value: formData.project }}
+                  onChange={(selected) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      project: selected ? selected.value : "",
+                      projectId: selected ? selected.id : ''
+                    }))
                   }
-                />
-              </div>
-            </Form.Group>
-
-            <Form.Group className="col-md-4 mb-3">
-              <Form.Label>Thickness<span className="text-danger">*</span></Form.Label>
-              <div style={{ width: "100%" }}>
-                <CreatableSelect
-                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                  onMenuOpen={fetchProjects}
+                  placeholder="-- Select a project --"
                   isClearable
-                  onMenuOpen={fetchThickness}
-                  onChange={handleThicknessSelect}
-                  onCreateOption={handleThicknessCreateOption}
-                  options={thicknessOptions}
-                  isLoading={loadingThickness}
-                  placeholder="Search or create thickness..."
-                  value={
-                    formData.thickness
-                      ? { label: formData.thickness, value: formData.thickness }
-                      : null
-                  }
+                  isLoading={projectLoading}
                 />
-              </div>
-            </Form.Group>
 
-            <Form.Group className="col-md-4 mb-3">
-              <Form.Label>Material <span className="text-danger">*</span></Form.Label>
-              <div style={{ width: "100%" }}>
-                <CreatableSelect
-                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
-                  isClearable
-                  onMenuOpen={fetchMaterial}
-                  onChange={handleMaterialSelect}
-                  onCreateOption={handleMaterialCreateOption}
-                  options={materialOptions}
-                  placeholder="Search or create material..."
-                  isLoading={loadingMaterial}
-                  value={
-                    formData.material
-                      ? { label: formData.material, value: formData.material }
-                      : null
-                  }
-                />
-              </div>
-            </Form.Group>
 
-            <Form.Group className="col-md-4 mb-3">
-              <Form.Label>Part Size</Form.Label>
-              <Form.Control type="text" name="partSize" value={formData.partSize} onChange={handleFormChange} />
-            </Form.Group>
-            <Form.Group className="col-md-4 mb-3">
-              <Form.Label>Part Weight</Form.Label>
-              <Form.Control type="text" name="partWeight" value={formData.partWeight} onChange={handleFormChange} />
-            </Form.Group>
-            </div>
+              </Form.Group>
+
+
+
+              <Form.Group className="col-md-4 mb-3">
+                <Form.Label>Part Name <span className="text-danger">*</span></Form.Label>
+                <div style={{ width: "100%" }}>
+                  <CreatableSelect
+                    styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                    isClearable
+                    onMenuOpen={fetchParts}
+                    onChange={handlePartsSelect}
+                    onCreateOption={handlePartsCreateOption}
+                    options={partOptions}
+                    isLoading={loadingPart}
+                    placeholder="Search or create part..."
+                    value={
+                      formData.partName
+                        ? { label: formData.partName, value: formData.partName }
+                        : null
+                    }
+                  />
+                </div>
+              </Form.Group>
+
+              <Form.Group className="col-md-4 mb-3">
+                <Form.Label>Thickness<span className="text-danger">*</span></Form.Label>
+                <div style={{ width: "100%" }}>
+                  <CreatableSelect
+                    styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                    isClearable
+                    onMenuOpen={fetchThickness}
+                    onChange={handleThicknessSelect}
+                    onCreateOption={handleThicknessCreateOption}
+                    options={thicknessOptions}
+                    isLoading={loadingThickness}
+                    placeholder="Search or create thickness..."
+                    value={
+                      formData.thickness
+                        ? { label: formData.thickness, value: formData.thickness }
+                        : null
+                    }
+                  />
+                </div>
+              </Form.Group>
+
+              <Form.Group className="col-md-4 mb-3">
+                <Form.Label>Material <span className="text-danger">*</span></Form.Label>
+                <div style={{ width: "100%" }}>
+                  <CreatableSelect
+                    styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                    isClearable
+                    onMenuOpen={fetchMaterial}
+                    onChange={handleMaterialSelect}
+                    onCreateOption={handleMaterialCreateOption}
+                    options={materialOptions}
+                    placeholder="Search or create material..."
+                    isLoading={loadingMaterial}
+                    value={
+                      formData.material
+                        ? { label: formData.material, value: formData.material }
+                        : null
+                    }
+                  />
+                </div>
+              </Form.Group>
+
+              <Form.Group className="col-md-4 mb-3">
+                <Form.Label>Part Size</Form.Label>
+                <Form.Control type="text" name="partSize" value={formData.partSize} onChange={handleFormChange} />
+              </Form.Group>
+              <Form.Group className="col-md-4 mb-3">
+                <Form.Label>Part Weight</Form.Label>
+                <Form.Control type="text" name="partWeight" value={formData.partWeight} onChange={handleFormChange} />
+              </Form.Group>
+              </div>
           </Form>
 
           <hr />
