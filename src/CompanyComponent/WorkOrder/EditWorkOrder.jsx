@@ -4,6 +4,7 @@
   import Select from "react-select";
   import axiosInstance from "../../BaseComponet/axiosInstance";
   import { toast } from "react-toastify";
+import CreatableSelect from "react-select/creatable";
 
   const processOptions = [
     { value: 'IF', label: 'IF' },
@@ -12,6 +13,14 @@
     { value: 'LF', label: 'LF' },
     { value: 'TL', label: 'TL' },
   ];
+
+  const customerOptions = [
+  { value: 'Customer A', label: 'Customer A' },
+  { value: 'Customer B', label: 'Customer B' },
+  { value: 'Customer C', label: 'Customer C' },
+  { value: 'Customer D', label: 'Customer D' },
+  { value: 'Customer E', label: 'Customer E' },
+];
 
   const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
     const fileInputRef = useRef(null);
@@ -22,11 +31,19 @@
     const [tableData, setTableData] = useState({});
     const nextId = useRef(1);
     const [itemNo, setItemNo]=useState();
+    const [loadingPart, setLoadingPart] = useState(false);
+    const [loadingThickness, setLoadingThickness] = useState(false);
+    const [loadingMaterial, setLoadingMaterial] = useState(false);
+    const [partOptions, setPartOptions] = useState([]);
+    const [materialOptions, setMaterialOptions] = useState([]);
+    const [thicknessOptions, setThicknessOptions] = useState([]);
+    const [projectLoading, setProjectLoading] = useState(false);
 
     const [formData, setFormData] = useState({
       partName: '',
       customer: '',
       project: '',
+      projectId: '',
       thickness: '',
       material: '',
       partSize: '',
@@ -39,24 +56,32 @@
     useEffect(() => {
       if (workOrderId) {
         fetchWorkOrder();
-        fetchProjects();
       }
     }, [workOrderId]);
 
     useEffect(() => {
-        const manualProcesses = processes.filter(p => p.type === 'manual');
-        const existingSelectIds = new Set(processes.filter(p => p.type === 'select').map(p => p.id));
+      const allProcesses = [...processes];
 
-        const newProcesses = selectedProcesses
-          .filter(opt => !existingSelectIds.has(opt.value) && !disabledProcessValues.includes(opt.value))
-          .map(opt => ({
-            id: opt.value,
-            type: 'select',
-            woNo: `PT-${itemNo}${opt.value}`,
-          }));
+      const manualProcesses = allProcesses.filter(p => p.type === 'manual');
+      const existingSelectIds = new Set(allProcesses.filter(p => p.type === 'select').map(p => p.id));
 
-        setProcesses([...manualProcesses, ...processes.filter(p => p.type === 'select'), ...newProcesses]);
-      }, [selectedProcesses]);
+      const newSelects = selectedProcesses
+        .filter(opt => !existingSelectIds.has(opt.value) && !disabledProcessValues.includes(opt.value))
+        .map(opt => ({
+          id: opt.value,
+          type: 'select',
+          woNo: `PT-${itemNo}${opt.value}`,
+        }));
+
+      // Combine and ensure manual first, then unique selects
+      const updatedProcesses = [
+        ...manualProcesses,
+        ...[...allProcesses.filter(p => p.type === 'select'), ...newSelects]
+          .filter((p, index, self) => self.findIndex(x => x.id === p.id) === index),
+      ];
+
+      setProcesses(updatedProcesses);
+    }, [selectedProcesses]);
 
 
 
@@ -121,15 +146,6 @@
       }
     };
 
-    const fetchProjects = async () => {
-      try {
-        const res = await axiosInstance.get(`/project/getByAllProjectNames`);
-        setProjectOptions(res.data);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      }
-    };
-
     const handleFormChange = (e) => {
       const { name, value } = e.target;
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -181,7 +197,13 @@
 
     const handleAddManualProcess = () => {
       const newId = `manual-${nextId.current++}`;
-      setProcesses(prev => [...prev, { id: newId, type: 'manual' }]);
+      setProcesses(prev => {
+        const newManual = { id: newId, type: 'manual' };
+        const manual = [...prev.filter(p => p.type === 'manual'), newManual];
+        const select = prev.filter(p => p.type === 'select');
+        return [...manual, ...select];
+      });
+
     };
 
     const handleDeleteRow = async (id, itemId) => {
@@ -214,6 +236,36 @@
 
     
     const handleUpdate = async () => {
+      const { partName, customer, project, thickness, material } = formData;
+      let hasError = false;
+  
+      if (!customer || customer === '-- Select a customer --') {
+        toast.error("Please select a customer");
+        hasError = true;
+      }
+  
+      if (!project) {
+        toast.error("Please select a project");
+        hasError = true;
+      }
+  
+      if (!partName.trim()) {
+        toast.error("Please enter part name");
+        hasError = true;
+      }
+  
+      if (!String(thickness).trim()) {
+        toast.error("Please enter thickness");
+        hasError = true;
+      }
+  
+      if (!material.trim()) {
+        toast.error("Please enter material");
+        hasError = true;
+      }
+  
+      if (hasError) return;
+      
       const items = processes.map((p, idx) => {
         const data = tableData[p.id] || {};
         return {
@@ -236,6 +288,7 @@
         customerName: formData.customer,
         material: formData.material,
         projectName: formData.project,
+        projectId: formData.projectId, 
         thickness: parseFloat(formData.thickness),
         partSize: formData.partSize,
         partWeight: formData.partWeight,
@@ -282,11 +335,158 @@
       } catch (error) {
         console.error("❌ Submission failed:", error);
       }
-
-      
     };
 
+    const fetchProjects = async () => {
+        try {
+          setProjectLoading(true); 
+    
+          const response = await axiosInstance.get(`/project/getByAllProjectNames`);
+          const options = response.data.map(project => ({
+            label: project.projectName,
+            value: project.projectName,
+            id:project.projectId
+          }));
+          setProjectOptions(options);
+        } catch (error) {
+          console.error("Error fetching projects:", error);
+          toast.error("Failed to load projects");
+        } finally {
+          setProjectLoading(false);
+        }
+      };
 
+      const fetchParts = async () => {
+          try {
+            setLoadingPart(true);
+      
+            const res = await axiosInstance.get("/work/getAllParts");
+            const options = res.data.map(p => ({
+              label: p.partName,
+              value: p.partId,
+            }));
+            setPartOptions(options);
+          } catch (err) {
+            toast.error("Failed to load parts");
+          } finally {
+            setLoadingPart(false);
+          }
+        };
+      
+      
+        const handlePartsSelect = (selectedOption) => {
+          if (!selectedOption) {
+            setFormData(prev => ({ ...prev, partName: "" }));
+          } else {
+            setFormData(prev => ({ ...prev, partName: selectedOption.label }));
+          }
+        };
+      
+        const handlePartsCreateOption = async (inputValue) => {
+          setLoadingPart(true);
+          try {
+            const res = await axiosInstance.post(`/work/addPart/${inputValue}`);
+            const newOption = {
+              label: res.data.partName,
+              value: res.data.partId,
+            };
+            setPartOptions(prev => [...prev, newOption]);
+            setFormData(prev => ({ ...prev, partName: newOption.label }));
+            toast.success(`Added "${newOption.label}"`);
+          } catch (err) {
+            toast.error("Failed to add part");
+          } finally {
+            setLoadingPart(false);
+          }
+        };
+      
+        const fetchMaterial = async () => {
+          try {
+            setLoadingMaterial(true);
+      
+            const res = await axiosInstance.get("/work/getAllMaterials");
+            const options = res.data.map(p => ({
+              label: p.materialName,
+              value: p.materialId,
+            }));
+            setMaterialOptions(options);
+          } catch (err) {
+            toast.error("Failed to load materials");
+          } finally {
+            setLoadingMaterial(false);
+          }
+        };
+      
+      
+        const handleMaterialSelect = (selectedOption) => {
+          if (!selectedOption) {
+            setFormData(prev => ({ ...prev, material: "" }));
+          } else {
+            setFormData(prev => ({ ...prev, material: selectedOption.label }));
+          }
+        };
+      
+        const handleMaterialCreateOption = async (inputValue) => {
+          setLoadingMaterial(true);
+          try {
+            const res = await axiosInstance.post(`/work/addMaterial/${inputValue}`);
+            const newOption = {
+              label: res.data.materialName,
+              value: res.data.materialId,
+            };
+            setPartOptions(prev => [...prev, newOption]);
+            setFormData(prev => ({ ...prev, material: newOption.label }));
+            toast.success(`Added "${newOption.label}"`);
+          } catch (err) {
+            toast.error("Failed to add part");
+          } finally {
+            setLoadingMaterial(false);
+          }
+        };
+      
+        const fetchThickness = async () => {
+          try {
+            setLoadingThickness(true); 
+      
+            const res = await axiosInstance.get("/work/getAllThicknesses");
+            const options = res.data.map(p => ({
+              label: p.thicknessName,
+              value: p.thicknessId,
+            }));
+            setThicknessOptions(options);
+          } catch (err) {
+            toast.error("Failed to load thicknesses");
+          } finally {
+            setLoadingThickness(false);
+          }
+        };
+      
+      
+        const handleThicknessSelect = (selectedOption) => {
+          if (!selectedOption) {
+            setFormData(prev => ({ ...prev, thickness: "" }));
+          } else {
+            setFormData(prev => ({ ...prev, thickness: selectedOption.label }));
+          }
+        };
+      
+        const handleThicknessCreateOption = async (inputValue) => {
+          setLoadingThickness(true);
+          try {
+            const res = await axiosInstance.post(`/work/addThickness/${inputValue}`);
+            const newOption = {
+              label: res.data.thicknessName,
+              value: res.data.thicknessId,
+            };
+            setThicknessOptions(prev => [...prev, newOption]);
+            setFormData(prev => ({ ...prev, thickness: newOption.label }));
+            toast.success(`Added "${newOption.label}"`);
+          } catch (err) {
+            toast.error("Failed to add part");
+          } finally {
+            setLoadingThickness(false);
+          }
+        };
 
 
     return (
@@ -361,51 +561,117 @@
             </div>
 
             <div className="row">
+              
               <Form.Group className="col-md-4 mb-3">
-                <Form.Label>Part Name</Form.Label>
-                <Form.Control type="text" name="partName" value={formData.partName} onChange={handleFormChange} required />
-              </Form.Group>
-              <Form.Group className="col-md-4 mb-3">
-                <Form.Label>Customer</Form.Label>
-                <Form.Control as="select" name="customer" value={formData.customer} onChange={handleFormChange} required>
-                  <option>Customer Name</option>
-                  <option>Customer A</option>
-                  <option>Customer B</option>
-                  <option>Customer C</option>
-                  <option>Customer D</option>
-                  <option>Customer E</option>
-                </Form.Control>
-              </Form.Group>
-              <Form.Group className="col-md-4 mb-3">
-                <Form.Label>Project</Form.Label>
-                <Form.Control as="select" name="project" value={formData.project} onChange={handleFormChange} required>
-                  <option value="" disabled={formData.project !== ''}>
-                    -- Select a project --
-                  </option>
-                  {projectOptions.map((project, index) => (
-                    <option key={index} value={project}>
-                      {project}
-                    </option>
-                  ))}
-                </Form.Control>
+                <Form.Label>Customer <span className="text-danger">*</span></Form.Label>
+                <Select
+                  options={customerOptions}
+                  value={customerOptions.find(opt => opt.value === formData.customer) || null}
+                  onChange={selected =>
+                    setFormData(prev => ({
+                      ...prev,
+                      customer: selected ? selected.value : ''
+                    }))
+                  }
+                  placeholder="Select a customer..."
+                  isClearable
+                />
+            </Form.Group>
 
-              </Form.Group>
-              <Form.Group className="col-md-4 mb-3">
-                <Form.Label>Thickness</Form.Label>
-                <Form.Control type="text" name="thickness" value={formData.thickness} onChange={handleFormChange} required />
-              </Form.Group>
-              <Form.Group className="col-md-4 mb-3">
-                <Form.Label>Material</Form.Label>
-                <Form.Control type="text" name="material" value={formData.material} onChange={handleFormChange} required />
-              </Form.Group>
-              <Form.Group className="col-md-4 mb-3">
-                <Form.Label>Part Size</Form.Label>
-                <Form.Control type="text" name="partSize" value={formData.partSize} onChange={handleFormChange} />
-              </Form.Group>
-              <Form.Group className="col-md-4 mb-3">
-                <Form.Label>Part Weight</Form.Label>
-                <Form.Control type="text" name="partWeight" value={formData.partWeight} onChange={handleFormChange} />
-              </Form.Group>
+            <Form.Group className="col-md-4 mb-3">
+              <Form.Label>Project <span className="text-danger">*</span></Form.Label>
+              <Select
+                options={projectOptions}
+                value={projectOptions.find(opt => opt.value === formData.project) || { label: formData.project, value: formData.project }}
+                onChange={(selected) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    project: selected ? selected.value : "",
+                    projectId: selected ? selected.id : ''
+                  }))
+                }
+                onMenuOpen={fetchProjects}
+                placeholder="-- Select a project --"
+                isClearable
+                isLoading={projectLoading}
+              />
+
+
+            </Form.Group>
+
+
+
+            <Form.Group className="col-md-4 mb-3">
+              <Form.Label>Part Name <span className="text-danger">*</span></Form.Label>
+              <div style={{ width: "100%" }}>
+                <CreatableSelect
+                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                  isClearable
+                  onMenuOpen={fetchParts}
+                  onChange={handlePartsSelect}
+                  onCreateOption={handlePartsCreateOption}
+                  options={partOptions}
+                  isLoading={loadingPart}
+                  placeholder="Search or create part..."
+                  value={
+                    formData.partName
+                      ? { label: formData.partName, value: formData.partName }
+                      : null
+                  }
+                />
+              </div>
+            </Form.Group>
+
+            <Form.Group className="col-md-4 mb-3">
+              <Form.Label>Thickness<span className="text-danger">*</span></Form.Label>
+              <div style={{ width: "100%" }}>
+                <CreatableSelect
+                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                  isClearable
+                  onMenuOpen={fetchThickness}
+                  onChange={handleThicknessSelect}
+                  onCreateOption={handleThicknessCreateOption}
+                  options={thicknessOptions}
+                  isLoading={loadingThickness}
+                  placeholder="Search or create thickness..."
+                  value={
+                    formData.thickness
+                      ? { label: formData.thickness, value: formData.thickness }
+                      : null
+                  }
+                />
+              </div>
+            </Form.Group>
+
+            <Form.Group className="col-md-4 mb-3">
+              <Form.Label>Material <span className="text-danger">*</span></Form.Label>
+              <div style={{ width: "100%" }}>
+                <CreatableSelect
+                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                  isClearable
+                  onMenuOpen={fetchMaterial}
+                  onChange={handleMaterialSelect}
+                  onCreateOption={handleMaterialCreateOption}
+                  options={materialOptions}
+                  placeholder="Search or create material..."
+                  isLoading={loadingMaterial}
+                  value={
+                    formData.material
+                      ? { label: formData.material, value: formData.material }
+                      : null
+                  }
+                />
+              </div>
+            </Form.Group>
+
+            <Form.Group className="col-md-4 mb-3">
+              <Form.Label>Part Size</Form.Label>
+              <Form.Control type="text" name="partSize" value={formData.partSize} onChange={handleFormChange} />
+            </Form.Group>
+            <Form.Group className="col-md-4 mb-3">
+              <Form.Label>Part Weight</Form.Label>
+              <Form.Control type="text" name="partWeight" value={formData.partWeight} onChange={handleFormChange} />
+            </Form.Group>
             </div>
           </Form>
 
@@ -463,9 +729,18 @@
                 const data = tableData[p.id] || {};
                 const isScoped = tableData[p.id]?.scope || false;
 
-                const manualIndex = processes.filter(proc => proc.type === 'manual').findIndex(proc => proc.id === p.id);
-                const originalWoNo = p.type === 'select' ? p.woNo : `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
-                const displayWoNo = isScoped ? 'XX' : originalWoNo;
+                const visibleManuals = processes.filter(proc => proc.type === 'manual' && !tableData[proc.id]?.scope);
+
+                let generatedWoNo = '';
+                if (p.type === 'manual') {
+                  const manualIndex = visibleManuals.findIndex(proc => proc.id === p.id);
+                  if (manualIndex !== -1) {
+                    generatedWoNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
+                  }
+                }
+
+                const displayWoNo = isScoped ? 'XX' : (p.type === 'select' ? p.woNo : generatedWoNo);
+
 
                 return (
                   <tr key={p.id}>
@@ -508,9 +783,9 @@
                       )}
                     </td>
                     <td><Form.Control size="sm" value={data.process || ''} onChange={e => handleTableInputChange(p.id, 'process', e.target.value)} /></td>
-                    <td><Form.Control size="sm" value={data.l || ''} onChange={e => handleTableInputChange(p.id, 'l', e.target.value)} /></td>
-                    <td><Form.Control size="sm" value={data.w || ''} onChange={e => handleTableInputChange(p.id, 'w', e.target.value)} /></td>
-                    <td><Form.Control size="sm" value={data.h || ''} onChange={e => handleTableInputChange(p.id, 'h', e.target.value)} /></td>
+                    <td><Form.Control size="sm" type="number" step="any" min="0" value={data.l || ''} onChange={e => handleTableInputChange(p.id, 'l', e.target.value)} /></td>
+                    <td><Form.Control size="sm" type="number" step="any" min="0" value={data.w || ''} onChange={e => handleTableInputChange(p.id, 'w', e.target.value)} /></td>
+                    <td><Form.Control size="sm" type="number" step="any" min="0" value={data.h || ''} onChange={e => handleTableInputChange(p.id, 'h', e.target.value)} /></td>
                     <td><Form.Control size="sm" value={data.remarks || ''} onChange={e => handleTableInputChange(p.id, 'remarks', e.target.value)} /></td>
                     <td><Button variant="link" onClick={() => handleDeleteRow(p.id,data.itemId)}><FaTrash color="red" /></Button></td>
                   </tr>

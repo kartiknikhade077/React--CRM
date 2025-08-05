@@ -6,6 +6,10 @@ import "./WorkOrder.css";
 import PaginationComponent from "../../Pagination/PaginationComponent";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import EditWorkOrder from "./EditWorkOrder";
+import CreateThickness from "./CreateThickness";
+import CreateMaterial from "./CreateMaterial";
+import CreatePart from "./CreatePart";
+import { toast } from "react-toastify";
 
 const WorkOrderList = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -16,6 +20,9 @@ const WorkOrderList = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [editModalVisible,setEditModalVisible] = useState(false);
     const [selectedWorkOrderId,setSelectedWorkOrderId] = useState(false);
+    const [addThikenessModal,setAddThikenessModal] = useState(false);
+    const [addMaterialModal,setAddMaterialModal] = useState(false);
+    const [addPartsModal,setAddPartsModal] = useState(false);
 
 
     useEffect(() => {
@@ -65,6 +72,21 @@ const WorkOrderList = () => {
         setEditModalVisible(false);
     };
 
+    const handleDeleteClick = async (workOrderId) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this Work Order?");
+        if (!confirmDelete) return;
+
+        try {
+            await axiosInstance.delete(`/work/deleteWorkOrder/${workOrderId}`);
+            toast.success("Work Order deleted successfully.");
+            fetchWorkOrder(page, size); 
+        } catch (error) {
+            console.error("Failed to delete work order:", error);
+            toast.error("Failed to delete. Please try again.");
+        }
+    };
+
+
     return (
         <div>
             <CompanyTopbar onToggle={handleToggle   } />
@@ -90,6 +112,24 @@ const WorkOrderList = () => {
                                 </div>
                             </div>
                             <div className="col-md-6 d-flex justify-content-end">
+                                <button
+                                    className="btn btn-dark me-1"
+                                    onClick={() =>setAddPartsModal(true)}
+                                >
+                                    + Add Parts
+                                </button>
+                                <button
+                                    className="btn btn-dark me-1"
+                                    onClick={() =>setAddMaterialModal(true)}
+                                >
+                                    + Add Material
+                                </button>
+                                <button
+                                    className="btn btn-dark me-1"
+                                    onClick={() =>setAddThikenessModal(true)}
+                                >
+                                    + Add Thickness
+                                </button>
                                 <button
                                     className="btn btn-dark"
                                     onClick={() => setShowModal(true)}
@@ -121,17 +161,24 @@ const WorkOrderList = () => {
                                         <td>{index + 1}</td>
                                         <td>{workOrder.itemNo}</td>
                                         <td>{workOrder.customerName}</td>
-                                        <td>{workOrder.partName}</td>
+                                        <td>{workOrder.projectName}</td>
                                         <td>{workOrder.partSize}</td>
                                         <td>{workOrder.partName}</td>
                                         <td>{workOrder.material}</td>
                                         <td>{workOrder.thickness}</td>
                                         <td>
                                             <button
-                                                className="btn btn-outline-primary btn-sm"
+                                                className="btn btn-outline-primary btn-sm me-1"
                                                 onClick={() => handleEditClick(workOrder.workOrderId)}
                                                 >
                                                 <i className="bi bi-pencil-square"></i>
+                                            </button>
+
+                                            <button
+                                                className="btn btn-outline-danger btn-sm"
+                                                onClick={() => handleDeleteClick(workOrder.workOrderId)}
+                                            >
+                                                <i className="bi bi-trash"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -175,6 +222,20 @@ const WorkOrderList = () => {
                 
             />
 
+            <CreateThickness
+                show={addThikenessModal}
+                onClose={()=>setAddThikenessModal(false)}
+            />
+
+            <CreateMaterial
+                show={addMaterialModal}
+                onClose={()=>setAddMaterialModal(false)}
+            />
+
+            <CreatePart
+                show={addPartsModal}
+                onClose={()=>setAddPartsModal(false)}
+            />
 
         </div>
         
