@@ -9,6 +9,7 @@ const CompanyKickoffsheetCustomerData = ({
   CustomToggle,
   handleAccordionClick,
   setCustomerId,
+  onCustomerDataChange,
 }) => {
   const [customerList, setCustomerList] = useState([]);
   const [searchTermCustomer, setSearchTermCustomer] = useState("");
@@ -18,6 +19,7 @@ const CompanyKickoffsheetCustomerData = ({
 
   const [formData, setFormData] = useState({
     customerid: "",
+    companyName: "",
     contactPerson: "",
     phoneNumber: "",
     website: "",
@@ -42,12 +44,17 @@ const CompanyKickoffsheetCustomerData = ({
     fetchCustomers();
   }, []);
 
-
   useEffect(() => {
     if (formData.customerid) {
       setCustomerId(formData.customerid);
     }
   }, [formData.customerid, setCustomerId]);
+
+ 
+
+  useEffect(() => {
+    onCustomerDataChange(formData);
+  }, [formData, onCustomerDataChange]);
 
 
   const selectedCustomerName =
@@ -116,6 +123,7 @@ const CompanyKickoffsheetCustomerData = ({
                             if (selectedCustomer) {
                               setFormData({
                                 customerid: selectedCustomer.id,
+                                companyName: selectedCustomer.companyName || "",
                                 contactPerson:
                                   selectedCustomer.customerName || "",
                                 phoneNumber: selectedCustomer.phoneNumber || "",
@@ -125,7 +133,7 @@ const CompanyKickoffsheetCustomerData = ({
                                 shippingAddress:
                                   selectedCustomer.shippingAddress || "",
                               });
-                               setCustomerId(selectedCustomer.id);
+                              setCustomerId(selectedCustomer.id);
                             }
                             setSearchTermCustomer(""); // Clear search
                             document.body.click(); // Close dropdown

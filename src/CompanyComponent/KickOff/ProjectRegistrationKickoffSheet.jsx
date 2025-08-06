@@ -9,6 +9,7 @@ import {
   Col,
   Button,
   Table,
+  Dropdown,
 } from "react-bootstrap";
 import { FaTrash, FaPlusCircle } from "react-icons/fa";
 
@@ -18,12 +19,23 @@ const ProjectRegistrationKickoffSheet = ({
   CustomToggle,
   handleAccordionClick,
   customerId,
+  onProjectDataChange,
+  onPartsChange,
+  onProcessesChange,
+
 }) => {
+  const [projectData, setProjectData] = useState({
+    projectId: "",
+    projectName: "",
+    projectTitle: "",
+    kickOffDate: "",
+    startDate: "",
+  });
   // ---------------- State for Part Details ----------------
 
   const [latestItemNumber, setLatestItemNumber] = useState(1540);
-
-  const [activePartItemNo, setActivePartItemNo] = useState(null);
+  const [activePartItemNo, setActivePartItemNo] = useState("PT-1");
+  // const [activePartItemNo, setActivePartItemNo] = useState(null);
   const [processesByPart, setProcessesByPart] = useState({});
 
   const [parts, setParts] = useState([]);
@@ -50,38 +62,37 @@ const ProjectRegistrationKickoffSheet = ({
     (proc) => proc.itemNo === activePartItemNo
   );
 
-const addPart = () => {
-  // Extract numeric itemNos from existing parts
-  const existingNumbers = parts.map(part => {
-    const match = part.itemNo.match(/PT-(\d+)/);
-    return match ? parseInt(match[1]) : 0;
-  });
+  const addPart = () => {
+    // Extract numeric itemNos from existing parts
+    const existingNumbers = parts.map((part) => {
+      const match = part.itemNo.match(/PT-(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    });
 
-  // Get max between fetched parts and API result
-  const maxExisting = Math.max(latestItemNumber, ...existingNumbers);
-  const nextItemNumber = maxExisting + 1;
+    // Get max between fetched parts and API result
+    const maxExisting = Math.max(latestItemNumber, ...existingNumbers);
+    const nextItemNumber = maxExisting + 1;
 
-  const newItemNo = `PT-${nextItemNumber}`;
+    const newItemNo = `PT-${nextItemNumber}`;
 
-  const newPart = {
-    id: Date.now(),
-    itemNo: newItemNo,
-    partName: "",
-    material: "",
-    thickness: "",
-    images: [],
+    const newPart = {
+      id: Date.now(),
+      itemNo: newItemNo,
+      partName: "",
+      material: "",
+      thickness: "",
+      images: [],
+    };
+
+    const updatedParts = [...parts, newPart];
+
+    setParts(updatedParts);
+    setActivePartItemNo(newPart.itemNo);
+    setProcessesByPart((prev) => ({
+      ...prev,
+      [newPart.itemNo]: [],
+    }));
   };
-
-  const updatedParts = [...parts, newPart];
-
-  setParts(updatedParts);
-  setActivePartItemNo(newPart.itemNo);
-  setProcessesByPart((prev) => ({
-    ...prev,
-    [newPart.itemNo]: [],
-  }));
-};
-
 
   const removePart = (id) => {
     setParts(parts.filter((part) => part.id !== id));
@@ -93,6 +104,9 @@ const addPart = () => {
     );
   };
 
+  useEffect(() => {
+    onPartsChange && onPartsChange(parts);
+  }, [parts]);
   // ---------------- State for Part Process ----------------
   const [processes, setProcesses] = useState([]);
 
@@ -132,10 +146,28 @@ const addPart = () => {
   };
 
   const removeProcess = (id) => {
+    // Find the process being deleted
+    const procList = processesByPart[activePartItemNo] || [];
+    const deletedProc = procList.find((p) => p.id === id);
+
+    const suffix = deletedProc
+      ? deletedProc.woNo.replace(activePartItemNo, "")
+      : null;
+
     setProcessesByPart((prev) => ({
       ...prev,
       [activePartItemNo]: prev[activePartItemNo].filter((p) => p.id !== id),
     }));
+
+    if (suffix && suffixOptions.includes(suffix)) {
+      setSelectedProcessesByPart((prev) => {
+        const old = prev[activePartItemNo] || [];
+        return {
+          ...prev,
+          [activePartItemNo]: old.filter((opt) => opt.value !== suffix),
+        };
+      });
+    }
   };
 
   const updateProcess = (id, field, value) => {
@@ -153,8 +185,6 @@ const addPart = () => {
   };
 
   const handleCustomProcessChange = (newSelected) => {
-
-     console.log('Dropdown changed:', newSelected);
     const prevSelected = selectedProcessesByPart[activePartItemNo] || [];
     const prevValues = prevSelected.map((p) => p.value);
     const newValues = newSelected?.map((p) => p.value) || [];
@@ -162,56 +192,29 @@ const addPart = () => {
     const added = newValues.filter((val) => !prevValues.includes(val));
     const removed = prevValues.filter((val) => !newValues.includes(val));
 
-    const newProcesses = added.map((suffix) => {
-      const woNo = `${activePartItemNo}${suffix}`;
-      return {
-        id: Date.now() + Math.random(),
-        woNo,
-        designer: "",
-        opNo: "",
-        processName: "",
-        length: "",
-        width: "",
-        height: "",
-        remarks: "",
-      };
-    });
+    const newProcesses = added.map((suffix) => ({
+      id: Date.now() + Math.random(),
+      woNo: `${activePartItemNo}${suffix}`,
+      itemNo: activePartItemNo,
+      designer: "",
+      opNo: "",
+      processName: "",
+      length: "",
+      width: "",
+      height: "",
+      remarks: "",
+    }));
 
     setProcessesByPart((prev) => {
-      let updated = prev[activePartItemNo] || [];
-
-      // Add new ones
-      updated = [...updated, ...newProcesses];
-
-      // Remove removed suffixes
-      updated = updated.filter((proc) => {
+      let updatedList = prev[activePartItemNo] || [];
+      updatedList = [...updatedList, ...newProcesses];
+      updatedList = updatedList.filter((proc) => {
         const suffix = proc.woNo.replace(activePartItemNo, "");
         return !removed.includes(suffix);
       });
-
-      // Sort logic
-      const isManual = (suffix) =>
-        /^[A-Z]$/.test(suffix) && !suffixOptions.includes(suffix);
-
-      const manualRows = updated
-        .filter((p) => isManual(p.woNo.replace(activePartItemNo, "")))
-        .sort((a, b) =>
-          a.woNo
-            .replace(activePartItemNo, "")
-            .localeCompare(b.woNo.replace(activePartItemNo, ""))
-        );
-
-      const workorderRows = updated
-        .filter((p) => !isManual(p.woNo.replace(activePartItemNo, "")))
-        .sort((a, b) =>
-          a.woNo
-            .replace(activePartItemNo, "")
-            .localeCompare(b.woNo.replace(activePartItemNo, ""))
-        );
-
       return {
         ...prev,
-        [activePartItemNo]: [...manualRows, ...workorderRows],
+        [activePartItemNo]: updatedList,
       };
     });
 
@@ -297,7 +300,7 @@ const addPart = () => {
         woNo: proc.workOrderNo,
         itemNo: itemNo,
         designer: "", // still hardcoded
-        opNo: proc.operationNumber || "",
+        opNo: proc.opNo || "",
         processName: proc.proceess || "",
         length: proc.length || "",
         width: proc.width || "",
@@ -340,6 +343,52 @@ const addPart = () => {
     fetchMaxItemNumber();
   }, []);
 
+  useEffect(() => {
+    onProjectDataChange(projectData);
+  }, [projectData, onProjectDataChange]);
+
+  useEffect(() => {
+    const selectedProject = projects.find(
+      (p) => p.projectId === selectedProjectId
+    );
+    setProjectData((prev) => ({
+      ...prev,
+      projectId: selectedProjectId || "",
+      projectName: selectedProject ? selectedProject.projectName : "",
+    }));
+  }, [selectedProjectId, projects]);
+
+  // Handler to update other project fields
+  const handleProjectFieldChange = (field, value) => {
+    setProjectData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  useEffect(() => {
+    onProcessesChange &&
+      onProcessesChange(flattenProcessesByPart(processesByPart));
+  }, [processesByPart, onProcessesChange]);
+
+  const flattenProcessesByPart = (processesByPart) => {
+    return Object.values(processesByPart).flat();
+  };
+
+  // For Dropdown employelist table
+  const [employeeList, setEmployeeList] = useState([]);
+
+  useEffect(() => {
+    axiosInstance
+      .get("/company/getEmployeeList/0/10")
+      .then((response) => {
+        setEmployeeList(response.data.employeeList || []);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch employee list:", err);
+      });
+  }, []);
+
   return (
     <Card className="mb-3 shadow-sm border-0">
       <CustomToggle
@@ -371,6 +420,10 @@ const addPart = () => {
                   onChange={(e) => {
                     const id = e.target.value;
                     setSelectedProjectId(id);
+                    setProjectData((prev) => ({
+                      ...prev,
+                      projectName: e.target.value,
+                    }));
                     console.log("Selected Project ID:", id); // Add this log to confirm
                   }}
                 >
@@ -388,7 +441,16 @@ const addPart = () => {
             <Col md={6}>
               <Form.Group controlId="projectTitle">
                 <Form.Label>Project Title</Form.Label>
-                <Form.Control type="text" placeholder="Enter Project Title" />
+                <Form.Control
+                  type="text"
+                  value={projectData.projectTitle}
+                  onChange={(e) =>
+                    setProjectData((prev) => ({
+                      ...prev,
+                      projectTitle: e.target.value,
+                    }))
+                  }
+                />
               </Form.Group>
             </Col>
           </Row>
@@ -397,7 +459,16 @@ const addPart = () => {
             <Col md={6}>
               <Form.Group controlId="kickOffDate">
                 <Form.Label>Kick-Off Date</Form.Label>
-                <Form.Control type="date" />
+                <Form.Control
+                  type="date"
+                  value={projectData.kickOffDate}
+                  onChange={(e) =>
+                    setProjectData((prev) => ({
+                      ...prev,
+                      kickOffDate: e.target.value,
+                    }))
+                  }
+                />
               </Form.Group>
             </Col>
             <Col md={6}>
@@ -405,11 +476,29 @@ const addPart = () => {
               <Row>
                 <Col>
                   <Form.Text className="text-muted">T0 : 8/1/2025</Form.Text>
-                  <Form.Control type="date" />
+                  <Form.Control
+                    type="date"
+                    value={projectData.startDate}
+                    onChange={(e) =>
+                      setProjectData((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                      }))
+                    }
+                  />
                 </Col>
                 <Col>
                   <Form.Text className="text-muted">T1 : 8/1/2025</Form.Text>
-                  <Form.Control type="date" />
+                  <Form.Control
+                    type="date"
+                    value={projectData.endDate}
+                    onChange={(e) =>
+                      setProjectData((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                      }))
+                    }
+                  />
                 </Col>
               </Row>
             </Col>
@@ -663,14 +752,20 @@ const addPart = () => {
                         </td>
                         <td>
                           <Form.Select
-                            value={proc.designer}
+                            value={proc.designer || ""}
                             onChange={(e) =>
                               updateProcess(proc.id, "designer", e.target.value)
                             }
                           >
-                            <option value="">Designer Name</option>
-                            <option value="Designer 1">Designer 1</option>
-                            <option value="Designer 2">Designer 2</option>
+                            <option value="">Select Designer</option>
+                            {employeeList.map((emp) => (
+                              <option
+                                key={emp.employeeId}
+                                value={emp.employeeId}
+                              >
+                                {emp.name}
+                              </option>
+                            ))}
                           </Form.Select>
                         </td>
                         <td>
