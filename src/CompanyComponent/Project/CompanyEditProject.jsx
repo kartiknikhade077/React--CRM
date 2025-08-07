@@ -94,7 +94,7 @@ const handleCheckboxChange = (e, emp) => {
     } catch (err) {
       toast.error("Error updating project");
       console.error(err);
-    }
+    } 
   };
 
 

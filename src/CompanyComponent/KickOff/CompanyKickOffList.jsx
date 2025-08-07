@@ -4,24 +4,42 @@ import CompanyTopbar from "../CompanyTopbar";
 import PaginationComponent from "../../Pagination/PaginationComponent";
 import Button from "react-bootstrap/Button";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 
 const KickOffList = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const handleToggle = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
+  const [kickOffList, setKickOffList] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [pageCount, setPageCount] = useState(0);
 
-  const navigate = useNavigate(); // ✅ useNavigate hook
+  const navigate = useNavigate();
 
-  const handleCreateClick = () => {
-    navigate("/KickOffCreate"); // ✅ navigate on button click
+  const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
-  
+  const handleCreateClick = () => {
+    navigate("/KickOffCreate");
+  };
+
+  // Fetch Data
+  useEffect(() => {
+    axiosInstance
+      .get(
+        `/kickoff/getAllKickOffs/${currentPage}/${pageSize}`
+      )
+      .then((res) => {
+        setKickOffList(res.data.kickOffList);
+        setPageCount(res.data.totalPages);
+      })
+      .catch((err) => {
+        setKickOffList([]);
+        setPageCount(0);
+      });
+  }, [currentPage, pageSize]);
+
   return (
     <>
       <CompanyTopbar onToggle={handleToggle} />
@@ -34,8 +52,6 @@ const KickOffList = () => {
               <div className="col-md-3">
                 <h4>Kickoff List</h4>
               </div>
-              {/* <div className="col-md-3"></div> */}
-
               <div className="col-md-6 d-flex justify-content-end">
                 <Button className="btn btn-dark" onClick={handleCreateClick}>
                   Create
@@ -45,19 +61,48 @@ const KickOffList = () => {
                 </Button>
               </div>
             </div>
+
             <div className="table-main-div">
               <table className="table table-hover align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th>NO </th>
+                    <th>NO</th>
                     <th>Customer No</th>
                     <th>Project</th>
-                    <th>part No</th>
+                    <th>Customer Name</th>
                     <th>KickoffDate</th>
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                  {kickOffList.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center">
+                        No Data Available
+                      </td>
+                    </tr>
+                  ) : (
+                    kickOffList.map((item, idx) => (
+                      <tr key={item.kickOffId}>
+                        <td>{idx + 1 + currentPage * pageSize}</td>
+                        <td>{item.customerName || "--"}</td>
+                        <td>{item.projectName || "--"}</td>
+                        <td>{item.customerName || "--"}</td>
+                        <td>{item.kickOffDate || "--"}</td>
+                        <td>
+                          <button
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() =>
+                              navigate(`/KickOffUpdate/${item.kickOffId}`)
+                            }
+                          >
+                            <i className="bi bi-pencil-square"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
               </table>
             </div>
           </div>

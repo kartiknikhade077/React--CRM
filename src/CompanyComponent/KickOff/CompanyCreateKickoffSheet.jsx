@@ -60,6 +60,8 @@ const CompanyCreateKickoffSheet = () => {
   const [customerRequirementsData, setCustomerRequirementsData] = useState([]);
   const loggedInEmployeeId = "YOUR_EMPLOYEE_ID";
 
+  const [signatureData, setSignatureData] = useState([]);
+
   const handleAccordionClick = (eventKey) => {
     setActiveKeys(
       (prev) =>
@@ -160,6 +162,9 @@ const CompanyCreateKickoffSheet = () => {
         employeeId: loggedInEmployeeId || "", // ensure you fill this with right employee id
       }));
 
+
+      
+
       if (reqPayload.length > 0) {
         await axiosInstance.post(
           "/kickoff/saveCustomerRequirements",
@@ -167,6 +172,22 @@ const CompanyCreateKickoffSheet = () => {
         );
       }
 
+
+
+      // 5th API
+
+      if (signatureData.length > 0) {
+        const signaturePayload = signatureData.map((item) => ({
+          ...item,
+          kickOffId,
+        }));
+        await axiosInstance.post(
+          "/kickoff/saveKickOffSignature",
+          signaturePayload
+        );
+      }
+
+      
       alert("Save successful!");
     } catch (error) {
       console.error("Save failed", error);
@@ -226,6 +247,7 @@ const CompanyCreateKickoffSheet = () => {
                 activeKey={activeKeys}
                 CustomToggle={CustomToggle}
                 handleAccordionClick={handleAccordionClick}
+                onSignatureChange={setSignatureData}
               />
             </Accordion>
 

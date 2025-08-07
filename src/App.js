@@ -37,6 +37,8 @@ import WorkOrderList from "./CompanyComponent/WorkOrder/WorkOrderList";
 import KickOffList from "./CompanyComponent/KickOff/CompanyKickOffList";
 import CompanyCreateKickoffSheet from "./CompanyComponent/KickOff/CompanyCreateKickoffSheet";
 import CheckListItemSetting from "./CompanyComponent/ChechlistItemSetting/CheckListItemSetting";
+
+import CompanyUpdateKickoffSheet from "./CompanyComponent/KickOff/Update/CompanyUpdateKickoffSheet";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -215,8 +217,7 @@ const App = () => {
           }
         />
 
-        
-         <Route
+        <Route
           path="/WorkOrder"
           element={
             <ProtectedRoute>
@@ -224,9 +225,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
-        
-   
 
         <Route
           path="/KickOffList"
@@ -245,6 +243,14 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/KickOffUpdate/:id"
+          element={
+            <ProtectedRoute>
+              <CompanyUpdateKickoffSheet />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<NotFound />} />
 
         <Route
@@ -255,9 +261,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
       </Routes>
-
     </Router>
   );
 };

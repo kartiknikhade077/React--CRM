@@ -9,6 +9,7 @@ const departments = [
   "Marketing",
   "Mechanical",
   "Quality Assurance",
+  
 ];
 
 const CompanyKickOffSignature = ({
@@ -16,6 +17,7 @@ const CompanyKickOffSignature = ({
   activeKey,
   CustomToggle,
   handleAccordionClick,
+  onSignatureChange,
 }) => {
   const [employees, setEmployees] = useState([]);
   // State to hold selected employeeId per department (optional)
@@ -65,6 +67,22 @@ const CompanyKickOffSignature = ({
     );
   };
 
+
+   useEffect(() => {
+     // Build array of {departments, headName}
+     const signatureArray = departments.map((dept, idx) => {
+       const selected = selectedEmployees[idx];
+       return {
+         departments: dept,
+         headName: selected ? selected.label : "",
+         // optionally: employeeId: selected ? selected.value : "",
+       };
+     });
+     // Inform parent
+     onSignatureChange && onSignatureChange(signatureArray);
+   }, [selectedEmployees, onSignatureChange]);
+
+   
   return (
     <Card className="mb-3 shadow-sm border-0">
       <CustomToggle
