@@ -37,8 +37,12 @@ import WorkOrderList from "./CompanyComponent/WorkOrder/WorkOrderList";
 import KickOffList from "./CompanyComponent/KickOff/CompanyKickOffList";
 import CompanyCreateKickoffSheet from "./CompanyComponent/KickOff/CompanyCreateKickoffSheet";
 import CheckListItemSetting from "./CompanyComponent/ChechlistItemSetting/CheckListItemSetting";
+<<<<<<< HEAD
 
 import CompanyUpdateKickoffSheet from "./CompanyComponent/KickOff/Update/CompanyUpdateKickoffSheet";
+=======
+import ChecklistSheetList from "./CompanyComponent/ChecklistSheet/ChecklistSheetList";
+>>>>>>> 4303ae519be81cf9ed3b570bf1226e420ff3c2ab
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -261,6 +265,19 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
+
+
+        <Route
+          path="/ChecklistSheet"
+          element={
+            <ProtectedRoute>
+              <ChecklistSheetList/>
+            </ProtectedRoute>
+          }
+        />
+
+
       </Routes>
     </Router>
   );

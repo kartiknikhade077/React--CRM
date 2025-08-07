@@ -1,0 +1,94 @@
+.main-container {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  font-family: sans-serif;
+}
+
+.required-label {
+  color: red;
+  margin-right: 4px;
+}
+
+/* ChecklistItems.css */
+
+/* Main container for the entire checklist block */
+.checklist-container {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    font-family: sans-serif;
+    overflow-x: auto; /* Ensures the table is responsive on small screens */
+}
+
+/* Title of the checklist */
+.checklist-title {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Main table styling */
+.checklist-table {
+    width: 100%;
+    min-width: 700px; /* Prevents the table from becoming too cramped */
+    border-collapse: separate;
+    border-spacing: 0 10px; /* Creates vertical space between rows */
+}
+
+/* Table header styles */
+.checklist-table thead {
+    background-color: #f8f9fa;
+}
+
+.checklist-table th {
+    border: 0;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Category rows (e.g., "dare", "Another Category") */
+.category-row {
+    background-color: #e9ecef;
+}
+
+.category-row td {
+    font-weight: bold;
+    padding: 0.75rem 1.25rem;
+    border: 0;
+}
+
+/* Item rows (the actual checklist items) */
+.item-row {
+    background-color: #fff;
+    /* Using a subtle border instead of shadow for better performance on large tables */
+    border: 1px solid #f0f0f0; 
+    border-radius: 5px;
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.item-row:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.item-row td {
+    vertical-align: middle;
+    border: 0;
+    padding: 0.75rem 1.25rem;
+}
+
+/* Custom class for the dropdowns to control their size */
+.check-select {
+    max-width: 150px;
+}
+
+.Checklist-sheet-list-container {
+  height: 95vh; 
+}

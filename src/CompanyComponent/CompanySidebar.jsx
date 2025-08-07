@@ -105,6 +105,13 @@ const CompanySidebar = ({ isCollapsed }) => {
           </Link>
         </li>
 
+        <li className={location.pathname === "/ChecklistSheet" ? "active" : ""}>
+          <Link to="/ChecklistSheet">
+            <FaTimesCircle />
+            {!isCollapsed && <span>Checklist-sheet</span>}
+          </Link>
+        </li>
+
         {/* Settings Dropdown */}
         <li
           className={`company-sidebar__settings-dropdown ${
