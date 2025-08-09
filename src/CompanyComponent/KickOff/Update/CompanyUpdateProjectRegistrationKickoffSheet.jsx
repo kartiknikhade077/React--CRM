@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Select from "react-select";
 import {
   Accordion,
@@ -25,7 +25,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   onPartsChange,
   onProcessesChange,
 }) => {
-  // States for managing project
+  // =================
+  // State definitions
+  // =================
   const [projectData, setProjectData] = useState({
     projectId: "",
     projectName: "",
@@ -34,20 +36,38 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     startDate: "",
     endDate: "",
   });
-  const [selectedProjectId, setSelectedProjectId] = useState("");
 
-  // Parts, processes, and active part
   const [parts, setParts] = useState([]);
   const [processesByPart, setProcessesByPart] = useState({});
   const [activePartItemNo, setActivePartItemNo] = useState(null);
-
-  // To keep track of max part number suffix for new parts
   const [latestItemNumber, setLatestItemNumber] = useState(0);
-
-  // Employee list for designer dropdowns
   const [employeeList, setEmployeeList] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedProcessesByPart, setSelectedProcessesByPart] = useState({});
 
-  // Fetch employee list once
+  const flattenProcessesByPart = (pbp) => Object.values(pbp).flat();
+  const [projectSelectOptions, setProjectSelectOptions] = useState([]);
+
+  // =========================
+  // Notify parent on changes
+  // =========================
+  useEffect(() => {
+    onProjectDataChange && onProjectDataChange(projectData);
+  }, [projectData, onProjectDataChange]);
+
+  useEffect(() => {
+    onPartsChange && onPartsChange(parts);
+  }, [parts, onPartsChange]);
+
+  useEffect(() => {
+    onProcessesChange &&
+      onProcessesChange(flattenProcessesByPart(processesByPart));
+  }, [processesByPart, onProcessesChange]);
+
+  // =========================
+  // Fetch employees once
+  // =========================
   useEffect(() => {
     axiosInstance
       .get("/company/getEmployeeList/0/10")
@@ -59,36 +79,29 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       });
   }, []);
 
-  // Initialize project data when initialProjectData changes
-  useEffect(() => {
-    if (initialProjectData && Object.keys(initialProjectData).length > 0) {
-      setProjectData({
-        projectId: initialProjectData.projectId || "",
-        projectName: initialProjectData.projectName || "",
-        projectTitle: initialProjectData.projectTitle || "",
-        kickOffDate: initialProjectData.kickOffDate || "",
-        startDate: initialProjectData.startDate || "",
-        endDate: initialProjectData.endDate || "",
-      });
-      setSelectedProjectId(initialProjectData.projectId || "");
-    }
-  }, [initialProjectData]);
+  // One-time initialization flags
+  const projectInitialized = useRef(false);
+  const partsInitialized = useRef(false);
+  const processesInitialized = useRef(false);
 
-  // Initialize parts when initialPartsData changes
+  // =========================
+  // Initialize parts (Update mode)
+  // =========================
   useEffect(() => {
-    if (Array.isArray(initialPartsData) && initialPartsData.length > 0) {
-      // Ensure images array exists on every part to avoid errors
-   const safeParts = initialPartsData.map((p) => ({
-     ...p,
-     itemNo: typeof p.itemNo === "string" ? p.itemNo : `PT-${p.itemNo || 0}`,
-     images: Array.isArray(p.images) ? p.images : [],
-   }));
-   setParts(safeParts);
-
-     
+    if (
+      !partsInitialized.current &&
+      Array.isArray(initialPartsData) &&
+      initialPartsData.length > 0
+    ) {
+      const safeParts = initialPartsData.map((p) => ({
+        ...p,
+        id: p.partId || Date.now() + Math.random(),
+        itemNo: typeof p.itemNo === "string" ? p.itemNo : `PT-${p.itemNo || 0}`,
+        images: Array.isArray(p.images) ? p.images : [],
+      }));
+      setParts(safeParts);
       setActivePartItemNo(safeParts[0]?.itemNo || null);
 
-      // Calculate max item number suffix from initial parts
       const initialNumbers = safeParts.map((part) => {
         const match = part.itemNo?.match(/PT-(\d+)/);
         return match ? parseInt(match[1], 10) : 0;
@@ -96,102 +109,142 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       setLatestItemNumber(
         initialNumbers.length ? Math.max(...initialNumbers) : 0
       );
-    } else {
-      setParts([]);
-      setActivePartItemNo(null);
-      setLatestItemNumber(0);
+
+      partsInitialized.current = true;
     }
   }, [initialPartsData]);
 
-  // Initialize processes when initialProcessesData changes
+  // =========================
+  // Initialize processes
+  // =========================
   useEffect(() => {
     if (
+      !processesInitialized.current &&
       Array.isArray(initialProcessesData) &&
       initialProcessesData.length > 0
     ) {
       const grouped = {};
       initialProcessesData.forEach((proc) => {
-        if (!grouped[proc.itemNo]) grouped[proc.itemNo] = [];
-        grouped[proc.itemNo].push(proc);
+        const itemNo =
+          typeof proc.itemNo === "string"
+            ? proc.itemNo
+            : `PT-${proc.itemNo || 0}`;
+        if (!grouped[itemNo]) grouped[itemNo] = [];
+        grouped[itemNo].push({
+          ...proc,
+          id: proc.partProcessId || Date.now() + Math.random(),
+        });
       });
       setProcessesByPart(grouped);
-    } else {
-      setProcessesByPart({});
+      processesInitialized.current = true;
     }
   }, [initialProcessesData]);
 
-  // If activePartItemNo is null but parts exist (rare case), set it to first part
+  // =========================
+  // Set active part if null
+  // =========================
   useEffect(() => {
     if (!activePartItemNo && parts.length > 0) {
       setActivePartItemNo(parts[0].itemNo);
     }
   }, [parts, activePartItemNo]);
 
-  // Fetch projects list when customerId changes
-  const [projects, setProjects] = useState([]);
-  useEffect(() => {
+  // =========================
+  // Fetch projects for the selected customer
+  // =========================
+  const fetchProjectByCust = async () => {
     if (customerId) {
-      axiosInstance
-        .get(`/project/getProjectByCustomerId/${customerId}`)
+      console.log("customer id --", customerId);
+      const response = await axiosInstance.get(
+        `/project/getProjectByCustomerId/${customerId}`
+      );
+      console.log("checking data", response.data);
 
-        .then((res) => {setProjects(res.data)}
-      
-      )
-        .catch((err) => console.error("Error fetching projects:", err));
-    } else {
-      setProjects([]);
-    }
-  }, [customerId]);
+      const data = response.data;
 
-  // Sync selectedProjectId and update projectData.projectName on project selection
+      const options = data.map((p) => ({
+        value: p.projectId,
+        label: p.projectName,
+        fullData: p,
+      }));
+      setProjectSelectOptions(options);
+    } 
+  };
+
+  // =========================
+  // Set initial react-select value in update mode
+  // =========================
+  // Update selectedProject for react-select after projects are fetched
   useEffect(() => {
-    const selectedProject = projects.find(
-      (p) => p.projectId === selectedProjectId
-    );
-    setProjectData((prev) => ({
-      ...prev,
-      projectId: selectedProjectId,
-      projectName: selectedProject ? selectedProject.projectName : "",
-    }));
-  }, [selectedProjectId, projects]);
+    if (
+      initialProjectData &&
+      initialProjectData.projectId &&
+      projects.length > 0
+    ) {
+      // Find the correct option object from your mapped options (not a new object)
 
-  // Inform parent about projectData changes
+      // Also, set projectData
+      setProjectData((prev) => ({
+        ...prev,
+        projectId: initialProjectData.projectId,
+        projectName: initialProjectData.projectName,
+        projectTitle: initialProjectData.projectTitle || "",
+        kickOffDate: initialProjectData.kickOffDate || "",
+        startDate: initialProjectData.startDate || "",
+        endDate: initialProjectData.endDate || "",
+      }));
+      
+   
+    }
+       console.log("selected project name-->", initialProjectData);
+       const options = {
+         value: initialProjectData.projectId || "",
+         label: initialProjectData.projectName || " test",
+         fullData: {},
+       };
+
+       setSelectedProject(options);
+    console.log("initial project data", initialProjectData.projectName);
  
 
-  // Utility to extract suffix from woNo
-  const getSuffix = (woNo) => woNo?.replace(activePartItemNo, "") || "";
+    
+    // Don't rely on a "one time" ref flag, always update when projects/initialProjectData change
+  }, [projects, initialProjectData]);
 
-  // Suffixes considered normal (non-manual)
-  const suffixOptions = ["UL", "CF", "LF", "TL"];
-  const isManualProcess = (suffix) =>
-    /^[A-Z]$/.test(suffix) && !suffixOptions.includes(suffix);
+  // =========================
+  // Functions used in render
+  // =========================
+  const updatePart = (id, field, value) => {
+    setParts((prev) =>
+      prev.map((part) => (part.id === id ? { ...part, [field]: value } : part))
+    );
+  };
 
-  // Processes for active part, sorted
-  const partProcesses = processesByPart[activePartItemNo] || [];
-  const manualProcesses = partProcesses
-    .filter((p) => isManualProcess(getSuffix(p.woNo)))
-    .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
-  const workorderProcesses = partProcesses
-    .filter((p) => !isManualProcess(getSuffix(p.woNo)))
-    .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
-  const sortedProcesses = [...manualProcesses, ...workorderProcesses];
+  const removePart = (id) => {
+    setParts((prev) => prev.filter((part) => part.id !== id));
+    const part = parts.find((p) => p.id === id);
+    if (part && processesByPart[part.itemNo]) {
+      setProcessesByPart((prev) => {
+        const copy = { ...prev };
+        delete copy[part.itemNo];
+        return copy;
+      });
+    }
+    if (activePartItemNo === part?.itemNo) {
+      const remaining = parts.filter((p) => p.id !== id);
+      setActivePartItemNo(remaining.length ? remaining[0].itemNo : null);
+    }
+  };
 
-  // Add a new part with incremented itemNo based on latestItemNumber
   const addPart = () => {
     const existingNumbers = parts.map((part) => {
-      // Safely check if itemNo is a string before matching
-      if (typeof part.itemNo === "string") {
-        const match = part.itemNo.match(/PT-(\d+)/);
-        return match ? parseInt(match[1], 10) : 0;
-      }
-      // If itemNo is not string, return 0 or handle appropriately
-      return 0;
+      const match =
+        typeof part.itemNo === "string" && part.itemNo.match(/PT-(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
     });
-
     const maxExisting = Math.max(latestItemNumber, ...existingNumbers);
-    const nextItemNumber = maxExisting + 1;
-    const newItemNo = `PT-${nextItemNumber}`;
-
+    const nextNumber = maxExisting + 1;
+    const newItemNo = `PT-${nextNumber}`;
     const newPart = {
       id: Date.now(),
       itemNo: newItemNo,
@@ -200,48 +253,91 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       thickness: "",
       images: [],
     };
-
     setParts((prev) => [...prev, newPart]);
     setActivePartItemNo(newItemNo);
     setProcessesByPart((prev) => ({ ...prev, [newItemNo]: [] }));
-    setLatestItemNumber(nextItemNumber);
+    setLatestItemNumber(nextNumber);
   };
 
-  // Remove a part and its processes, adjust active part if needed
-  const removePart = (id) => {
-    setParts((prev) => prev.filter((p) => p.id !== id));
-
-    const part = parts.find((p) => p.id === id);
-    if (part && part.itemNo in processesByPart) {
-      setProcessesByPart((prev) => {
-        const copy = { ...prev };
-        delete copy[part.itemNo];
-        return copy;
-      });
-    }
-
-    if (activePartItemNo === part?.itemNo && parts.length > 1) {
-      const remainingParts = parts.filter((p) => p.id !== id);
-      if (remainingParts.length > 0) {
-        setActivePartItemNo(remainingParts[0].itemNo);
-      } else {
-        setActivePartItemNo(null);
-      }
-    }
+  const updateProcess = (id, field, value) => {
+    setProcessesByPart((prev) => ({
+      ...prev,
+      [activePartItemNo]: prev[activePartItemNo].map((proc) =>
+        proc.id === id ? { ...proc, [field]: value } : proc
+      ),
+    }));
   };
 
-  // Update a specific field of a part
-  const updatePart = (id, field, value) => {
-    setParts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
-    );
+  const removeProcess = (id) => {
+    setProcessesByPart((prev) => ({
+      ...prev,
+      [activePartItemNo]: (prev[activePartItemNo] || []).filter(
+        (proc) => proc.id !== id
+      ),
+    }));
   };
 
-  // Add a process to active part with next unused manual suffix
-  const addProcess = () => {
+  const getSuffix = (woNo) => woNo?.replace(activePartItemNo, "") || "";
+  const suffixOptions = ["UL", "CF", "LF", "TL"];
+  const isManualProcess = (suffix) =>
+    /^[A-Z]$/.test(suffix) && !suffixOptions.includes(suffix);
+
+  const partProcesses = processesByPart[activePartItemNo] || [];
+  const manualProcesses = partProcesses
+    .filter((p) => isManualProcess(getSuffix(p.woNo)))
+    .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
+  const workorderProcesses = partProcesses
+    .filter((p) => !isManualProcess(getSuffix(p.woNo)))
+    .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
+
+  const sortedProcesses = [...manualProcesses, ...workorderProcesses];
+
+  const handleCustomProcessChange = (newSelected) => {
     if (!activePartItemNo) return;
-    const existingProcesses = processesByPart[activePartItemNo] || [];
+    const prevSelected = selectedProcessesByPart[activePartItemNo] || [];
+    const prevValues = prevSelected.map((p) => p.value);
+    const newValues = newSelected?.map((p) => p.value) || [];
+    const added = newValues.filter((val) => !prevValues.includes(val));
+    const removed = prevValues.filter((val) => !newValues.includes(val));
 
+    const newProcesses = added.map((suffix) => ({
+      id: Date.now() + Math.random(),
+      woNo: `${activePartItemNo}${suffix}`,
+      itemNo: activePartItemNo,
+      designer: "",
+      opNo: "",
+      processName: "",
+      length: "",
+      width: "",
+      height: "",
+      remarks: "",
+    }));
+
+    setProcessesByPart((prev) => {
+      let updatedList = prev[activePartItemNo] || [];
+      updatedList = [...updatedList, ...newProcesses];
+      updatedList = updatedList.filter((proc) => {
+        const suffix = proc.woNo.replace(activePartItemNo, "");
+        return !removed.includes(suffix);
+      });
+      return { ...prev, [activePartItemNo]: updatedList };
+    });
+
+    setSelectedProcessesByPart((prev) => ({
+      ...prev,
+      [activePartItemNo]: newSelected || [],
+    }));
+  };
+
+  const processOptions = [
+    { label: "UL", value: "UL" },
+    { label: "CF", value: "CF" },
+    { label: "LF", value: "LF" },
+    { label: "TL", value: "TL" },
+  ];
+
+  const addProcess = () => {
+    const existingProcesses = processesByPart[activePartItemNo] || [];
     const manualSuffixes = existingProcesses
       .map((p) => getSuffix(p.woNo))
       .filter(isManualProcess);
@@ -271,94 +367,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }));
   };
 
-  // Remove a process by id from current active part
-  const removeProcess = (id) => {
-    const procList = processesByPart[activePartItemNo] || [];
-    setProcessesByPart((prev) => ({
-      ...prev,
-      [activePartItemNo]: procList.filter((p) => p.id !== id),
-    }));
-  };
-
-  // Update a specific field of a process by id in active part
-  const updateProcess = (id, field, value) => {
-    setProcessesByPart((prev) => ({
-      ...prev,
-      [activePartItemNo]: prev[activePartItemNo].map((p) =>
-        p.id === id ? { ...p, [field]: value } : p
-      ),
-    }));
-  };
-
-  // Sync selected multi processes per active part for Select control
-  const [selectedProcessesByPart, setSelectedProcessesByPart] = useState({});
-
-  useEffect(() => {
-    const selected = {};
-    Object.entries(processesByPart).forEach(([itemNo, procs]) => {
-      selected[itemNo] = procs.map((p) => ({
-        label: getSuffix(p.woNo),
-        value: getSuffix(p.woNo),
-      }));
-    });
-    setSelectedProcessesByPart(selected);
-  }, [processesByPart]);
-
-  // Handle multi-select change for workorder suffixes of active part
-  const handleCustomProcessChange = (newSelected) => {
-    if (!activePartItemNo) return;
-    const prevSelected = selectedProcessesByPart[activePartItemNo] || [];
-    const prevValues = prevSelected.map((p) => p.value);
-    const newValues = newSelected?.map((p) => p.value) || [];
-
-    const added = newValues.filter((val) => !prevValues.includes(val));
-    const removed = prevValues.filter((val) => !newValues.includes(val));
-
-    const newProcesses = added.map((suffix) => ({
-      id: Date.now() + Math.random(),
-      woNo: `${activePartItemNo}${suffix}`,
-      itemNo: activePartItemNo,
-      designer: "",
-      opNo: "",
-      processName: "",
-      length: "",
-      width: "",
-      height: "",
-      remarks: "",
-    }));
-
-    setProcessesByPart((prev) => {
-      let updatedList = prev[activePartItemNo] || [];
-      updatedList = [...updatedList, ...newProcesses];
-      updatedList = updatedList.filter((proc) => {
-        const suffix = proc.woNo.replace(activePartItemNo, "");
-        return !removed.includes(suffix);
-      });
-      return {
-        ...prev,
-        [activePartItemNo]: updatedList,
-      };
-    });
-
-    setSelectedProcessesByPart((prev) => ({
-      ...prev,
-      [activePartItemNo]: newSelected || [],
-    }));
-  };
-
-  // Handle project selection dropdown change
-  const handleProjectSelect = (projectId) => {
-    setSelectedProjectId(projectId);
-  };
-
-
-  const processOptions = [
-    { label: "UL", value: "UL" },
-    { label: "CF", value: "CF" },
-    { label: "LF", value: "LF" },
-    { label: "TL", value: "TL" },
-  ];
-
   return (
     <Card className="mb-3 shadow-sm border-0">
       <CustomToggle
@@ -368,6 +376,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       >
         Project Registration/Enquiry
       </CustomToggle>
+
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
           {/* Project Details Section */}
@@ -384,32 +393,16 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 <Form.Label>
                   Enter Project Name <span className="text-danger">*</span>
                 </Form.Label>
-                <Form.Select
-                  value={selectedProjectId}
-                  onChange={(e) => {
-                    const projectId = e.target.value;
-                    setSelectedProjectId(projectId);
-                    const selectedProject = projects.find(
-                      (p) => p.projectId === projectId
-                    );
-                    setProjectData((prev) => ({
-                      ...prev,
-                      projectId: projectId,
-                      projectName: selectedProject
-                        ? selectedProject.projectName
-                        : "",
-                    }));
+                <Select
+                  options={projectSelectOptions}
+                  value={selectedProject} // if null, shows placeholder. If set, shows "Project Name"
+                  onChange={(option) => {
+                    setSelectedProject(option);
                   }}
-                >
-                  <option disabled value="">
-                    Select Project
-                  </option>
-                  {projects.map((project) => (
-                    <option key={project.projectId} value={project.projectId}>
-                      {project.projectName}
-                    </option>
-                  ))}
-                </Form.Select>
+                  placeholder="Select Project..."
+                  isClearable
+                  onMenuOpen={fetchProjectByCust}
+                />
               </Form.Group>
             </Col>
             <Col md={6}>
@@ -478,7 +471,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             </Col>
           </Row>
 
-          {/* Parts Section */}
+          {/* Part Details */}
           <h5
             className="mb-3"
             style={{ borderLeft: "4px solid #1a3c8c", paddingLeft: "12px" }}
@@ -509,7 +502,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 </tr>
               ) : (
                 parts.map((part) => (
-                  <tr key={part.id}>
+                  <tr key={part.id || part.partId}>
                     <td>
                       <strong>{part.itemNo}</strong>
                     </td>
@@ -551,97 +544,56 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           gap: "10px",
                         }}
                       >
-                        {part.images.map((img, idx) =>
-                          typeof img === "string" ? (
-                            <div
-                              key={idx}
+                        {part.images.map((img, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              position: "relative",
+                              width: "100px",
+                              height: "100px",
+                              border: "1px solid #ddd",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <img
+                              src={
+                                typeof img === "string"
+                                  ? img
+                                  : URL.createObjectURL(img)
+                              }
+                              alt={`img-${idx}`}
                               style={{
-                                position: "relative",
-                                width: "100px",
-                                height: "100px",
-                                border: "1px solid #ddd",
-                                borderRadius: "4px",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updatedImages = [...part.images];
+                                updatedImages.splice(idx, 1);
+                                updatePart(part.id, "images", updatedImages);
+                              }}
+                              style={{
+                                position: "absolute",
+                                top: "-8px",
+                                right: "-8px",
+                                background: "red",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "50%",
+                                width: "24px",
+                                height: "24px",
+                                cursor: "pointer",
+                                fontSize: "14px",
                               }}
                             >
-                              <img
-                                src={img}
-                                alt={`existing-${idx}`}
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                              <button
-                                onClick={() => {
-                                  const updatedImages = [...part.images];
-                                  updatedImages.splice(idx, 1);
-                                  updatePart(part.id, "images", updatedImages);
-                                }}
-                                style={{
-                                  position: "absolute",
-                                  top: "-8px",
-                                  right: "-8px",
-                                  background: "red",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "50%",
-                                  width: "24px",
-                                  height: "24px",
-                                  cursor: "pointer",
-                                  fontSize: "14px",
-                                }}
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ) : (
-                            <div
-                              key={idx}
-                              style={{
-                                position: "relative",
-                                width: "100px",
-                                height: "100px",
-                                border: "1px solid #ddd",
-                                borderRadius: "4px",
-                              }}
-                            >
-                              <img
-                                src={URL.createObjectURL(img)}
-                                alt={`preview-${idx}`}
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                              <button
-                                onClick={() => {
-                                  const updatedImages = [...part.images];
-                                  updatedImages.splice(idx, 1);
-                                  updatePart(part.id, "images", updatedImages);
-                                }}
-                                style={{
-                                  position: "absolute",
-                                  top: "-8px",
-                                  right: "-8px",
-                                  background: "red",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "50%",
-                                  width: "24px",
-                                  height: "24px",
-                                  cursor: "pointer",
-                                  fontSize: "14px",
-                                }}
-                              >
-                                ×
-                              </button>
-                            </div>
-                          )
-                        )}
-
-                        {/* Add More Images Button */}
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {/* Add More Images */}
                         <div
                           className="d-flex align-items-center justify-content-center"
                           style={{
@@ -668,8 +620,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             </div>
                           </div>
                         </div>
-
-                        {/* Hidden Input for Multiple Images */}
                         <input
                           type="file"
                           id={`multi-image-upload-${part.id}`}
@@ -707,6 +657,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             </Button>
           </div>
 
+          {/* Part Process */}
           <h5
             className="mb-3"
             style={{ borderLeft: "4px solid #1a3c8c", paddingLeft: "12px" }}
@@ -714,14 +665,13 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             Part Process
           </h5>
 
-          {/* Display part tabs */}
-          {Array.isArray(parts) && parts.length > 0 && (
+          {parts.length > 0 && (
             <div>
               <div className="d-flex mb-2">
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 cursor-pointer ${
+                    className={`px-3 py-2 me-2 ${
                       activePartItemNo === part.itemNo
                         ? "bg-primary text-white"
                         : "bg-light"
@@ -734,7 +684,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 ))}
               </div>
 
-              {/* Process table */}
+              {/* Processes Table */}
               <Table bordered responsive>
                 <thead style={{ backgroundColor: "#002855", color: "white" }}>
                   <tr>
@@ -787,23 +737,29 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             }
                           >
                             <option value="">Select</option>
-                            <option value="05">05</option>
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="30">30</option>
-                            <option value="40">40</option>
-                            <option value="50">50</option>
-                            <option value="60">60</option>
-                            <option value="70">70</option>
-                            <option value="80">80</option>
-                            <option value="90">90</option>
-                            <option value="100">100</option>
-                            <option value="120">120</option>
-                            <option value="140">140</option>
-                            <option value="160">160</option>
-                            <option value="180">180</option>
-                            <option value="200">200</option>
-                            <option value="XX">XX</option>
+                            {[
+                              "05",
+                              "10",
+                              "20",
+                              "30",
+                              "40",
+                              "50",
+                              "60",
+                              "70",
+                              "80",
+                              "90",
+                              "100",
+                              "120",
+                              "140",
+                              "160",
+                              "180",
+                              "200",
+                              "XX",
+                            ].map((val) => (
+                              <option key={val} value={val}>
+                                {val}
+                              </option>
+                            ))}
                           </Form.Select>
                         </td>
                         <td>
@@ -871,16 +827,14 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 </tbody>
               </Table>
 
-              {/* Multi select for workorder suffix */}
+              {/* Multi-select for Workorder Process */}
               {activePartItemNo && (
                 <div className="d-flex align-items-center justify-content-between gap-2 mb-3">
                   <strong className="me-2">Workorder Process</strong>
                   <Select
                     isMulti
                     isClearable
-                    options={
-                      processOptions
-                    } /* <-- uncomment this if you have processOptions defined */
+                    options={processOptions}
                     value={selectedProcessesByPart[activePartItemNo] || []}
                     onChange={handleCustomProcessChange}
                     placeholder="Select from list..."

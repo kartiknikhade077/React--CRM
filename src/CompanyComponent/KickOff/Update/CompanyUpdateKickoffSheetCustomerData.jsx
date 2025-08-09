@@ -14,6 +14,8 @@ const CompanyUpdateKickoffSheetCustomerData = ({
 }) => {
   const [customerList, setCustomerList] = useState([]);
 
+  const [selectedCustomer, setSelectedCustomer] = useState();
+
   const [formData, setFormData] = useState({
     customerid: "",
     customerName: "",
@@ -24,36 +26,25 @@ const CompanyUpdateKickoffSheetCustomerData = ({
     shippingAddress: "",
   });
 
-  // Fetch customer list and normalize keys on mount
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const response = await axiosInstance.get("/customer/getCustomerList");
-    const normalized = (response.data || []).map((c) => {
-      const customerid = String(c.companyId || c.customerid || c.id);
-      const label = c.companyName || c.customerName || "";
+  const fetchCustomers = async () => {
+    try {
+      const response = await axiosInstance.get("/customer/getCustomerList");
+      const data = response.data;
 
-      return {
-        value: customerid,
-        label: label,
-        customerid,
-        companyName: c.contactPersonName || "",
-        contactPerson: c.contactPersonName || "",
-        phoneNumber: c.mobileNumber || "",
-        website: c.companyWebsite || "",
-        billingAddress: c.billingAddress || "",
-        shippingAddress: c.shippingAddress || "",
-      };
-    });
-    setCustomerList(normalized);
+      console.log("checking data", data);
 
-      } catch (error) {
-        console.error("Failed to fetch customers:", error);
-        setCustomerList([]);
-      }
-    };
-    fetchCustomers();
-  }, []);
+      const options = data.map((c) => ({
+        value: c.companyId,
+        label: c.companyName,
+        fullData: c,
+      }));
+
+      setCustomerList(options);
+    } catch (error) {
+      console.error("Failed to fetch customers:", error);
+      setCustomerList([]);
+    }
+  };
 
   // Set formData after customer list load, using initialData
   useEffect(() => {
@@ -67,6 +58,14 @@ const CompanyUpdateKickoffSheetCustomerData = ({
         billingAddress: initialData.billingAddress || "",
         shippingAddress: initialData.shippingAddress || "",
       });
+
+
+      const options = {
+        value: initialData.customerid || "",
+        label: initialData.companyName || "",
+        fullData: {},
+      };
+      setSelectedCustomer(options);
     }
   }, [initialData]);
 
@@ -77,45 +76,35 @@ const CompanyUpdateKickoffSheetCustomerData = ({
     }
   }, [formData.customerid, setCustomerId]);
 
-  // Find currently selected customer option for react-select value prop
-const selectedOption =
-  customerList.find((c) => String(c.value) === String(formData.customerid)) ||
-  null;
-
-
   // Handler when option is selected in react-select
-const handleSelectChange = (selected) => {
-  if (!selected) {
+
+  const handleSelectChange = (selected) => {
+    setSelectedCustomer(selected); // ✅ Update selectedCustomer state
+
+    if (!selected) {
+      setFormData({
+        customerid: "",
+        customerName: "",
+        contactPerson: "",
+        phoneNumber: "",
+        website: "",
+        billingAddress: "",
+        shippingAddress: "",
+      });
+      return;
+    }
+
     setFormData({
       ...formData,
-      customerid: "",
-      customerName: "",
-      contactPerson: "",
-      phoneNumber: "",
-      website: "",
-      billingAddress: "",
-      shippingAddress: "",
+      customerid: selected.value,
+      customerName: selected.label,
+      contactPerson: selected.fullData?.contactPerson || "",
+      phoneNumber: selected.fullData?.phoneNumber || "",
+      website: selected.fullData?.website || "",
+      billingAddress: selected.fullData?.billingAddress || "",
+      shippingAddress: selected.fullData?.shippingAddress || "",
     });
-    return;
-  }
-
-  setFormData({
-    ...formData, // Keep any other unchanged fields
-    customerid: selected.value, // ✅ Use `value` instead of `selected.customerid`
-    customerName: selected.label, // ✅ Or selected.companyName if preferred
-    contactPerson: selected.contactPerson,
-    phoneNumber: selected.phoneNumber,
-    website: selected.website,
-    billingAddress: selected.billingAddress,
-    shippingAddress: selected.shippingAddress,
-  });
-};
-
-
-
-
-
-
+  };
 
   return (
     <Card className="mb-3 shadow-sm border-0">
@@ -136,15 +125,11 @@ const handleSelectChange = (selected) => {
                 </Form.Label>
                 <Select
                   options={customerList}
-                  value={selectedOption}
+                  value={selectedCustomer}
                   onChange={handleSelectChange}
                   placeholder="Select Customer"
+                  onMenuOpen={fetchCustomers}
                   isClearable
-                  menuPortalTarget={document.body}
-                  styles={{
-                    control: (base) => ({ ...base, textAlign: "left" }),
-                    menuPortal: (base) => ({ ...base, zIndex: 9999 }), // 👈 Ensure dropdown is on top
-                  }}
                 />
               </Form.Group>
             </Col>

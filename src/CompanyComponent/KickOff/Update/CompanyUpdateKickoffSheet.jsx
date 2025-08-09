@@ -40,7 +40,6 @@ const CustomToggle = ({ children, eventKey, activeKey, onClick }) => {
   );
 };
 
-
 const CompanyUpdateKickoffSheet = () => {
   const { id } = useParams(); // kickoff id from route
   const navigate = useNavigate();
@@ -49,10 +48,10 @@ const CompanyUpdateKickoffSheet = () => {
   const [activeKeys, setActiveKeys] = useState(["0", "1", "2", "3"]);
   const [loading, setLoading] = useState(true);
 
-  // State holders for all child data (same structure as create)
+  // State for all child parts of the form
   const [customerId, setCustomerId] = useState(null);
-  const [customerData, setCustomerData] = useState(null);
-  const [projectData, setProjectData] = useState(null);
+  const [customerData, setCustomerData] = useState({});
+  const [projectData, setProjectData] = useState({});
   const [partsData, setPartsData] = useState([]);
   const [processesData, setProcessesData] = useState([]);
   const [customerRequirementsData, setCustomerRequirementsData] = useState([]);
@@ -60,7 +59,7 @@ const CompanyUpdateKickoffSheet = () => {
 
   const [employeeList, setEmployeeList] = useState([]);
 
-  // Accordion open/close toggle
+  // Accordion toggle
   const handleAccordionClick = (eventKey) => {
     setActiveKeys((prev) =>
       prev.includes(eventKey)
@@ -69,63 +68,70 @@ const CompanyUpdateKickoffSheet = () => {
     );
   };
 
-  // Fetch kickoff data & employees on mount
-useEffect(() => {
-  const fetchKickoffData = async () => {
-    try {
-      setLoading(true);
-      const { data } = await axiosInstance.get(`/kickoff/getKickOffInfo/${id}`);
+  // Fetch kickoff data & employee list on mount
+  useEffect(() => {
+    const fetchKickoffData = async () => {
+      try {
+        setLoading(true);
+        const { data } = await axiosInstance.get(
+          `/kickoff/getKickOffInfo/${id}`
+        );
 
-      // Set customer data from kickOffInfo
-      const kickoffInfo = data.kickOffInfo || {};
+        // Populate customer data
+        const kickoffInfo = data.kickOffInfo || {};
+        setCustomerData({
+          customerId: kickoffInfo.customerId || "",
+          companyName: kickoffInfo.customerName || "",
+          contactPerson: kickoffInfo.contactPersonName || "",
+          phoneNumber: kickoffInfo.mobileNumber || "",
+          website: kickoffInfo.companyWebsite || "",
+          billingAddress: kickoffInfo.billingAddress || "",
+          shippingAddress: kickoffInfo.shippingAddress || "",
+        });
+        setCustomerId(kickoffInfo.customerId || "");
 
-      setCustomerData({
-        customerid: kickoffInfo.companyId || "",
-        companyName: kickoffInfo.customerName || "",
-        contactPerson: kickoffInfo.contactPersonName || "",
-        phoneNumber: kickoffInfo.mobileNumber || "",
-        website: kickoffInfo.companyWebsite || "",
-        billingAddress: kickoffInfo.billingAddress || "",
-        shippingAddress: kickoffInfo.shippingAddress || "",
-      });
-      setCustomerId(kickoffInfo.companyId || "");
+        // Project data
+        setProjectData({
+          projectId: kickoffInfo.projectId || "",
+          projectName: kickoffInfo.projectName || "",
+          projectTitle: kickoffInfo.projectTitle || "",
+          kickOffDate: kickoffInfo.kickOffDate || "",
+          startDate: kickoffInfo.startDate || "",
+          endDate: kickoffInfo.endDate || "",
+        });
 
-      // Set project data from kickOffInfo
-      setProjectData({
-        projectId: kickoffInfo.projectId || "",
-        projectName: kickoffInfo.projectName || "",
-        projectTitle: kickoffInfo.projectTitle || "",
-        kickOffDate: kickoffInfo.kickOffDate || "",
-        startDate: kickoffInfo.startDate || "",
-        endDate: kickoffInfo.endDate || "",
-      });
+        // Parts + processes
+        setPartsData(data.kickOffItemsList || []);
+        setProcessesData(data.itemProcessList || []);
 
-      // Parts data from kickOffItemsList
-      setPartsData(data.kickOffItemsList || []);
+        // Requirements + signatures
+        setCustomerRequirementsData(data.requirementList || []);
+        setSignatureData(data.listofSingnature || []);
 
-      // Process data from itemProcessList
-      setProcessesData(data.itemProcessList || []);
+        // Fetch employee list
+        try {
+          const empRes = await axiosInstance.get(
+            "/company/getEmployeeList/0/10"
+          );
+          setEmployeeList(empRes.data.employeeList || []);
+        } catch (err) {
+          console.error("Failed to fetch employee list:", err);
+        }
+      } catch (error) {
+        console.error("Failed to fetch kickoff data:", error);
+        alert("Failed to load kickoff details, redirecting to list.");
+        navigate("/KickOffList");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      // Customer requirements
-      setCustomerRequirementsData(data.requirementList || []);
-
-      // Signatures
-      setSignatureData(data.listofSingnature || []);
-    } catch (error) {
-      console.error("Failed to fetch kickoff data:", error);
-      alert("Failed to load kickoff details, redirecting to list.");
-      navigate("/KickOffList");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchKickoffData();
-}, [id, navigate]);
+    fetchKickoffData();
+  }, [id, navigate]);
 
   const handleSave = async () => {
     try {
-      // Build update payload similarly to create, but include IDs to update existing records
+      // 1️⃣ Update kickoff info
       const payload = {
         kickOffId: id,
         customerName: customerData?.companyName || "",
@@ -134,7 +140,6 @@ useEffect(() => {
         companyWebsite: customerData?.website || "",
         billingAddress: customerData?.billingAddress || "",
         shippingAddress: customerData?.shippingAddress || "",
-
         projectId: projectData?.projectId || "",
         projectName: projectData?.projectName || "",
         projectTitle: projectData?.projectTitle || "",
@@ -144,14 +149,14 @@ useEffect(() => {
       };
 
       console.log("Payload to update kickoff info:", payload);
-      await axiosInstance.put("/kickoff/updateKickOffInfo", payload); // Use update API
+      await axiosInstance.put("/kickoff/updateKickOffInfo", payload);
 
-      // Update partsData - include part IDs for updating existing parts
+      // 2️⃣ Update Parts
       const partItems = await Promise.all(
         partsData.map(async (part, index) => ({
           partId: part.partId || null,
           kickOffId: id,
-          itemNo: index + 1,
+          itemNo: typeof part.itemNo === "string" ? part.itemNo : index + 1, // preserve string PT-XXX if exists
           partName: part.partName || "",
           material: part.material || "",
           thickness: part.thickness || "",
@@ -165,7 +170,7 @@ useEffect(() => {
 
       await axiosInstance.put("/kickoff/updateKickOffItems", partItems);
 
-      // Update processesData similarly with IDs
+      // 3️⃣ Update Processes
       const processesPayload = processesData.map((proc) => {
         const emp = employeeList.find((e) => e.employeeId === proc.designer);
         const itemNoInt =
@@ -193,18 +198,19 @@ useEffect(() => {
         processesPayload
       );
 
-      // Update customer requirements
+      // 4️⃣ Update Requirements
       const reqPayload = customerRequirementsData.map((item) => ({
         ...item,
         kickOffId: id,
         companyId: customerId || "",
       }));
+
       await axiosInstance.put(
         "/kickoff/updateCustomerRequirements",
         reqPayload
       );
 
-      // Update signatures
+      // 5️⃣ Update Signatures
       if (signatureData.length > 0) {
         const signaturePayload = signatureData.map((sig) => ({
           ...sig,
@@ -217,7 +223,7 @@ useEffect(() => {
       }
 
       alert("Update successful!");
-      navigate("/KickOffList"); // optionally redirect after update
+      navigate("/KickOffList");
     } catch (error) {
       console.error("Update failed", error);
       alert("Failed to update kickoff data.");
@@ -226,6 +232,7 @@ useEffect(() => {
 
   if (loading) return <div>Loading kickoff details...</div>;
 
+  
   return (
     <>
       <CompanyTopbar onToggle={() => setIsCollapsed(!isCollapsed)} />
@@ -241,11 +248,11 @@ useEffect(() => {
                   CustomToggle={CustomToggle}
                   handleAccordionClick={handleAccordionClick}
                   setCustomerId={setCustomerId}
-              
                   initialData={customerData}
                 />
               </Accordion.Item>
-               <CompanyUpdateProjectRegistrationKickoffSheet
+
+              <CompanyUpdateProjectRegistrationKickoffSheet
                 eventKey="1"
                 activeKey={activeKeys}
                 CustomToggle={CustomToggle}
@@ -253,10 +260,12 @@ useEffect(() => {
                 customerId={customerId}
                 initialProjectData={projectData}
                 initialPartsData={partsData}
+                initialProcessesData={processesData}
                 onProjectDataChange={setProjectData}
                 onPartsChange={setPartsData}
                 onProcessesChange={setProcessesData}
-              /> *
+              />
+
               <CompanyUpdateKickOffCustomerRequirements
                 eventKey="2"
                 activeKey={activeKeys}
@@ -267,14 +276,15 @@ useEffect(() => {
                 employeeId={"YOUR_EMPLOYEE_ID"}
                 initialRequirements={customerRequirementsData}
               />
-                 <CompanyUpdateKickOffSignature
+
+              <CompanyUpdateKickOffSignature
                 eventKey="3"
                 activeKey={activeKeys}
                 CustomToggle={CustomToggle}
                 handleAccordionClick={handleAccordionClick}
                 onSignatureChange={setSignatureData}
                 initialSignatureData={signatureData}
-              /> 
+              />
             </Accordion>
 
             <div className="d-flex justify-content-end gap-2 mt-4 p-3 bg-white rounded-bottom shadow-sm">
@@ -297,7 +307,7 @@ useEffect(() => {
 
 export default CompanyUpdateKickoffSheet;
 
-// Helper function copied from create (remember to define or import in this file)
+// Helper function
 const fileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
