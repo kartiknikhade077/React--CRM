@@ -10,12 +10,14 @@ const CompanyUpdateKickoffSheetCustomerData = ({
   handleAccordionClick,
   formData,
   setFormData,
-  id // <-- pass from parent for kickOffId
+  id, // <-- pass from parent for kickOffId
+  onProjectSelect,
 }) => {
   const [customerList, setCustomerList] = useState([]);
   const [projectSelectOptions, setProjectSelectOptions] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [customers, setCustomers] = useState([]);
 
   // Fetch customers
   useEffect(() => {
@@ -25,25 +27,41 @@ const CompanyUpdateKickoffSheetCustomerData = ({
         if (Array.isArray(res.data)) {
           setCustomerList(res.data);
 
-          if (formData.customerid) {
-            const cust = res.data.find(c => c.companyId === formData.customerid);
-            if (cust) {
-              const sel = { value: cust.companyId, label: cust.companyName || cust.customerName };
-              setSelectedCustomer(sel);
+          console.log("checking cust data", res.data);
+          setCustomers(res.data);
 
-              // Pass projectId for edit-mode preselection
-              fetchProjectsByCustomerId(cust.companyId, formData.projectId);
+          console.log("Form data ",formData);
+
+          if (formData.companyId) {
+            const cust = res.data.find(
+              (c) => c.id === formData.savedcusomerid
+            );
+            if (cust) {
+              const sel = {
+                value: cust.companyId, // for dropdown display
+                label: cust.companyName,
+                customerId: cust.id, // ✅ backend customerId
+              };
+
+              setSelectedCustomer(sel);
+              console.log("getcustomerid::::::", sel);
+
+              // Use backend customerId for API
+              fetchProjectsByCustomerId(cust.id, formData.projectId);
             }
           }
         }
       })
-      .catch(err => console.error("Error fetching customers:", err));
-  }, [formData.customerid, formData.projectId]);
+      .catch((err) => console.error("Error fetching customers:", err));
+  }, []);
 
   // Fetch projects per customer
   const fetchProjectsByCustomerId = (customerId, preselectProjectId = null) => {
+    if (!customerId) return;
+    console.log("customerId =", customerId);
+
     axiosInstance
-      .get(`/project/getProjectByCustomerId/${customerId}`)
+      .get(`/project/getProjectByCustomerId/${customerId}`) // ✅ using arg, not stale state
       .then((res) => {
         let projects = Array.isArray(res.data?.data) ? res.data.data : res.data;
         if (!Array.isArray(projects)) projects = [];
@@ -51,56 +69,81 @@ const CompanyUpdateKickoffSheetCustomerData = ({
         const projectOptions = projects.map((project) => ({
           value: project.projectId,
           label: project.projectName,
-          fullData: project
+          fullData: project,
         }));
         setProjectSelectOptions(projectOptions);
 
-        // Handle preselect for both new/edit
         if (preselectProjectId) {
-          const selected = projectOptions.find(p => p.value === preselectProjectId);
+          const selected = projectOptions.find(
+            (p) => p.value === preselectProjectId
+          );
           setSelectedProject(selected || null);
         } else {
           setSelectedProject(null);
         }
       })
-      .catch(err => console.error("Error fetching projects:", err));
+      .catch((err) => console.error("Error fetching projects:", err));
   };
 
   // Handle customer change
   const handleCustomerChange = (selectedOption) => {
     setSelectedCustomer(selectedOption);
-    setFormData((prev) => ({
-      ...prev,
-      customerid: selectedOption?.value || "",
-      customerName: selectedOption?.label || "",
-      // Reset project fields
-      projectId: "",
-      projectName: "",
-      projectTitle: "",
-      kickOffDate: "",
-      startDate: "",
-      endDate: ""
-    }));
+
+    const custData = selectedOption;
+
+    console.log("customer selected data", custData.customerId);
+
+    const selectedCustomer = customers.find(
+      (c) => c.id === custData.customerId
+    );
+
+    // Set the company name to project details
+    if (selectedCustomer) {
+      //  setProjectDetails(selectedCustomer.companyName);
+      console.log(selectedCustomer.companyName);
+
+      setFormData((prev) => ({
+        ...prev,
+        companyId: selectedCustomer?.companyId || "",
+        savedcusomerid: selectedCustomer?.id || "", // backend ID for /project API
+        customerName: selectedCustomer?.companyName || "", // Company name
+        contactPerson: selectedCustomer?.customerName || "", // Contact person
+        phoneNumber: selectedCustomer?.phoneNumber || "",
+        website: selectedCustomer?.website || "",
+        billingAddress: selectedCustomer?.billingAddress || "",
+        shippingAddress: selectedCustomer?.shippingAddress || "",
+        // Reset project info
+        projectId: "",
+        projectName: "",
+        projectTitle: "",
+        kickOffDate: "",
+        startDate: "",
+        endDate: "",
+      }));
+    }
     setSelectedProject(null);
 
-    if (selectedOption?.value) {
-      fetchProjectsByCustomerId(selectedOption.value);
+    if (custData?.customerId) {
+      fetchProjectsByCustomerId(selectedCustomer.id); // ✅ always fetch
     }
   };
 
   // Handle project change
   const handleProjectChange = (selectedOption) => {
+    const projectId = selectedOption?.fullData?.projectId || "";
     setSelectedProject(selectedOption);
     const project = selectedOption?.fullData || {};
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       projectId: project.projectId || "",
       projectName: project.projectName || "",
       projectTitle: project.projectTitle || "",
       kickOffDate: project.kickOffDate || "",
       startDate: project.startDate || "",
-      endDate: project.endDate || ""
+      endDate: project.endDate || "",
     }));
+
+    onProjectSelect(projectId);
   };
 
   // --- ✅ Independent SAVE Function for this child ---
@@ -120,7 +163,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
       kickOffDate: formData.kickOffDate,
       startDate: formData.startDate,
       endDate: formData.endDate,
-      createdDateTime: new Date().toISOString() // or the original if you keep it
+      createdDateTime: new Date().toISOString(), // or the original if you keep it
     };
 
     try {
@@ -154,7 +197,8 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                     onChange={handleCustomerChange}
                     options={customerList.map((cust) => ({
                       value: cust.companyId,
-                      label: cust.companyName || cust.customerName,
+                      label: cust.companyName,
+                      customerId: cust.id,
                     }))}
                     placeholder="Select customer..."
                   />

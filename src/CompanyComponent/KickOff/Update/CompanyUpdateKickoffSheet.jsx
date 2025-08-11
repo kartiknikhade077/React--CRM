@@ -46,9 +46,19 @@ const CompanyUpdateKickoffSheet = () => {
   const [activeKeys, setActiveKeys] = useState(["0", "1", "2", "3"]);
   const [loading, setLoading] = useState(true);
 
+
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+
+  const handleProjectSelect = (projectId) => {
+    setSelectedProjectId(projectId); // store separately
+  };
+
+
+
+
   // Single formData combining customer + project
   const [formData, setFormData] = useState({
-    customerid: "",
+    companyId: "",
     customerName: "",
     contactPerson: "",
     phoneNumber: "",
@@ -92,7 +102,7 @@ const CompanyUpdateKickoffSheet = () => {
         setFormData({
           // customerId
 
-          customerid: kickoffInfo.companyId || "",
+          companyId: kickoffInfo.companyId || "",
           customerName: kickoffInfo.customerName || "",
           contactPerson: kickoffInfo.contactPersonName || "",
           phoneNumber: kickoffInfo.mobileNumber || "",
@@ -106,7 +116,6 @@ const CompanyUpdateKickoffSheet = () => {
           kickOffDate: kickoffInfo.kickOffDate || "",
           startDate: kickoffInfo.startDate || "",
           endDate: kickoffInfo.endDate || "",
-
         });
 
 
@@ -135,94 +144,6 @@ const CompanyUpdateKickoffSheet = () => {
     fetchKickoffData();
   }, [id, navigate]);
 
-  // const handleSave = async () => {
-  //   try {
-  //     const payload = {
-  //       kickOffId: id,
-  //       customerName: formData.customerName,
-  //       contactPersonName: formData.contactPerson,
-  //       mobileNumber: formData.phoneNumber,
-  //       companyWebsite: formData.website,
-  //       billingAddress: formData.billingAddress,
-  //       shippingAddress: formData.shippingAddress,
-  //       projectId: formData.projectId,
-  //       projectName: formData.projectName,
-  //       projectTitle: formData.projectTitle,
-  //       kickOffDate: formData.kickOffDate,
-  //       startDate: formData.startDate,
-  //       endDate: formData.endDate,
-  //     };
-
-  //     await axiosInstance.put("/kickoff/updateKickOffInfo", payload);
-
-  //     const partItems = await Promise.all(
-  //       partsData.map(async (part, index) => ({
-  //         partId: part.partId || null,
-  //         kickOffId: id,
-  //         itemNo: typeof part.itemNo === "string" ? part.itemNo : index + 1,
-  //         partName: part.partName || "",
-  //         material: part.material || "",
-  //         thickness: part.thickness || "",
-  //         imageList: await Promise.all(
-  //           (part.images || []).map((img) =>
-  //             typeof img === "string" ? img : fileToBase64(img)
-  //           )
-  //         ),
-  //       }))
-  //     );
-  //     await axiosInstance.put("/kickoff/updateKickOffItems", partItems);
-
-  //     const processesPayload = processesData.map((proc) => {
-  //       const emp = employeeList.find((e) => e.employeeId === proc.designer);
-  //       const itemNoInt =
-  //         typeof proc.itemNo === "string"
-  //           ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
-  //           : proc.itemNo;
-  //       return {
-  //         partProcessId: proc.partProcessId || null,
-  //         kickOffId: id,
-  //         itemNo: itemNoInt,
-  //         workOrderNumber: proc.woNo || proc.workOrderNumber || "",
-  //         designerName: emp ? emp.name : "",
-  //         employeeId: proc.employeeId || proc.designer || "",
-  //         operationNumber: proc.opNo || "",
-  //         process: proc.processName || proc.process || "",
-  //         length: parseFloat(proc.length) || 0,
-  //         height: parseFloat(proc.height) || 0,
-  //         width: parseFloat(proc.width) || 0,
-  //         remarks: proc.remarks || "",
-  //       };
-  //     });
-  //     await axiosInstance.put(
-  //       "/kickoff/updateKickOffItemsProcess",
-  //       processesPayload
-  //     );
-
-  //     const reqPayload = customerRequirementsData.map((item) => ({
-  //       ...item,
-  //       kickOffId: id,
-  //       companyId: formData.customerid || "",
-  //     }));
-  //     await axiosInstance.put("/kickoff/updateCustomerRequirements", reqPayload);
-
-  //     if (signatureData.length > 0) {
-  //       const signaturePayload = signatureData.map((sig) => ({
-  //         ...sig,
-  //         kickOffId: id,
-  //       }));
-  //       await axiosInstance.put(
-  //         "/kickoff/updateKickOffSignature",
-  //         signaturePayload
-  //       );
-  //     }
-
-  //     alert("Update successful!");
-  //     navigate("/KickOffList");
-  //   } catch (error) {
-  //     console.error("Update failed", error);
-  //     alert("Failed to update kickoff data.");
-  //   }
-  // };
 
   if (loading) return <div>Loading kickoff details...</div>;
 
@@ -242,23 +163,10 @@ const CompanyUpdateKickoffSheet = () => {
                   handleAccordionClick={handleAccordionClick}
                   formData={formData}
                   setFormData={setFormData}
+                  onProjectSelect={handleProjectSelect}
                   id={id} // <-- added
                 />
-
               </Accordion.Item>
-
-              {/* <CompanyUpdateProjectRegistrationKickoffSheet
-                eventKey="1"
-                activeKey={activeKeys}
-                CustomToggle={CustomToggle}
-                handleAccordionClick={handleAccordionClick}
-                formData={formData}
-                setFormData={setFormData}
-                initialPartsData={partsData}
-                initialProcessesData={processesData}
-                onPartsChange={setPartsData}
-                onProcessesChange={setProcessesData}
-              /> */}
 
               <CompanyUpdateProjectRegistrationKickoffSheet
                 eventKey="1"
@@ -269,6 +177,7 @@ const CompanyUpdateKickoffSheet = () => {
                 initialProcessesData={processesData}
                 onPartsChange={setPartsData}
                 onProcessesChange={setProcessesData}
+                selectedProjectId={selectedProjectId}
                 id={id} // ✅ KickOffId
               />
 
@@ -278,7 +187,7 @@ const CompanyUpdateKickoffSheet = () => {
                 CustomToggle={CustomToggle}
                 handleAccordionClick={handleAccordionClick}
                 onCustomerRequirementsChange={setCustomerRequirementsData}
-                companyId={formData.customerid || ""}
+                companyId={formData.companyId || ""}
                 employeeId={"YOUR_EMPLOYEE_ID"} // pass real one if available
                 initialRequirements={customerRequirementsData}
                 id={id} // ✅ important for saving
@@ -293,7 +202,6 @@ const CompanyUpdateKickoffSheet = () => {
                 initialSignatureData={signatureData}
                 id={id} // ✅ KickOffId
               />
-
             </Accordion>
 
             <div className="d-flex justify-content-end gap-2 mt-4 p-3 bg-white rounded-bottom shadow-sm">
