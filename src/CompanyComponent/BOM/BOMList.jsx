@@ -5,12 +5,15 @@ import PaginationComponent from "../../Pagination/PaginationComponent";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import Button from "react-bootstrap/Button";
 import { useNavigate } from "react-router-dom";
+import BOMPDFModal from "./BOMPDFModal";
 const BOMList = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [pageCount, setPageCount] = useState(0);
     const [BOMListDetails, setBOMListDetails] = useState([]);
+    const [showPdf, setShowPdf] = useState(false);
+    const [selectedBomId, setSelectedBomId] = useState("");
     const navigate = useNavigate(); // ✅ useNavigate hook
     const handleToggle = () => {
         setIsCollapsed(!isCollapsed);
@@ -20,7 +23,7 @@ const BOMList = () => {
         fetchBOMList();
     }, [currentPage, pageSize]);
 
-   
+
 
     const fetchBOMList = async () => {
         try {
@@ -34,14 +37,14 @@ const BOMList = () => {
         }
     };
 
-     const navigateToCreteBOM = () => {
-    navigate("/CreateBOM"); // ✅ navigate on button click
-  };
+    const navigateToCreteBOM = () => {
+        navigate("/CreateBOM"); // ✅ navigate on button click
+    };
 
 
-   const editBOM = (bomId) => {
-    navigate("/EditBOM", { state: { bomId } });
-  };
+    const editBOM = (bomId) => {
+        navigate("/EditBOM", { state: { bomId } });
+    };
 
     return (
         <>
@@ -88,16 +91,27 @@ const BOMList = () => {
 
 
                                                 <td className="text-end">
-                        <button
-                          className="btn btn-outline-primary btn-sm"
-                          onClick={() => {
-                            editBOM(BOM.bomId);
-                           
-                          }}
-                        >
-                          <i className="bi bi-pencil-square"></i>
-                        </button>
-                      </td>
+                                                    <button
+                                                        className="btn btn-outline-primary btn-sm"
+                                                        onClick={() => {
+                                                            editBOM(BOM.bomId);
+
+                                                        }}
+                                                    >
+                                                        <i className="bi bi-pencil-square"></i>
+                                                    </button>
+                                                    <div>
+                                                        <button
+                                                            className="btn btn-outline-primary btn-sm"
+                                                            onClick={() => {
+                                                                setSelectedBomId(BOM.bomId);
+                                                                setShowPdf(true);
+                                                            }}
+                                                        >
+                                                            <i className="bi bi-eye"></i> Preview PDF
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))
                                     ) : (
@@ -126,6 +140,15 @@ const BOMList = () => {
                             }}
                         />
                     </div>
+
+                    {/* Render the modal just once */}
+                    {showPdf && (
+                        <BOMPDFModal
+                            show={showPdf}
+                            onClose={() => setShowPdf(false)}
+                            bomId={selectedBomId}
+                        />
+                    )}
                 </div>
             </div>
         </>)
