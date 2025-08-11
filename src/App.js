@@ -43,6 +43,7 @@ import BOMList from "./CompanyComponent/BOM/BOMList";
 import BOMCreatePage from "./CompanyComponent/BOM/BOMCreatePage";
 import BOMUpadatePage from "./CompanyComponent/BOM/BOMUpdatePage";
 
+import MomList from "./CompanyComponent/Mom/MomList";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -255,7 +256,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<NotFound />} />
 
         <Route
           path="/CheckListItemSetting"
@@ -300,6 +300,18 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/MomList"
+          element={
+            <ProtectedRoute>
+              <MomList/>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route path="*" element={<NotFound />} />
+
       </Routes>
     </Router>
   );
