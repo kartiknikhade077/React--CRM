@@ -18,7 +18,7 @@ const CompanyKickoffsheetCustomerData = ({
   const pageSize = 100;
 
   const [formData, setFormData] = useState({
-    customerid: "",
+    customerId: "",
     companyName: "",
     contactPerson: "",
     phoneNumber: "",
@@ -45,10 +45,11 @@ const CompanyKickoffsheetCustomerData = ({
   }, []);
 
   useEffect(() => {
-    if (formData.customerid) {
+    if (formData.customerId) {
+      console.log("formdata customer id--",formData.customerid)
       setCustomerId(formData.customerid);
     }
-  }, [formData.customerid, setCustomerId]);
+  }, [formData.customerId, setCustomerId]);
 
  
 
@@ -87,7 +88,7 @@ const CompanyKickoffsheetCustomerData = ({
                     {/* Show selected customer name or placeholder */}
                     {(() => {
                       const selectedCustomer = customerList.find(
-                        (c) => c.id === formData.customerid
+                        (c) => c.id === formData.customerId
                       );
                       return selectedCustomer
                         ? selectedCustomer.companyName
@@ -122,7 +123,7 @@ const CompanyKickoffsheetCustomerData = ({
                             );
                             if (selectedCustomer) {
                               setFormData({
-                                customerid: selectedCustomer.id,
+                                customerId: selectedCustomer.id,
                                 companyName: selectedCustomer.companyName || "",
                                 contactPerson:
                                   selectedCustomer.customerName || "",
@@ -138,7 +139,7 @@ const CompanyKickoffsheetCustomerData = ({
                             setSearchTermCustomer(""); // Clear search
                             document.body.click(); // Close dropdown
                           }}
-                          active={formData.customerid === customer.id}
+                          active={formData.customerId === customer.id}
                         >
                           {customer.companyName}
                         </Dropdown.Item>

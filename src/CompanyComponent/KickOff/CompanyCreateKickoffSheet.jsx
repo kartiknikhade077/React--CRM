@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Accordion, Button, Form } from "react-bootstrap";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-
+import { toast } from "react-toastify";
 import CompanySidebar from "../CompanySidebar";
 import CompanyTopbar from "../CompanyTopbar";
 
@@ -33,6 +34,8 @@ const CustomToggle = ({ children, eventKey, activeKey, onClick }) => (
   </div>
 );
 
+// inside your component
+
 // Helper function to convert File to base64 string
 const fileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
@@ -47,10 +50,11 @@ const fileToBase64 = (file) => {
 };
 
 const CompanyCreateKickoffSheet = () => {
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeKeys, setActiveKeys] = useState(["0", "1", "2", "3"]); // all open initially
 
-  const [customerId, setCustomerId] = useState(null);
+  const [customerId, setCustomerId] = useState();
 
   const [customerData, setCustomerData] = useState(null);
   const [projectData, setProjectData] = useState(null);
@@ -76,6 +80,7 @@ const CompanyCreateKickoffSheet = () => {
       // Compose data from both child states
       const payload = {
         // map customerData fields
+        customerId: customerData?.customerId || "",
         customerName: customerData?.companyName || "",
         contactPersonName: customerData?.contactPerson || "",
         mobileNumber: customerData?.phoneNumber || "",
@@ -104,8 +109,6 @@ const CompanyCreateKickoffSheet = () => {
       const kickOffId = response.data.kickOffId;
       if (!kickOffId) throw new Error("kickOffId not received");
 
-
-
       // Prepare parts payload with base64 images
       const partItems = await Promise.all(
         partsData.map(async (part) => {
@@ -129,17 +132,16 @@ const CompanyCreateKickoffSheet = () => {
         })
       );
 
-
       await axiosInstance.post("/kickoff/saveKickOffItems", partItems);
 
       //3RD
 
       const processesPayload = processesData.map((proc) => {
         const emp = employeeList.find((e) => e.employeeId === proc.designer);
-        const itemNoInt = typeof proc.itemNo === "string"
-          ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
-          : proc.itemNo;
-
+        const itemNoInt =
+          typeof proc.itemNo === "string"
+            ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
+            : proc.itemNo;
 
         return {
           kickOffId,
@@ -173,17 +175,12 @@ const CompanyCreateKickoffSheet = () => {
         employeeId: loggedInEmployeeId || "", // ensure you fill this with right employee id
       }));
 
-
-
-
       if (reqPayload.length > 0) {
         await axiosInstance.post(
           "/kickoff/saveCustomerRequirements",
           reqPayload
         );
       }
-
-
 
       // 5th API
 
@@ -198,11 +195,12 @@ const CompanyCreateKickoffSheet = () => {
         );
       }
 
-
-      alert("Save successful!");
+      toast.success("Create Kickoff Sheet successfully!");
+      navigate("/KickOffList");
     } catch (error) {
       console.error("Save failed", error);
-      alert("Failed to save data.");
+
+      toast.error("Failed to Create Kickoff Sheet ");
     }
   };
 
