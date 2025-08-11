@@ -5,13 +5,15 @@ import PaginationComponent from "../../Pagination/PaginationComponent";
 
 const demo = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const handleToggle = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [pageCount, setPageCount] = useState(0);
+
+
+    const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
     <>
       <CompanyTopbar onToggle={handleToggle} />
