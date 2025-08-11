@@ -25,6 +25,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   onPartsChange,
   onProcessesChange,
   id,
+  selectedProjectId,
 }) => {
   // =================
   // State definitions
@@ -43,13 +44,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   const [activePartItemNo, setActivePartItemNo] = useState(null);
   const [latestItemNumber, setLatestItemNumber] = useState(0);
   const [employeeList, setEmployeeList] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
   const [selectedProcessesByPart, setSelectedProcessesByPart] = useState({});
 
   const flattenProcessesByPart = (pbp) => Object.values(pbp).flat();
-  const [projectSelectOptions, setProjectSelectOptions] = useState([]);
-
 
   useEffect(() => {
     axiosInstance
@@ -62,83 +59,145 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       });
   }, []);
 
-  // One-time initialization flags
-  const projectInitialized = useRef(false);
-  const partsInitialized = useRef(false);
-  const processesInitialized = useRef(false);
-
-
-  // Initialize parts from initialPartsData
+  // =========================
+  // Fetch new parts/processes whenever selectedProjectId changes
   // =========================
   useEffect(() => {
-    if (!partsInitialized.current &&
-      Array.isArray(initialPartsData) &&
-      initialPartsData.length > 0) {
+    // CASE 1: initial load from parent kickoff data (no project switch yet)
+    if (!selectedProjectId) {
+      if (Array.isArray(initialPartsData) && initialPartsData.length > 0) {
+        setParts(
+          initialPartsData.map((p, idx) => ({
+            ...p,
+            id: p.itemId || Date.now() + idx,
+            itemNo:
+              typeof p.itemNo === "string" ? p.itemNo : `PT-${p.itemNo || 0}`,
+            images: Array.isArray(p.imageList) ? p.imageList : [],
+            partName: p.partName || "",
+            material: p.material || "",
+            thickness: p.thickness || "",
+          }))
+        );
 
-      const safeParts = initialPartsData.map((p) => ({
-        ...p,
-        id: p.partId || Date.now() + Math.random(),
-        itemNo: typeof p.itemNo === "string" ? p.itemNo : `PT-${p.itemNo || 0}`,
-        images: Array.isArray(p.imageList) ? p.imageList : [],
-        partName: p.partName || "",
-        material: p.material || "",
-        thickness: p.thickness || ""
+        // processes
+        const grouped = {};
+        initialProcessesData.forEach((proc) => {
+          const itemNo =
+            typeof proc.itemNo === "string"
+              ? proc.itemNo
+              : `PT-${proc.itemNo || 0}`;
+          if (!grouped[itemNo]) grouped[itemNo] = [];
+          grouped[itemNo].push({
+            ...proc,
+            id: proc.partProcessId || Date.now() + Math.random(),
+            woNo: proc.workOrderNumber || "",
+            designer: proc.employeeId || "",
+            designerName: proc.designerName || "",
+            opNo: proc.operationNumber || "",
+            processName: proc.process || "",
+            length: proc.length || "",
+            width: proc.width || "",
+            height: proc.height || "",
+            remarks: proc.remarks || "",
+          });
+        });
+        setProcessesByPart(grouped);
+
+        if (initialPartsData.length > 0) {
+          setActivePartItemNo(
+            typeof initialPartsData[0].itemNo === "string"
+              ? initialPartsData[0].itemNo
+              : `PT-${initialPartsData[0].itemNo || 0}`
+          );
+        }
+
+        // compute latest number
+        const numbers = initialPartsData.map((part) => {
+          const match = `${part.itemNo}`.match(/PT-(\d+)/);
+          return match ? parseInt(match[1], 10) : 0;
+        });
+        setLatestItemNumber(numbers.length ? Math.max(...numbers) : 0);
+      }
+      return;
+    }
+
+    // CASE 2: project changed → fetch from project API
+    setParts([]);
+    setProcessesByPart({});
+    setActivePartItemNo(null);
+    setLatestItemNumber(0);
+
+    axiosInstance
+      .get(`/work/getWorkOrderItemsByProjectId/${selectedProjectId}`)
+      .then((res) => {
+        if (res.data) {
+          populatePartsAndProcesses(res.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching part/process data:", err);
+      });
+
+    fetchMaxItemNumber(); // optional per project
+  }, [selectedProjectId, initialPartsData, initialProcessesData]);
+
+  // Function to populate Parts & Processes from API data
+  const populatePartsAndProcesses = (data) => {
+    const { partProcess, partDetails } = data;
+
+    const groupedByItem = {};
+    partProcess.forEach((item) => {
+      const key = `PT-${item.itemNo}`;
+      if (!groupedByItem[key]) groupedByItem[key] = [];
+      groupedByItem[key].push(item);
+    });
+
+    const newParts = [];
+    const newProcessesByPart = {};
+
+    partDetails.forEach((partDetail, index) => {
+      const itemNo = `PT-${partDetail.itemNo}`;
+      const part = {
+        id: partDetail.partId || Date.now() + index,
+        itemNo,
+        partName: partDetail.partName || "",
+        material: partDetail.material || "",
+        thickness: partDetail.thickness || "",
+        images: [],
+      };
+
+      newParts.push(part);
+
+      const processes = (groupedByItem[itemNo] || []).map((proc, idx) => ({
+        id: proc.partProcessId || Date.now() + index * 10 + idx,
+        woNo: proc.workOrderNo || "",
+        itemNo,
+        designer: proc.employeeId || "",
+        designerName: proc.designerName || "",
+        opNo: proc.opNo || "",
+        processName: proc.proceess || proc.process || "",
+        length: proc.length || "",
+        width: proc.width || "",
+        height: proc.height || "",
+        remarks: proc.remark || proc.remarks || "",
       }));
 
-      setParts(safeParts);
-      setActivePartItemNo(safeParts[0]?.itemNo || null);
+      newProcessesByPart[itemNo] = processes;
+    });
 
-      // Determine latest auto-number
-      const numbers = safeParts.map((part) => {
-        const match = `${part.itemNo}`.match(/PT-(\d+)/);
-        return match ? parseInt(match[1], 10) : 0;
-      });
-      setLatestItemNumber(numbers.length ? Math.max(...numbers) : 0);
-
-      partsInitialized.current = true;
+    setParts(newParts);
+    setProcessesByPart(newProcessesByPart);
+    if (newParts.length > 0) {
+      setActivePartItemNo(newParts[0].itemNo);
     }
-  }, [initialPartsData]);
 
-  // =========================
-  // Initialize processes from initialProcessesData
-  // =========================
-  useEffect(() => {
-    if (!processesInitialized.current &&
-      Array.isArray(initialProcessesData) &&
-      initialProcessesData.length > 0) {
-
-      const grouped = {};
-      initialProcessesData.forEach((proc) => {
-        const itemNo =
-          typeof proc.itemNo === "string" ? proc.itemNo : `PT-${proc.itemNo || 0}`;
-        if (!grouped[itemNo]) grouped[itemNo] = [];
-
-        grouped[itemNo].push({
-          ...proc,
-          id: proc.partProcessId || Date.now() + Math.random(),
-          woNo: proc.workOrderNumber || "",
-          designer: proc.employeeId || "",
-          designerName: proc.designerName || "",
-          opNo: proc.operationNumber || "",
-          processName: proc.process || "",
-          length: proc.length || "",
-          width: proc.width || "",
-          height: proc.height || "",
-          remarks: proc.remarks || ""
-        });
-      });
-
-      setProcessesByPart(grouped);
-      processesInitialized.current = true;
-    }
-  }, [initialProcessesData]);
-
-
-
-  // =========================
-  // Initialize processes
-  // =========================
-
+    // Set latest item number
+    const numbers = newParts.map((p) => {
+      const match = `${p.itemNo}`.match(/PT-(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    });
+    setLatestItemNumber(numbers.length ? Math.max(...numbers) : 0);
+  };
 
   // =========================
   // Set active part if null
@@ -148,8 +207,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       setActivePartItemNo(parts[0].itemNo);
     }
   }, [parts, activePartItemNo]);
-
-
 
   // =========================
   // Functions used in render
@@ -307,27 +364,27 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }));
   };
 
-
-
-  // ...existing code from your component above
-
   // ✅ Save Parts API
   const handleUpdateParts = async () => {
     try {
       for (const p of parts) {
         const payload = {
-          itemId: p.partId || p.id, // assuming p.partId exists; if not, send null
-          kickOffId: id, // pass via props
-          itemNo: typeof p.itemNo === "string" ? parseInt(p.itemNo.replace(/^PT-/, ""), 10) : p.itemNo,
+          // itemId:  ,  // ensure this is the backend ID string
+          kickOffId: id,
+          itemNo:
+            typeof p.itemNo === "string"
+              ? parseInt(p.itemNo.replace(/^PT-/, ""), 10)
+              : p.itemNo,
           partName: p.partName,
           material: p.material,
-          thickness: p.thickness
+          thickness: p.thickness,
         };
+        console.log("Updating part with payload:", payload); // Debug log
         await axiosInstance.put("/kickoff/updateItem", payload);
       }
       alert("Parts updated successfully!");
     } catch (error) {
-      console.error("Failed to update parts:", error);
+      console.error("Failed to update parts:", error.response || error);
       alert("Failed to update parts");
     }
   };
@@ -335,31 +392,67 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   // ✅ Save Processes API
   const handleUpdateProcesses = async () => {
     try {
-      const allProcesses = Object.values(processesByPart).flat().map((proc) => ({
-        partProcessId: proc.partProcessId || proc.id,
-        kickOffId: id,
-        itemNo: typeof proc.itemNo === "string"
-          ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
-          : proc.itemNo,
-        workOrderNumber: proc.woNo,
-        designerName: proc.designerName || (employeeList.find(e => e.employeeId === proc.designer)?.name || ""),
-        employeeId: proc.designer,
-        process: proc.processName,
-        length: parseFloat(proc.length) || 0,
-        height: parseFloat(proc.height) || 0,
-        width: parseFloat(proc.width) || 0,
-        remarks: proc.remarks || ""
-      }));
-      await axiosInstance.put("/kickoff/updateKickOffItemsProccess", allProcesses);
+      const allProcesses = Object.values(processesByPart)
+        .flat()
+        .map((proc) => ({
+          partProcessId: proc.partProcessId ? proc.partProcessId : null, // null for new
+          kickOffId: id,
+          itemNo:
+            typeof proc.itemNo === "string"
+              ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
+              : proc.itemNo,
+          workOrderNumber: proc.woNo,
+          designerName:
+            proc.designerName ||
+            employeeList.find((e) => e.employeeId === proc.designer)?.name ||
+            "",
+          employeeId: proc.designer,
+          process: proc.processName,
+          length: parseFloat(proc.length) || 0,
+          height: parseFloat(proc.height) || 0,
+          width: parseFloat(proc.width) || 0,
+          remarks: proc.remarks || "",
+        }));
+
+      console.log("Sending processes payload:", allProcesses);
+
+      await axiosInstance.put(
+        "/kickoff/updateKickOffItemsProccess",
+        allProcesses
+      );
+
       alert("Processes updated successfully!");
     } catch (error) {
-      console.error("Failed to update processes:", error);
+      console.error("Failed to update processes:", error.response || error);
       alert("Failed to update processes");
     }
   };
 
+  // Function to fetch the maximum item number from server
+  const fetchMaxItemNumber = async () => {
+    try {
+      console.log("Fetching max item number...");
+      const response = await axiosInstance.get("/work/getMaxItemNumber");
 
+      console.log("API response:", response.data);
 
+      if (response.data) {
+        const numericPart = parseInt(
+          response.data.toString().replace(/\D/g, ""),
+          10
+        );
+        console.log("Parsed max number is == ", numericPart);
+        setLatestItemNumber(numericPart); // Correct setter
+      }
+    } catch (error) {
+      console.error("Failed to fetch max item number:", error);
+    }
+  };
+
+  // Fetch max item number once on initial mount
+  useEffect(() => {
+    fetchMaxItemNumber();
+  }, []);
 
   return (
     <Card className="mb-3 shadow-sm border-0">
@@ -373,8 +466,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
-
-
           {/* Part Details */}
           <h5
             className="mb-3"
@@ -548,6 +639,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                       >
                         <FaTrash />
                       </Button>
+
+                      <Button variant="primary" onClick={handleUpdateParts}>
+                        Update{" "}
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -555,13 +650,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             </tbody>
           </Table>
 
-          <div className="d-flex justify-content-end mt-3 mb-5">
+          <div className="d-flex justify-content-end mt-3 gap-2  mb-5">
             <Button onClick={addPart} variant="primary">
-              <FaPlusCircle className="me-2" /> Add Part
+              <FaPlusCircle className="me-2 ms-2" /> Add Part
             </Button>
-            <Button variant="primary" onClick={handleUpdateParts}>
-//               Update Parts
-//             </Button>
           </div>
 
           {/* Part Process */}
@@ -578,10 +670,11 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 ${activePartItemNo === part.itemNo
-                      ? "bg-primary text-white"
-                      : "bg-light"
-                      }`}
+                    className={`px-3 py-2 me-2 ${
+                      activePartItemNo === part.itemNo
+                        ? "bg-primary text-white"
+                        : "bg-light"
+                    }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >
@@ -626,12 +719,14 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           >
                             <option value="">Select Designer</option>
                             {employeeList.map((emp) => (
-                              <option key={emp.employeeId} value={emp.employeeId}>
+                              <option
+                                key={emp.employeeId}
+                                value={emp.employeeId}
+                              >
                                 {emp.name}
                               </option>
                             ))}
                           </Form.Select>
-
                         </td>
                         <td>
                           <Form.Select
@@ -718,6 +813,13 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           >
                             <FaTrash />
                           </Button>
+
+                          <Button
+                            variant="success"
+                            onClick={handleUpdateProcesses}
+                          >
+                            Update{" "}
+                          </Button>
                         </td>
                       </tr>
                     ))
@@ -750,9 +852,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                   <Button onClick={addProcess} variant="primary">
                     <FaPlusCircle className="me-2" /> Add Another Process
                   </Button>
-                  <Button variant="success" onClick={handleUpdateProcesses}>
-//               Update Processes
-//             </Button>
                 </div>
               )}
             </div>

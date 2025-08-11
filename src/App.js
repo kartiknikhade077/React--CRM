@@ -42,6 +42,7 @@ import ChecklistSheetList from "./CompanyComponent/ChecklistSheet/ChecklistSheet
 import BOMList from "./CompanyComponent/BOM/BOMList";
 import BOMCreatePage from "./CompanyComponent/BOM/BOMCreatePage";
 import BOMUpadatePage from "./CompanyComponent/BOM/BOMUpdatePage";
+import BomCategoryList from "./CompanyComponent/BomCategorieSettings/BomCategoryList";
 
 import MomList from "./CompanyComponent/Mom/MomList";
 const App = () => {
@@ -306,6 +307,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <MomList/>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/BomCategorySetting"
+          element={
+            <ProtectedRoute>
+              <BomCategoryList />
             </ProtectedRoute>
           }
         />

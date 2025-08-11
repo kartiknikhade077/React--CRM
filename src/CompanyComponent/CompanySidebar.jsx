@@ -168,6 +168,15 @@ const CompanySidebar = ({ isCollapsed }) => {
               >
                 <Link to="/CheckListItemSetting">Checklist-Item</Link>
               </li>
+              <li
+                className={`p-0 ${
+                  location.pathname === "/BomCategorySetting"
+                    ? "active"
+                    : ""
+                }`}
+              >
+                <Link to="/BomCategorySetting">BOM Categories</Link>
+              </li>
             </ul>
           )}
         </li>

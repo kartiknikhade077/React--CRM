@@ -1,0 +1,37 @@
+/* Styling for the checkbox container */
+.field-checkbox-wrapper {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6; /* Light grey border */
+    border-radius: 0.375rem; /* Bootstrap's standard border-radius */
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+/* Style for when the checkbox is checked */
+.field-checkbox-wrapper.selected {
+    background-color: #e7f1ff; /* Light blue background */
+    border-color: #0d6efd; /* Bootstrap primary blue border */
+}
+
+/* Custom styling for the "Required" tag */
+.required-tag {
+    font-size: 0.75em;
+    font-weight: bold;
+    color: #0d6efd; /* Bootstrap primary blue color */
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Ensure the label and checkbox are aligned nicely */
+.field-checkbox-wrapper .form-check {
+    min-height: auto; /* Override bootstrap default */
+    padding-left: 1.5em; /* Adjust padding for alignment */
+}
+
+.field-checkbox-wrapper .form-check-label {
+    margin-left: 0.25rem;
+}
+
+/* Ensure disabled items don't look too faded */
+.field-checkbox-wrapper .form-check-input:disabled {
+    opacity: 0.7;
+}
