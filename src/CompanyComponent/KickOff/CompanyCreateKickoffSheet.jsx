@@ -104,21 +104,31 @@ const CompanyCreateKickoffSheet = () => {
       const kickOffId = response.data.kickOffId;
       if (!kickOffId) throw new Error("kickOffId not received");
 
+
+
       // Prepare parts payload with base64 images
       const partItems = await Promise.all(
-        partsData.map(async (part, index) => ({
-          kickOffId,
-          itemNo: index + 1,
-          partName: part.partName || "",
-          material: part.material || "",
-          thickness: part.thickness || "",
-          imageList: await Promise.all(
-            (part.images || []).map((img) =>
-              typeof img === "string" ? img : fileToBase64(img)
-            )
-          ),
-        }))
+        partsData.map(async (part) => {
+          const itemNoInt =
+            typeof part.itemNo === "string"
+              ? parseInt(part.itemNo.replace(/^PT-/, ""), 10)
+              : part.itemNo;
+
+          return {
+            kickOffId,
+            itemNo: itemNoInt,
+            partName: part.partName || "",
+            material: part.material || "",
+            thickness: part.thickness || "",
+            imageList: await Promise.all(
+              (part.images || []).map((img) =>
+                typeof img === "string" ? img : fileToBase64(img)
+              )
+            ),
+          };
+        })
       );
+
 
       await axiosInstance.post("/kickoff/saveKickOffItems", partItems);
 
@@ -126,10 +136,11 @@ const CompanyCreateKickoffSheet = () => {
 
       const processesPayload = processesData.map((proc) => {
         const emp = employeeList.find((e) => e.employeeId === proc.designer);
-        const itemNoInt =
-          typeof proc.itemNo === "string"
-            ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
-            : proc.itemNo;
+        const itemNoInt = typeof proc.itemNo === "string"
+          ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
+          : proc.itemNo;
+
+
         return {
           kickOffId,
           itemNo: itemNoInt, // should be like "PT-xxxx" string
@@ -163,7 +174,7 @@ const CompanyCreateKickoffSheet = () => {
       }));
 
 
-      
+
 
       if (reqPayload.length > 0) {
         await axiosInstance.post(
@@ -187,7 +198,7 @@ const CompanyCreateKickoffSheet = () => {
         );
       }
 
-      
+
       alert("Save successful!");
     } catch (error) {
       console.error("Save failed", error);

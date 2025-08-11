@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Accordion, Card, Form, Row, Col, Button } from "react-bootstrap";
+import axiosInstance from "../../../BaseComponet/axiosInstance";
 
 const CompanyUpdateKickOffCustomerRequirements = ({
   eventKey,
@@ -10,6 +11,7 @@ const CompanyUpdateKickOffCustomerRequirements = ({
   initialRequirements = [],
   companyId,
   employeeId,
+  id // ✅ pass kickOffId from parent!
 }) => {
   const [requirements, setRequirements] = useState(initialRequirements);
 
@@ -24,8 +26,25 @@ const CompanyUpdateKickOffCustomerRequirements = ({
     onCustomerRequirementsChange(newReqs);
   };
 
-  // UI rendering for list of requirements with input controls, add/remove buttons, etc.
-  // Follow your create component UI
+  // ✅ Independent Save for Customer Requirements
+  const handleUpdateRequirements = async () => {
+    try {
+      // Build payload in same shape API expects ⬇
+      const payload = requirements.map((req) => ({
+        ...req,
+        kickOffId: id,
+        companyId: companyId,
+        employeeId: employeeId
+      }));
+
+      await axiosInstance.put("/kickoff/updateCustomerRequirements", payload);
+
+      alert("Customer Requirements updated successfully!");
+    } catch (error) {
+      console.error("Failed to update customer requirements:", error);
+      alert("Failed to update customer requirements");
+    }
+  };
 
   if (!Array.isArray(requirements)) return null;
 
@@ -38,6 +57,7 @@ const CompanyUpdateKickOffCustomerRequirements = ({
       >
         Customer Requirements
       </CustomToggle>
+
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
           {requirements.map((req, idx) => (
@@ -82,11 +102,14 @@ const CompanyUpdateKickOffCustomerRequirements = ({
                   }
                 />
               </Col>
-              {/* Optionally add remove or other action buttons */}
             </Row>
           ))}
-          {/* Optionally add button to add new requirement */}
+
+          {/* Add Requirement Button */}
           <Button
+            variant="outline-secondary"
+            size="sm"
+            className="me-2"
             onClick={() => {
               setRequirements([
                 ...requirements,
@@ -97,14 +120,19 @@ const CompanyUpdateKickOffCustomerRequirements = ({
                   requirementTwo: "",
                   requirementThree: "",
                   requirementFour: "",
-                  kickOffId: "",
+                  kickOffId: id,
                   companyId,
-                  employeeId,
-                },
+                  employeeId
+                }
               ]);
             }}
           >
-            Add Requirement
+            + Add Requirement
+          </Button>
+
+          {/* ✅ Update Button */}
+          <Button variant="primary" className="mt-3" onClick={handleUpdateRequirements}>
+            Update Requirements
           </Button>
         </Card.Body>
       </Accordion.Collapse>

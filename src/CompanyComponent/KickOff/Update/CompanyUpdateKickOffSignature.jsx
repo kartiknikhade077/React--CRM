@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Accordion, Card, Form, Row, Col, Button } from "react-bootstrap";
+import axiosInstance from "../../../BaseComponet/axiosInstance";
 
 const CompanyUpdateKickOffSignature = ({
   eventKey,
@@ -8,10 +9,11 @@ const CompanyUpdateKickOffSignature = ({
   handleAccordionClick,
   onSignatureChange,
   initialSignatureData = [],
+  id // ✅ Pass KickOffId from parent
 }) => {
   const [signatures, setSignatures] = useState(initialSignatureData);
 
-  // Update local state when initial data changes
+  // Sync state from props
   useEffect(() => {
     setSignatures(initialSignatureData);
   }, [initialSignatureData]);
@@ -23,24 +25,38 @@ const CompanyUpdateKickOffSignature = ({
     onSignatureChange(newSignatures);
   };
 
-  // Optional: Add new signature entry
   const handleAddSignature = () => {
     setSignatures([
       ...signatures,
       {
         id: null,
-        kickOffId: "",
+        kickOffId: id,
         departments: "",
-        headName: "",
+        headName: ""
       },
     ]);
   };
 
-  // Optional: Remove signature entry
   const handleRemoveSignature = (index) => {
     const newSignatures = signatures.filter((_, i) => i !== index);
     setSignatures(newSignatures);
     onSignatureChange(newSignatures);
+  };
+
+  // ✅ Independent Save for Signatures
+  const handleUpdateSignatures = async () => {
+    try {
+      const payload = signatures.map(sig => ({
+        ...sig,
+        kickOffId: id
+      }));
+
+      await axiosInstance.put("/kickoff/updateKickOffSignature", payload);
+      alert("Signatures updated successfully!");
+    } catch (error) {
+      console.error("Failed to update signatures:", error);
+      alert("Failed to update signatures");
+    }
   };
 
   return (
@@ -90,9 +106,17 @@ const CompanyUpdateKickOffSignature = ({
               </Col>
             </Row>
           ))}
-          <Button onClick={handleAddSignature} variant="primary">
-            Add Signature
-          </Button>
+
+          <div className="mt-3">
+            <Button onClick={handleAddSignature} variant="outline-primary" size="sm" className="me-2">
+              + Add Signature
+            </Button>
+
+            {/* ✅ Save Button */}
+            <Button onClick={handleUpdateSignatures} variant="primary">
+              Update Signatures
+            </Button>
+          </div>
         </Card.Body>
       </Accordion.Collapse>
     </Card>

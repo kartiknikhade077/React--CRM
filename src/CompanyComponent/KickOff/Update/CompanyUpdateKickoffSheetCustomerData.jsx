@@ -1,222 +1,328 @@
 import React, { useEffect, useState } from "react";
-import { Accordion, Card, Form, Row, Col, Dropdown } from "react-bootstrap";
-import axiosInstance from "../../../BaseComponet/axiosInstance";
+import { Accordion, Card, Form, Row, Col, Button } from "react-bootstrap";
 import Select from "react-select";
+import axiosInstance from "../../../BaseComponet/axiosInstance";
 
 const CompanyUpdateKickoffSheetCustomerData = ({
   eventKey,
   activeKey,
   CustomToggle,
   handleAccordionClick,
-  setCustomerId,
-
-  initialData = {},
+  formData,
+  setFormData,
+  id // <-- pass from parent for kickOffId
 }) => {
   const [customerList, setCustomerList] = useState([]);
+  const [projectSelectOptions, setProjectSelectOptions] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(null);
 
-  const [selectedCustomer, setSelectedCustomer] = useState();
+  // Fetch customers
+  useEffect(() => {
+    axiosInstance
+      .get("/customer/getCustomerList")
+      .then((res) => {
+        if (Array.isArray(res.data)) {
+          setCustomerList(res.data);
 
-  const [formData, setFormData] = useState({
-    customerid: "",
-    customerName: "",
-    contactPerson: "",
-    phoneNumber: "",
-    website: "",
-    billingAddress: "",
-    shippingAddress: "",
-  });
+          if (formData.customerid) {
+            const cust = res.data.find(c => c.companyId === formData.customerid);
+            if (cust) {
+              const sel = { value: cust.companyId, label: cust.companyName || cust.customerName };
+              setSelectedCustomer(sel);
 
-  const fetchCustomers = async () => {
-    try {
-      const response = await axiosInstance.get("/customer/getCustomerList");
-      const data = response.data;
+              // Pass projectId for edit-mode preselection
+              fetchProjectsByCustomerId(cust.companyId, formData.projectId);
+            }
+          }
+        }
+      })
+      .catch(err => console.error("Error fetching customers:", err));
+  }, [formData.customerid, formData.projectId]);
 
-      console.log("checking data", data);
+  // Fetch projects per customer
+  const fetchProjectsByCustomerId = (customerId, preselectProjectId = null) => {
+    axiosInstance
+      .get(`/project/getProjectByCustomerId/${customerId}`)
+      .then((res) => {
+        let projects = Array.isArray(res.data?.data) ? res.data.data : res.data;
+        if (!Array.isArray(projects)) projects = [];
 
-      const options = data.map((c) => ({
-        value: c.companyId,
-        label: c.companyName,
-        fullData: c,
-      }));
+        const projectOptions = projects.map((project) => ({
+          value: project.projectId,
+          label: project.projectName,
+          fullData: project
+        }));
+        setProjectSelectOptions(projectOptions);
 
-      setCustomerList(options);
-    } catch (error) {
-      console.error("Failed to fetch customers:", error);
-      setCustomerList([]);
+        // Handle preselect for both new/edit
+        if (preselectProjectId) {
+          const selected = projectOptions.find(p => p.value === preselectProjectId);
+          setSelectedProject(selected || null);
+        } else {
+          setSelectedProject(null);
+        }
+      })
+      .catch(err => console.error("Error fetching projects:", err));
+  };
+
+  // Handle customer change
+  const handleCustomerChange = (selectedOption) => {
+    setSelectedCustomer(selectedOption);
+    setFormData((prev) => ({
+      ...prev,
+      customerid: selectedOption?.value || "",
+      customerName: selectedOption?.label || "",
+      // Reset project fields
+      projectId: "",
+      projectName: "",
+      projectTitle: "",
+      kickOffDate: "",
+      startDate: "",
+      endDate: ""
+    }));
+    setSelectedProject(null);
+
+    if (selectedOption?.value) {
+      fetchProjectsByCustomerId(selectedOption.value);
     }
   };
 
-  // Set formData after customer list load, using initialData
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        customerid: initialData.customerid || "",
-        customerName: initialData.customerName || "",
-        contactPerson: initialData.contactPerson || "",
-        phoneNumber: initialData.phoneNumber || "",
-        website: initialData.website || "",
-        billingAddress: initialData.billingAddress || "",
-        shippingAddress: initialData.shippingAddress || "",
-      });
+  // Handle project change
+  const handleProjectChange = (selectedOption) => {
+    setSelectedProject(selectedOption);
+    const project = selectedOption?.fullData || {};
+    setFormData(prev => ({
+      ...prev,
+      projectId: project.projectId || "",
+      projectName: project.projectName || "",
+      projectTitle: project.projectTitle || "",
+      kickOffDate: project.kickOffDate || "",
+      startDate: project.startDate || "",
+      endDate: project.endDate || ""
+    }));
+  };
 
+  // --- ✅ Independent SAVE Function for this child ---
+  const handleUpdate = async () => {
+    const payload = {
+      kickOffId: id,
+      employeeid: null, // or pass actual employee id if available
+      projectId: formData.projectId,
+      customerName: formData.customerName,
+      contactPersonName: formData.contactPerson,
+      mobileNumber: formData.phoneNumber,
+      companyWebsite: formData.website,
+      billingAddress: formData.billingAddress,
+      shippingAddress: formData.shippingAddress,
+      projectName: formData.projectName,
+      projectTitle: formData.projectTitle,
+      kickOffDate: formData.kickOffDate,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      createdDateTime: new Date().toISOString() // or the original if you keep it
+    };
 
-      const options = {
-        value: initialData.customerid || "",
-        label: initialData.companyName || "",
-        fullData: {},
-      };
-      setSelectedCustomer(options);
+    try {
+      await axiosInstance.put("/kickoff/updateKickOffInfo", payload);
+      alert("Customer & Project details updated successfully!");
+    } catch (error) {
+      console.error("Update failed", error);
+      alert("Failed to update customer/project details.");
     }
-  }, [initialData]);
-
-  // Update parent when formData.customerid changes
-  useEffect(() => {
-    if (formData.customerid) {
-      setCustomerId(formData.customerid);
-    }
-  }, [formData.customerid, setCustomerId]);
-
-  // Handler when option is selected in react-select
-
-  const handleSelectChange = (selected) => {
-    setSelectedCustomer(selected); // ✅ Update selectedCustomer state
-
-    if (!selected) {
-      setFormData({
-        customerid: "",
-        customerName: "",
-        contactPerson: "",
-        phoneNumber: "",
-        website: "",
-        billingAddress: "",
-        shippingAddress: "",
-      });
-      return;
-    }
-
-    setFormData({
-      ...formData,
-      customerid: selected.value,
-      customerName: selected.label,
-      contactPerson: selected.fullData?.contactPerson || "",
-      phoneNumber: selected.fullData?.phoneNumber || "",
-      website: selected.fullData?.website || "",
-      billingAddress: selected.fullData?.billingAddress || "",
-      shippingAddress: selected.fullData?.shippingAddress || "",
-    });
   };
 
   return (
-    <Card className="mb-3 shadow-sm border-0">
-      <CustomToggle
-        eventKey={eventKey}
-        activeKey={activeKey}
-        onClick={() => handleAccordionClick(eventKey)}
-      >
-        Customer Data
-      </CustomToggle>
-      <Accordion.Collapse eventKey={eventKey}>
-        <Card.Body>
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Group controlId="customerName">
-                <Form.Label>
-                  Customer Name <span className="text-danger">*</span>
-                </Form.Label>
-                <Select
-                  options={customerList}
-                  value={selectedCustomer}
-                  onChange={handleSelectChange}
-                  placeholder="Select Customer"
-                  onMenuOpen={fetchCustomers}
-                  isClearable
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group controlId="contactPerson">
-                <Form.Label>
-                  Contact Person Name <span className="text-danger">*</span>
-                </Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Contact Person Name"
-                  value={formData.contactPerson}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contactPerson: e.target.value })
-                  }
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+    <Accordion activeKey={activeKey}>
+      <Card>
+        <CustomToggle
+          as={Card.Header}
+          eventKey={eventKey}
+          onClick={() => handleAccordionClick(eventKey)}
+        >
+          Customer & Project Details
+        </CustomToggle>
+        <Accordion.Collapse eventKey={eventKey}>
+          <Card.Body>
+            <h5>Customer Details</h5>
+            <Row>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Select Customer</Form.Label>
+                  <Select
+                    value={selectedCustomer}
+                    onChange={handleCustomerChange}
+                    options={customerList.map((cust) => ({
+                      value: cust.companyId,
+                      label: cust.companyName || cust.customerName,
+                    }))}
+                    placeholder="Select customer..."
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Contact Person</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={formData.contactPerson}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        contactPerson: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Phone Number</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={formData.phoneNumber}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        phoneNumber: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Website</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={formData.website}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        website: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Billing Address</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={formData.billingAddress}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        billingAddress: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Shipping Address</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={formData.shippingAddress}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        shippingAddress: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Group controlId="phoneNumber">
-                <Form.Label>
-                  <span className="text-danger">*</span> Mobile Number
-                </Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Enter Mobile Number"
-                  value={formData.phoneNumber}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phoneNumber: e.target.value })
-                  }
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group controlId="website">
-                <Form.Label>Company Website</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Enter Company Website"
-                  value={formData.website}
-                  onChange={(e) =>
-                    setFormData({ ...formData, website: e.target.value })
-                  }
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+            {/* Project Details */}
+            <h5 className="mt-4">Project Details</h5>
+            <Row>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Select Project</Form.Label>
+                  <Select
+                    value={selectedProject}
+                    onChange={handleProjectChange}
+                    options={projectSelectOptions}
+                    placeholder="Select project..."
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Project Title</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={formData.projectTitle}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        projectTitle: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Kickoff Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={formData.kickOffDate}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        kickOffDate: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Start Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>End Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-          <Row>
-            <Col md={6}>
-              <Form.Group controlId="billingAddress">
-                <Form.Label>Billing Address</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={2}
-                  placeholder="Enter Billing Address"
-                  value={formData.billingAddress}
-                  onChange={(e) =>
-                    setFormData({ ...formData, billingAddress: e.target.value })
-                  }
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group controlId="shippingAddress">
-                <Form.Label>Shipping Address</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={2}
-                  placeholder="Enter Shipping Address"
-                  value={formData.shippingAddress}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      shippingAddress: e.target.value,
-                    })
-                  }
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Accordion.Collapse>
-    </Card>
+            {/* Save Button */}
+            <div className="mt-4 text-end">
+              <Button variant="primary" onClick={handleUpdate}>
+                Update Customer & Project
+              </Button>
+            </div>
+          </Card.Body>
+        </Accordion.Collapse>
+      </Card>
+    </Accordion>
   );
 };
 

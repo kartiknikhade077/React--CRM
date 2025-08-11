@@ -24,6 +24,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   onProjectDataChange,
   onPartsChange,
   onProcessesChange,
+  id,
 }) => {
   // =================
   // State definitions
@@ -49,25 +50,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   const flattenProcessesByPart = (pbp) => Object.values(pbp).flat();
   const [projectSelectOptions, setProjectSelectOptions] = useState([]);
 
-  // =========================
-  // Notify parent on changes
-  // =========================
-  useEffect(() => {
-    onProjectDataChange && onProjectDataChange(projectData);
-  }, [projectData, onProjectDataChange]);
 
-  useEffect(() => {
-    onPartsChange && onPartsChange(parts);
-  }, [parts, onPartsChange]);
-
-  useEffect(() => {
-    onProcessesChange &&
-      onProcessesChange(flattenProcessesByPart(processesByPart));
-  }, [processesByPart, onProcessesChange]);
-
-  // =========================
-  // Fetch employees once
-  // =========================
   useEffect(() => {
     axiosInstance
       .get("/company/getEmployeeList/0/10")
@@ -84,61 +67,78 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   const partsInitialized = useRef(false);
   const processesInitialized = useRef(false);
 
-  // =========================
-  // Initialize parts (Update mode)
+
+  // Initialize parts from initialPartsData
   // =========================
   useEffect(() => {
-    if (
-      !partsInitialized.current &&
+    if (!partsInitialized.current &&
       Array.isArray(initialPartsData) &&
-      initialPartsData.length > 0
-    ) {
+      initialPartsData.length > 0) {
+
       const safeParts = initialPartsData.map((p) => ({
         ...p,
         id: p.partId || Date.now() + Math.random(),
         itemNo: typeof p.itemNo === "string" ? p.itemNo : `PT-${p.itemNo || 0}`,
-        images: Array.isArray(p.images) ? p.images : [],
+        images: Array.isArray(p.imageList) ? p.imageList : [],
+        partName: p.partName || "",
+        material: p.material || "",
+        thickness: p.thickness || ""
       }));
+
       setParts(safeParts);
       setActivePartItemNo(safeParts[0]?.itemNo || null);
 
-      const initialNumbers = safeParts.map((part) => {
-        const match = part.itemNo?.match(/PT-(\d+)/);
+      // Determine latest auto-number
+      const numbers = safeParts.map((part) => {
+        const match = `${part.itemNo}`.match(/PT-(\d+)/);
         return match ? parseInt(match[1], 10) : 0;
       });
-      setLatestItemNumber(
-        initialNumbers.length ? Math.max(...initialNumbers) : 0
-      );
+      setLatestItemNumber(numbers.length ? Math.max(...numbers) : 0);
 
       partsInitialized.current = true;
     }
   }, [initialPartsData]);
 
   // =========================
-  // Initialize processes
+  // Initialize processes from initialProcessesData
   // =========================
   useEffect(() => {
-    if (
-      !processesInitialized.current &&
+    if (!processesInitialized.current &&
       Array.isArray(initialProcessesData) &&
-      initialProcessesData.length > 0
-    ) {
+      initialProcessesData.length > 0) {
+
       const grouped = {};
       initialProcessesData.forEach((proc) => {
         const itemNo =
-          typeof proc.itemNo === "string"
-            ? proc.itemNo
-            : `PT-${proc.itemNo || 0}`;
+          typeof proc.itemNo === "string" ? proc.itemNo : `PT-${proc.itemNo || 0}`;
         if (!grouped[itemNo]) grouped[itemNo] = [];
+
         grouped[itemNo].push({
           ...proc,
           id: proc.partProcessId || Date.now() + Math.random(),
+          woNo: proc.workOrderNumber || "",
+          designer: proc.employeeId || "",
+          designerName: proc.designerName || "",
+          opNo: proc.operationNumber || "",
+          processName: proc.process || "",
+          length: proc.length || "",
+          width: proc.width || "",
+          height: proc.height || "",
+          remarks: proc.remarks || ""
         });
       });
+
       setProcessesByPart(grouped);
       processesInitialized.current = true;
     }
   }, [initialProcessesData]);
+
+
+
+  // =========================
+  // Initialize processes
+  // =========================
+
 
   // =========================
   // Set active part if null
@@ -149,67 +149,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }
   }, [parts, activePartItemNo]);
 
-  // =========================
-  // Fetch projects for the selected customer
-  // =========================
-  const fetchProjectByCust = async () => {
-    if (customerId) {
-      console.log("customer id --", customerId);
-      const response = await axiosInstance.get(
-        `/project/getProjectByCustomerId/${customerId}`
-      );
-      console.log("checking data", response.data);
 
-      const data = response.data;
-
-      const options = data.map((p) => ({
-        value: p.projectId,
-        label: p.projectName,
-        fullData: p,
-      }));
-      setProjectSelectOptions(options);
-    } 
-  };
-
-  // =========================
-  // Set initial react-select value in update mode
-  // =========================
-  // Update selectedProject for react-select after projects are fetched
-  useEffect(() => {
-    if (
-      initialProjectData &&
-      initialProjectData.projectId &&
-      projects.length > 0
-    ) {
-      // Find the correct option object from your mapped options (not a new object)
-
-      // Also, set projectData
-      setProjectData((prev) => ({
-        ...prev,
-        projectId: initialProjectData.projectId,
-        projectName: initialProjectData.projectName,
-        projectTitle: initialProjectData.projectTitle || "",
-        kickOffDate: initialProjectData.kickOffDate || "",
-        startDate: initialProjectData.startDate || "",
-        endDate: initialProjectData.endDate || "",
-      }));
-      
-   
-    }
-       console.log("selected project name-->", initialProjectData);
-       const options = {
-         value: initialProjectData.projectId || "",
-         label: initialProjectData.projectName || " test",
-         fullData: {},
-       };
-
-       setSelectedProject(options);
-    console.log("initial project data", initialProjectData.projectName);
- 
-
-    
-    // Don't rely on a "one time" ref flag, always update when projects/initialProjectData change
-  }, [projects, initialProjectData]);
 
   // =========================
   // Functions used in render
@@ -367,6 +307,60 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }));
   };
 
+
+
+  // ...existing code from your component above
+
+  // ✅ Save Parts API
+  const handleUpdateParts = async () => {
+    try {
+      for (const p of parts) {
+        const payload = {
+          itemId: p.partId || p.id, // assuming p.partId exists; if not, send null
+          kickOffId: id, // pass via props
+          itemNo: typeof p.itemNo === "string" ? parseInt(p.itemNo.replace(/^PT-/, ""), 10) : p.itemNo,
+          partName: p.partName,
+          material: p.material,
+          thickness: p.thickness
+        };
+        await axiosInstance.put("/kickoff/updateItem", payload);
+      }
+      alert("Parts updated successfully!");
+    } catch (error) {
+      console.error("Failed to update parts:", error);
+      alert("Failed to update parts");
+    }
+  };
+
+  // ✅ Save Processes API
+  const handleUpdateProcesses = async () => {
+    try {
+      const allProcesses = Object.values(processesByPart).flat().map((proc) => ({
+        partProcessId: proc.partProcessId || proc.id,
+        kickOffId: id,
+        itemNo: typeof proc.itemNo === "string"
+          ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
+          : proc.itemNo,
+        workOrderNumber: proc.woNo,
+        designerName: proc.designerName || (employeeList.find(e => e.employeeId === proc.designer)?.name || ""),
+        employeeId: proc.designer,
+        process: proc.processName,
+        length: parseFloat(proc.length) || 0,
+        height: parseFloat(proc.height) || 0,
+        width: parseFloat(proc.width) || 0,
+        remarks: proc.remarks || ""
+      }));
+      await axiosInstance.put("/kickoff/updateKickOffItemsProccess", allProcesses);
+      alert("Processes updated successfully!");
+    } catch (error) {
+      console.error("Failed to update processes:", error);
+      alert("Failed to update processes");
+    }
+  };
+
+
+
+
   return (
     <Card className="mb-3 shadow-sm border-0">
       <CustomToggle
@@ -379,97 +373,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
-          {/* Project Details Section */}
-          <h5
-            className="mb-3"
-            style={{ borderLeft: "4px solid #1a3c8c", paddingLeft: "12px" }}
-          >
-            Project Details
-          </h5>
 
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Group controlId="projectName">
-                <Form.Label>
-                  Enter Project Name <span className="text-danger">*</span>
-                </Form.Label>
-                <Select
-                  options={projectSelectOptions}
-                  value={selectedProject} // if null, shows placeholder. If set, shows "Project Name"
-                  onChange={(option) => {
-                    setSelectedProject(option);
-                  }}
-                  placeholder="Select Project..."
-                  isClearable
-                  onMenuOpen={fetchProjectByCust}
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group controlId="projectTitle">
-                <Form.Label>Project Title</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={projectData.projectTitle}
-                  onChange={(e) =>
-                    setProjectData((prev) => ({
-                      ...prev,
-                      projectTitle: e.target.value,
-                    }))
-                  }
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row className="mb-4">
-            <Col md={6}>
-              <Form.Group controlId="kickOffDate">
-                <Form.Label>Kick-Off Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  value={projectData.kickOffDate}
-                  onChange={(e) =>
-                    setProjectData((prev) => ({
-                      ...prev,
-                      kickOffDate: e.target.value,
-                    }))
-                  }
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Label>Delivery Date</Form.Label>
-              <Row>
-                <Col>
-                  <Form.Text className="text-muted">T0 : 8/1/2025</Form.Text>
-                  <Form.Control
-                    type="date"
-                    value={projectData.startDate}
-                    onChange={(e) =>
-                      setProjectData((prev) => ({
-                        ...prev,
-                        startDate: e.target.value,
-                      }))
-                    }
-                  />
-                </Col>
-                <Col>
-                  <Form.Text className="text-muted">T1 : 8/1/2025</Form.Text>
-                  <Form.Control
-                    type="date"
-                    value={projectData.endDate}
-                    onChange={(e) =>
-                      setProjectData((prev) => ({
-                        ...prev,
-                        endDate: e.target.value,
-                      }))
-                    }
-                  />
-                </Col>
-              </Row>
-            </Col>
-          </Row>
 
           {/* Part Details */}
           <h5
@@ -655,6 +559,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             <Button onClick={addPart} variant="primary">
               <FaPlusCircle className="me-2" /> Add Part
             </Button>
+            <Button variant="primary" onClick={handleUpdateParts}>
+//               Update Parts
+//             </Button>
           </div>
 
           {/* Part Process */}
@@ -671,11 +578,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 ${
-                      activePartItemNo === part.itemNo
-                        ? "bg-primary text-white"
-                        : "bg-light"
-                    }`}
+                    className={`px-3 py-2 me-2 ${activePartItemNo === part.itemNo
+                      ? "bg-primary text-white"
+                      : "bg-light"
+                      }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >
@@ -720,14 +626,12 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           >
                             <option value="">Select Designer</option>
                             {employeeList.map((emp) => (
-                              <option
-                                key={emp.employeeId}
-                                value={emp.employeeId}
-                              >
+                              <option key={emp.employeeId} value={emp.employeeId}>
                                 {emp.name}
                               </option>
                             ))}
                           </Form.Select>
+
                         </td>
                         <td>
                           <Form.Select
@@ -846,6 +750,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                   <Button onClick={addProcess} variant="primary">
                     <FaPlusCircle className="me-2" /> Add Another Process
                   </Button>
+                  <Button variant="success" onClick={handleUpdateProcesses}>
+//               Update Processes
+//             </Button>
                 </div>
               )}
             </div>
