@@ -37,11 +37,11 @@ import WorkOrderList from "./CompanyComponent/WorkOrder/WorkOrderList";
 import KickOffList from "./CompanyComponent/KickOff/CompanyKickOffList";
 import CompanyCreateKickoffSheet from "./CompanyComponent/KickOff/CompanyCreateKickoffSheet";
 import CheckListItemSetting from "./CompanyComponent/ChechlistItemSetting/CheckListItemSetting";
-
-
 import CompanyUpdateKickoffSheet from "./CompanyComponent/KickOff/Update/CompanyUpdateKickoffSheet";
-
 import ChecklistSheetList from "./CompanyComponent/ChecklistSheet/ChecklistSheetList";
+import BOMList from "./CompanyComponent/BOM/BOMList";
+import BOMCreatePage from "./CompanyComponent/BOM/BOMCreatePage";
+import BOMUpadatePage from "./CompanyComponent/BOM/BOMUpdatePage";
 
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
@@ -266,8 +266,32 @@ const App = () => {
           }
         />
 
+          <Route
+          path="/BOMList"
+          element={
+            <ProtectedRoute>
+              <BOMList />
+            </ProtectedRoute>
+          }
+        />
 
+            <Route
+          path="/CreateBOM"
+          element={
+            <ProtectedRoute>
+              <BOMCreatePage />
+            </ProtectedRoute>
+          }
+        />
 
+        <Route
+          path="/EditBOM"
+          element={
+            <ProtectedRoute>
+              <BOMUpadatePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/ChecklistSheet"
           element={
@@ -276,8 +300,6 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
-
       </Routes>
     </Router>
   );
