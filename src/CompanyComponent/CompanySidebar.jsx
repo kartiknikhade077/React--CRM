@@ -105,10 +105,17 @@ const CompanySidebar = ({ isCollapsed }) => {
           </Link>
         </li>
 
-        <li className={location.pathname === "/ChecklistSheet" ? "active" : ""}>
+       <li className={location.pathname === "/ChecklistSheet" ? "active" : ""}>
           <Link to="/ChecklistSheet">
             <FaTimesCircle />
             {!isCollapsed && <span>Checklist-sheet</span>}
+          </Link>
+        </li> 
+
+        <li className={location.pathname === "/BOMList" ? "active" : ""}>
+          <Link to="/BOMList">
+            <FaTimesCircle />
+            {!isCollapsed && <span>BOM</span>}
           </Link>
         </li>
 
