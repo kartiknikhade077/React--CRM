@@ -459,9 +459,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       <CustomToggle
         eventKey={eventKey}
         activeKey={activeKey}
-        onClick={() => handleAccordionClick(eventKey)}
+        handleAccordionClick={() => handleAccordionClick(eventKey)}
       >
         Project Registration/Enquiry
+        
       </CustomToggle>
 
       <Accordion.Collapse eventKey={eventKey}>

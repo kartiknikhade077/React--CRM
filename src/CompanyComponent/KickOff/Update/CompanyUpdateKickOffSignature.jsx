@@ -64,12 +64,24 @@ const CompanyUpdateKickOffSignature = ({
       <CustomToggle
         eventKey={eventKey}
         activeKey={activeKey}
-        onClick={() => handleAccordionClick(eventKey)}
+        handleAccordionClick={() => handleAccordionClick(eventKey)}
       >
         Signatures
       </CustomToggle>
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
+          <div className="text-end">
+        
+
+            <Button
+              onClick={handleUpdateSignatures}
+              variant="primary"
+              className="mt-2 mx-2"
+            >
+              Update Signatures
+            </Button>
+          </div>
+
           {signatures.map((sig, idx) => (
             <Row key={sig.id || idx} className="mb-3 align-items-center">
               <Col md={5}>
@@ -108,14 +120,16 @@ const CompanyUpdateKickOffSignature = ({
           ))}
 
           <div className="mt-3">
-            <Button onClick={handleAddSignature} variant="outline-primary" size="sm" className="me-2">
+            <Button
+              onClick={handleAddSignature}
+              variant="outline-primary"
+              size="sm"
+              className="me-2"
+            >
               + Add Signature
             </Button>
 
             {/* ✅ Save Button */}
-            <Button onClick={handleUpdateSignatures} variant="primary">
-              Update Signatures
-            </Button>
           </div>
         </Card.Body>
       </Accordion.Collapse>
