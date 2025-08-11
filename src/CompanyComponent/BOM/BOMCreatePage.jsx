@@ -21,6 +21,7 @@ const BOMCreatePage = () => {
     const [formRows, setFormRows] = useState({});
     const [rowsByCategory, setRowsByCategory] = useState({});
     const [BOMInfo, setBOMInfo] = useState([])
+    const [dieDetails, setDieDetails] = useState("")
     const navigate = useNavigate();
 
     const handleToggle = () => {
@@ -143,18 +144,35 @@ const BOMCreatePage = () => {
         fetchWorkOrderNumberByItemNo(itemNo)
     };
 
+    const onHandleChageWorkOrder = async (e) => {
+
+        try{
+        const workOrderNo = e.target.value;
+        const response = await axiosInstance.get(`/kickoff/getItemProcessByWorkOrderNumber/${workOrderNo}`);
+
+         const itemProcess=response.data.body;
+          
+            setDieDetails("OP "+itemProcess.operationNumber+"_"+partName+"_"+itemProcess.process)
+
+        }catch(error){
+            console.error("Error fetching projects:", error);
+        }
+
+
+    }
+
 
 
     const saveInfo = async (e) => {
         e.preventDefault(); // Prevent page 
 
         const flatArray = Object.values(rowsByCategory).flat();
-        
+
         // Collect BOM Info
         const bomInfo = {
             customerName: customers.find(c => c.id === selectedCustomerId)?.companyName || "",
             projectName: projects.find(p => p.projectId === selectedProjectId)?.projectName || "",
-            customerId:selectedCustomerId,
+            customerId: selectedCustomerId,
             projectId: selectedProjectId,
             partName: partName,
             itemNo: parseInt(e.target.itemNo.value),
@@ -165,7 +183,7 @@ const BOMCreatePage = () => {
             dieDetails: e.target.dieDetails.value,
         };
 
-     
+
 
 
         // Combine the final payload
@@ -174,29 +192,18 @@ const BOMCreatePage = () => {
             BOMCategoryInfo: flatArray
         };
 
-       // console.log("Sending BOM Payload:", finalPayload);
+        // console.log("Sending BOM Payload:", finalPayload);
 
         // Send to backend
         try {
             const response = await axiosInstance.post("/kickoff/createBOM", finalPayload);
-        navigate("/BOMList");
+            navigate("/BOMList");
         } catch (error) {
             console.error("Error saving BOM:", error);
             alert("Failed to create BOM.");
         }
     };
 
-
-
-
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setBOMInfo((prev) => ({
-            ...prev,
-            [name]: value
-        }));
-    };
 
 
     const handleAddRow = (categoryKey) => {
@@ -318,7 +325,7 @@ const BOMCreatePage = () => {
                                         <div className="col-md-6">
                                             <Form.Group className="mb-3" controlId="formWorkOrderNo">
                                                 <Form.Label>Work Order Number</Form.Label>
-                                                <Form.Select aria-label="Select Work Order Number" required name="workOrderNo"> 
+                                                <Form.Select aria-label="Select Work Order Number" required name="workOrderNo" onChange={onHandleChageWorkOrder}>
                                                     <option value="">Select Project</option>
                                                     {workOrders.map((workOrder) => (
                                                         <option
@@ -337,13 +344,13 @@ const BOMCreatePage = () => {
                                         <div className="col-md-6">
                                             <Form.Group className="mb-3" controlId="formPartName">
                                                 <Form.Label>Part Name</Form.Label>
-                                                <Form.Control type="text" required placeholder="Enter Part Name" name="partName" value={partName} />
+                                                <Form.Control type="text" required placeholder="Enter Part Name" name="partName" value={partName} onChange={(e) => setPartName(e.target.value)} />
                                             </Form.Group>
                                         </div>
                                         <div className="col-md-6">
                                             <Form.Group className="mb-3" controlId="formProjectDetails">
                                                 <Form.Label>Project Details</Form.Label>
-                                                <Form.Control type="text" required placeholder="Enter Project Details" name="projectDetails" value={projectDetials} />
+                                                <Form.Control type="text" required placeholder="Enter Project Details" name="projectDetails" value={projectDetials} onChange={(e) => setProjectDetails(e.target.value)} />
                                             </Form.Group>
                                         </div>
                                     </div>
@@ -367,7 +374,7 @@ const BOMCreatePage = () => {
                                         <div className="col-md-6">
                                             <Form.Group className="mb-3" controlId="formDieDetails">
                                                 <Form.Label>Die Details</Form.Label>
-                                                <Form.Control type="text" required placeholder="Enter Die Details" name="dieDetails" />
+                                                <Form.Control type="text" required placeholder="Enter Die Details" name="dieDetails" value={dieDetails}   onChange={(e) => setDieDetails(e.target.value)}/>
                                             </Form.Group>
                                         </div>
                                     </div>

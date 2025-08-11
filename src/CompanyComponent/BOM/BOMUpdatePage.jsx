@@ -27,7 +27,8 @@ const BOMUpdatePage = () => {
     const [formRows, setFormRows] = useState({});
     const [rowsByCategory, setRowsByCategory] = useState({});
     const [editableRows, setEditableRows] = useState({});
-
+    const [dieDetails, setDieDetails] = useState("")
+    const [partName,setPartName]=useState("")
 
     const [BOMInfoCategory, setBOMInfoCategory] = useState([])
     // Fetch customers on bomId change
@@ -57,6 +58,8 @@ const BOMUpdatePage = () => {
             setBOMInfoCategory(data.BOMInfoCategory)
             fetchCategories(data.BOMInfoCategory)
             setProjectDetails(data.BOMInfo.projectDetails)
+            setDieDetails(data.BOMInfo.dieDetails)
+             setPartName(data.BOMInfo.partName)
             if (data.BOMInfo.customerId) {
                 setSelectedCustomer(data.BOMInfo.customerId);
                 fetchProjectsByCustomerId(data.BOMInfo.customerId)
@@ -198,6 +201,7 @@ const BOMUpdatePage = () => {
     };
 
     const fetchWorkOrderNumberByItemNo = async (itemNo) => {
+        setSelectedItem(itemNo)
         try {
             const response = await axiosInstance.get(`/kickoff/getWorkOrderNumberByItemNo/${itemNo}`);
             setWorkOrders(response.data || []);
@@ -356,6 +360,24 @@ const BOMUpdatePage = () => {
     };
 
 
+     const onHandleChageWorkOrder = async (e) => {
+            setSelectedWorkOrder(e.target.value)
+            try{
+            const workOrderNo = e.target.value;
+            const response = await axiosInstance.get(`/kickoff/getItemProcessByWorkOrderNumber/${workOrderNo}`);
+    
+             const itemProcess=response.data.body;
+              console.log(itemProcess)
+                setDieDetails("OP "+itemProcess.operationNumber+"_"+partName+"_"+itemProcess.process)
+    
+            }catch(error){
+                console.error("Error fetching projects:", error);
+            }
+    
+    
+        }
+    
+
 
     return (
         <>
@@ -439,7 +461,7 @@ const BOMUpdatePage = () => {
                                             aria-label="Select Work Order"
                                             name="workOrderNo"
                                             value={selectedWorkOrder}
-                                            onChange={(e) => setSelectedWorkOrder(e.target.value)}
+                                            onChange={onHandleChageWorkOrder}
                                             disabled={!selectedProjectId || workWorders.length === 0}
                                         >
                                             <option value="">Select Work Order</option>
@@ -463,7 +485,7 @@ const BOMUpdatePage = () => {
                                             required
                                             placeholder="Enter Part Name"
                                             name="partName"
-                                            defaultValue={BOMInformation.partName}
+                                            defaultValue={partName}
                                         />
                                     </Form.Group>
                                 </div>
@@ -520,7 +542,7 @@ const BOMUpdatePage = () => {
                                             required
                                             placeholder="Enter Die Details"
                                             name="dieDetails"
-                                            defaultValue={BOMInformation.dieDetails}
+                                            defaultValue={dieDetails}
                                         />
                                     </Form.Group>
                                 </div>
