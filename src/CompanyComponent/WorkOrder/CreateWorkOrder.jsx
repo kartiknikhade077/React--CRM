@@ -23,7 +23,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   const [selectedProcesses, setSelectedProcesses] = useState([]);
   const [tableData, setTableData] = useState({});
   const nextId = useRef(1);
-  const [itemNo, setItemNo]=useState(3000);
+  const [itemNo, setItemNo]=useState(1001);
   const [loadingPart, setLoadingPart] = useState(false);
   const [loadingThickness, setLoadingThickness] = useState(false);
   const [loadingMaterial, setLoadingMaterial] = useState(false);
@@ -401,9 +401,9 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     }
   };
   
-  useEffect(() => {
-    fetchItemNo();
-  }, []);
+  // useEffect(() => {
+  //   fetchItemNo();
+  // }, []);
 
   const fetchItemNo = async () => {
     try {

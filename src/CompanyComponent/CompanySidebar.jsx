@@ -119,6 +119,13 @@ const CompanySidebar = ({ isCollapsed }) => {
           </Link>
         </li>
 
+        <li className={location.pathname === "/MomList" ? "active" : ""}>
+          <Link to="/MomList">
+            <FaTimesCircle />
+            {!isCollapsed && <span>MOM</span>}
+          </Link>
+        </li>
+
         {/* Settings Dropdown */}
         <li
           className={`company-sidebar__settings-dropdown ${
