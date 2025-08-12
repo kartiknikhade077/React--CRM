@@ -11,7 +11,8 @@ import {
   Table,
   Dropdown,
 } from "react-bootstrap";
-import { FaTrash, FaPlusCircle } from "react-icons/fa";
+import { FaTrash, FaPlusCircle, FaSave } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const ProjectRegistrationKickoffSheet = ({
   eventKey,
@@ -58,6 +59,7 @@ const ProjectRegistrationKickoffSheet = ({
 
   const sortedProcesses = [...manualProcesses, ...workorderProcesses];
 
+
   const filteredProcesses = sortedProcesses.filter(
     (proc) => proc.itemNo === activePartItemNo
   );
@@ -82,6 +84,7 @@ const ProjectRegistrationKickoffSheet = ({
       material: "",
       thickness: "",
       images: [],
+      isNew: true,
     };
 
     const updatedParts = [...parts, newPart];
@@ -92,6 +95,7 @@ const ProjectRegistrationKickoffSheet = ({
       ...prev,
       [newPart.itemNo]: [],
     }));
+    setLatestItemNumber(nextItemNumber);
   };
 
   const removePart = (id) => {
@@ -108,7 +112,6 @@ const ProjectRegistrationKickoffSheet = ({
     onPartsChange && onPartsChange(parts);
   }, [parts]);
   // ---------------- State for Part Process ----------------
-  const [processes, setProcesses] = useState([]);
 
   const addProcess = () => {
     if (!activePartItemNo) return;
@@ -237,7 +240,10 @@ const ProjectRegistrationKickoffSheet = ({
   const [selectedProjectId, setSelectedProjectId] = useState("");
 
   useEffect(() => {
+    
+
     if (customerId) {
+      
       axiosInstance
         .get(`/project/getProjectByCustomerId/${customerId}`)
         .then((res) => {
@@ -363,7 +369,8 @@ const ProjectRegistrationKickoffSheet = ({
         partName: partDetail.partName || "",
         material: partDetail.material || "",
         thickness: partDetail.thickness || "",
-        images: apiImages, // base64 images wrapped for rendering
+        images: apiImages,
+        isNew: false,
       };
 
       newParts.push(part);
@@ -461,6 +468,7 @@ const ProjectRegistrationKickoffSheet = ({
         console.error("Failed to fetch employee list:", err);
       });
   }, []);
+
 
   return (
     <Card className="mb-3 shadow-sm border-0">
@@ -776,11 +784,7 @@ const ProjectRegistrationKickoffSheet = ({
                     </td>
 
                     <td className="text-center">
-                      <Button
-                        variant="link"
-                        onClick={() => removePart(part.id)}
-                        className="text-danger"
-                      >
+                      <Button variant="link" onClick={() => removePart(part.id)} className="text-danger">
                         <FaTrash />
                       </Button>
                     </td>
@@ -796,7 +800,6 @@ const ProjectRegistrationKickoffSheet = ({
             </Button>
           </div>
 
-          {/* ---------------- Part Process Section ---------------- */}
           {/* ---------------- Part Process Section ---------------- */}
           <h5
             className="mb-3"
@@ -986,6 +989,7 @@ const ProjectRegistrationKickoffSheet = ({
                     <FaPlusCircle className="me-2" /> Add Another Process
                   </Button>
                 </div>
+                
               )}
             </div>
           )}

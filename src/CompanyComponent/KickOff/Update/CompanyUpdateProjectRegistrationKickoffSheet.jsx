@@ -17,7 +17,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   activeKey,
   CustomToggle,
   handleAccordionClick,
-  customerId,
   initialProjectData = {},
   initialPartsData = [],
   initialProcessesData = [],
@@ -26,6 +25,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   onProcessesChange,
   id,
   selectedProjectId,
+  customerId,
+  customerName,
+  projectId,
+  projectName,
 }) => {
   // =================
   // State definitions
@@ -76,6 +79,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             partName: p.partName || "",
             material: p.material || "",
             thickness: p.thickness || "",
+            isNew: false,
           }))
         );
 
@@ -159,17 +163,20 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       const itemNo = `PT-${partDetail.itemNo}`;
       const part = {
         id: partDetail.partId || Date.now() + index,
+        itemId: partDetail.partId,
         itemNo,
         partName: partDetail.partName || "",
         material: partDetail.material || "",
         thickness: partDetail.thickness || "",
         images: [],
+        isNew: false,
       };
 
       newParts.push(part);
 
       const processes = (groupedByItem[itemNo] || []).map((proc, idx) => ({
         id: proc.partProcessId || Date.now() + index * 10 + idx,
+        partProcessId: proc.partProcessId, // Store backend ID
         woNo: proc.workOrderNo || "",
         itemNo,
         designer: proc.employeeId || "",
@@ -181,7 +188,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         height: proc.height || "",
         remarks: proc.remark || proc.remarks || "",
       }));
-
       newProcessesByPart[itemNo] = processes;
     });
 
@@ -249,6 +255,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       material: "",
       thickness: "",
       images: [],
+      isNew: true,
     };
     setParts((prev) => [...prev, newPart]);
     setActivePartItemNo(newItemNo);
@@ -368,55 +375,117 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   const filesToBase64 = (files) =>
     Promise.all(
       files.map((file) => {
-        // Already a string (from backend) → return cleaned base64
-        if (typeof file === "string") {
-          return file.startsWith("data:")
-            ? file.split(",")[1] // remove prefix like data:image/jpeg;base64,
-            : file; // already pure base64
+        if (typeof file === 'object' && file.imagePath && !(file instanceof File)) {
+             return file.imagePath;
         }
-
-        // Is a File or Blob → convert to base64 string
+        if (typeof file === "string" && file.startsWith("data:")) {
+           return file.split(",")[1];
+        }
         if (file instanceof File || file instanceof Blob) {
           return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result.split(",")[1]); // only the base64 part
+            reader.onload = (e) => resolve(e.target.result.split(",")[1]);
             reader.onerror = reject;
             reader.readAsDataURL(file);
           });
         }
-
-        // Unexpected type → skip
         return null;
       })
-    ).then((results) => results.filter(Boolean)); // remove nulls
+    ).then((results) => results.filter(Boolean));
+    
+   const handleSaveOrUpdatePart = async (partToSave) => {
+    const imageListForKickoff = await filesToBase64(partToSave.images);
 
-  // ✅ Save Parts API
-  const handleUpdateParts = async () => {
-    try {
-      for (const p of parts) {
-        const imageList = await filesToBase64(p.images);
-        const payload = {
-          itemId: p.itemId, // ensure this is the backend ID string
-          kickOffId: id,
-          itemNo:
-            typeof p.itemNo === "string"
-              ? parseInt(p.itemNo.replace(/^PT-/, ""), 10)
-              : p.itemNo,
-          partName: p.partName,
-          material: p.material,
-          thickness: p.thickness,
-          imageList,
+    if (partToSave.isNew || !partToSave.itemId) {
+      try {
+        const workOrderPayload = {
+          itemNo: parseInt(partToSave.itemNo.replace(/^PT-/, ""), 10),
+          partName: partToSave.partName,
+          material: partToSave.material,
+          thickness: partToSave.thickness,
+          projectId: projectId,
+          projectName: projectName,
+          customerId: customerId,
+          customerName: customerName,
         };
-        console.log("itemNo-->", p.itemId);
-        console.log("Updating part with payload:", payload); // Debug log
-        await axiosInstance.put("/kickoff/updateItem", payload);
+        console.log("::::::::::work order playload::::::::::::::",workOrderPayload)
+
+        const formData = new FormData();
+        formData.append("workOrder", JSON.stringify(workOrderPayload));
+
+        const imageFiles = partToSave.images.filter(img => img instanceof File);
+        if (imageFiles.length > 0) {
+          imageFiles.forEach(file => {
+            formData.append('images', file);
+          });
+        }
+
+        const workOrderResponse = await axiosInstance.post("/work/createWorkOrderPart", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const savedWorkOrder = workOrderResponse.data;
+        const newPartId = savedWorkOrder.workOrderId; 
+        const kickoffItemPayload = {
+          kickOffId: id,
+          itemId: null,
+          itemNo: parseInt(partToSave.itemNo.replace(/^PT-/, ""), 10),
+          partName: partToSave.partName,
+          material: partToSave.material,
+          thickness: partToSave.thickness,
+          imageList: imageListForKickoff, 
+        };
+
+        await axiosInstance.put("/kickoff/updateItem", kickoffItemPayload);
+        setParts(prevParts => prevParts.map(p => 
+          p.id === partToSave.id 
+            ? { 
+                ...p, 
+                ...savedWorkOrder,
+                id: newPartId, 
+                itemId: newPartId,
+                isNew: false 
+              } 
+            : p
+        ));
+        
+        if (savedWorkOrder.partProcess && savedWorkOrder.partProcess.length > 0) {
+            setProcessesByPart(prev => ({
+                ...prev,
+                [partToSave.itemNo]: savedWorkOrder.partProcess.map(proc => ({...proc, id: proc.partProcessId}))
+            }));
+        }
+
+        alert("Part saved successfully!");
+
+      } catch (error) {
+        console.error("Failed to save new part:", error.response || error);
+        alert("Error: Could not save the new part. Please check the data and try again.");
       }
-      alert("Parts updated successfully!");
-    } catch (error) {
-      console.error("Failed to update parts:", error.response || error);
-      alert("Failed to update parts");
+    }  else {
+      try {
+        const kickoffUpdatePayload = {
+          itemId: partToSave.itemId,
+          kickOffId: id,
+          itemNo: parseInt(partToSave.itemNo.replace(/^PT-/, ""), 10),
+          partName: partToSave.partName,
+          material: partToSave.material,
+          thickness: partToSave.thickness,
+          imageList: imageListForKickoff
+        };
+        
+        console.log("Updating existing part with payload:", kickoffUpdatePayload);
+        await axiosInstance.put("/kickoff/updateItem", kickoffUpdatePayload);
+        
+        alert("Part updated successfully!");
+
+      } catch (error) {
+        console.error("Failed to update part:", error.response || error);
+        alert("Failed to update part.");
+      }
     }
   };
+
+  
 
   // ✅ Save Processes API
   const handleUpdateProcesses = async () => {
@@ -707,8 +776,8 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                         <FaTrash />
                       </Button>
 
-                      <Button variant="primary" onClick={handleUpdateParts}>
-                        Update{" "}
+                      <Button variant="primary" onClick={() => handleSaveOrUpdatePart(part)}>
+                         {part.isNew ? 'Save' : 'Update'}
                       </Button>
                     </td>
                   </tr>

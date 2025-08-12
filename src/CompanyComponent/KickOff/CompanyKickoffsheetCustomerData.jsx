@@ -9,6 +9,7 @@ const CompanyKickoffsheetCustomerData = ({
   CustomToggle,
   handleAccordionClick,
   setCustomerId,
+  setCustomerName,
   onCustomerDataChange,
 }) => {
   const [customerList, setCustomerList] = useState([]);
@@ -35,6 +36,7 @@ const CompanyKickoffsheetCustomerData = ({
     const fetchCustomers = async () => {
       try {
         const response = await axiosInstance.get("/customer/getCustomerList");
+        console.log("selected COmpany data-->",response.data);
         setCustomerList(response.data || []);
       } catch (error) {
         console.error("Failed to fetch customers:", error);
@@ -46,10 +48,11 @@ const CompanyKickoffsheetCustomerData = ({
 
   useEffect(() => {
     if (formData.customerId) {
-      console.log("formdata customer id--",formData.customerid)
-      setCustomerId(formData.customerid);
+      console.log("formdata customer id--",formData.customerId)
+      setCustomerId(formData.customerId);
+      setCustomerName(formData.companyName);
     }
-  }, [formData.customerId, setCustomerId]);
+  }, [formData.customerId, setCustomerId],[formData.companyName, setCustomerName]);
 
  
 
@@ -135,6 +138,7 @@ const CompanyKickoffsheetCustomerData = ({
                                   selectedCustomer.shippingAddress || "",
                               });
                               setCustomerId(selectedCustomer.id);
+                              setCustomerName(selectedCustomer.companyName);
                             }
                             setSearchTermCustomer(""); // Clear search
                             document.body.click(); // Close dropdown

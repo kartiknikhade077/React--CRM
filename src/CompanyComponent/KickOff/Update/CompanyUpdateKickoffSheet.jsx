@@ -182,7 +182,11 @@ const CompanyUpdateKickoffSheet = () => {
                 onPartsChange={setPartsData}
                 onProcessesChange={setProcessesData}
                 selectedProjectId={selectedProjectId}
-                id={id} // ✅ KickOffId
+                id={id}
+                customerId={formData.savedcusomerid}
+                customerName={formData.customerName}
+                projectId={formData.projectId}
+                projectName={formData.projectName}
               />
 
               <CompanyUpdateKickOffCustomerRequirements
