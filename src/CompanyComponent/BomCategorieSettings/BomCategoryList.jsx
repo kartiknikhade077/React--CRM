@@ -136,7 +136,7 @@ const BomCategorySetting = () => {
       <CreateBomCategory
         show={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSave={() => setShowCreateModal(false)}
+        onSave={() => {setShowCreateModal(false);fetchCategories();}}
       />
 
       <UpdateBomCategory

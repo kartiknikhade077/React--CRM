@@ -401,9 +401,9 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     }
   };
   
-  // useEffect(() => {
-  //   fetchItemNo();
-  // }, []);
+  useEffect(() => {
+    fetchItemNo();
+  }, []);
 
   const fetchItemNo = async () => {
     try {
@@ -425,8 +425,8 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     try {
       const response = await axiosInstance.get("/customer/getCustomerList");  
       const formattedOptions = response.data.map(customer => ({
-        value: customer.customerName,
-        label: customer.customerName,
+        value: customer.companyName,
+        label: customer.companyName,
         id: customer.id
       }));
       setCustomerOptions(formattedOptions);

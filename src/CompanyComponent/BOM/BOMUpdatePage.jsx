@@ -5,6 +5,7 @@ import CompanyTopbar from "../CompanyTopbar";
 import Form from "react-bootstrap/Form";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import Button from "react-bootstrap/esm/Button";
+import { toast } from "react-toastify";
 
 const BOMUpdatePage = () => {
     const location = useLocation();
@@ -54,6 +55,7 @@ const BOMUpdatePage = () => {
         try {
             const response = await axiosInstance.get(`kickoff/getBOMInfoById/${bomId}`);
             const data = response.data;
+            console.log("check:::::::::::::::::",data);
             setBOMInformation(data.BOMInfo);
             setBOMInfoCategory(data.BOMInfoCategory)
             fetchCategories(data.BOMInfoCategory)
@@ -115,13 +117,14 @@ const BOMUpdatePage = () => {
                         rawSizeLength: bom.rawSizeLength || "",
                         rawSizeWidth: bom.rawSizeWidth || "",
                         rawSizeHeight: bom.rawSizeHeight || "",
-                        quantity: bom.qunatity || "", // careful: API uses "qunatity"
+                        quantity: bom.quantity || "", // careful: API uses "qunatity"
                         modelWeight: bom.modelWeight || "",
                         orderingRemarks: bom.orderingRemarks || "",
                         boughtOutItems: bom.boughtOutItems || "",
                         boughtOutQuantity: bom.boughtOutQuantity || "",
                         specification: bom.specification || "",
                         section: bom.section || "",
+                        remarks:bom.remarks || ""
                     }));
                 } else {
                     // No BOM rows → just one empty row
@@ -145,6 +148,7 @@ const BOMUpdatePage = () => {
                         boughtOutQuantity: "",
                         specification: "",
                         section: "",
+                        remarks:""
                     }];
                 }
             });
@@ -330,7 +334,7 @@ const BOMUpdatePage = () => {
    
 
     // Remove a single row from a category
-    const handleRemoveRow = (category, rowIndex, bomId) => {
+    const handleRemoveRow = async (category, rowIndex, bomId) => {
         setFormRows(prev => ({
             ...prev,
             [category]: prev[category].filter((_, idx) => idx !== rowIndex)
@@ -340,6 +344,17 @@ const BOMUpdatePage = () => {
             ...prev,
             [category]: prev[category]?.filter((_, idx) => idx !== rowIndex)
         }));
+        
+        
+        if(bomId){
+            const response = await axiosInstance.delete(`/kickoff/deleteBOMCategoryInfo/${bomId}`);
+            if(response.data){
+                toast.success("Bom category deleleted succesfully..");
+            }else{
+                toast.error("Something wents wrong while deleting bom category");
+            }
+        }
+
     };
 
 
@@ -660,7 +675,8 @@ const BOMUpdatePage = () => {
                                                                                 onChange={(e) => handleInputChange(title, rowIdx, "finishSizeWidth", e.target.value)} value={rowsByCategory[title]?.[rowIdx]?.finishSizeWidth || ""}
                                                                             />
                                                                             <Form.Control type="number" placeholder="H" name="finishSizeHeight" readOnly={!editableRows[`${title}-${rowIdx}`]}
-                                                                                value={rowsByCategory[title]?.[rowIdx]?.finishSizeHeight || ""}
+                                                                                value={rowsByCategory[title]?.[rowIdx]?.finishSizeHeight || "" }
+                                                                                onChange={(e) => handleInputChange(title, rowIdx, "finishSizeHeight", e.target.value)}
                                                                             />
                                                                         </div>
                                                                     </Form.Group>
@@ -736,6 +752,13 @@ const BOMUpdatePage = () => {
                                                                     </Form.Group>
                                                                 )}
 
+                                                                {item === "REMARKS" && (
+                                                                    <Form.Group controlId={`remarks-${title}-${rowIdx}-${idx}`}>
+                                                                        <Form.Label>Remarks</Form.Label>
+                                                                        <Form.Control type="text" placeholder="remarks" name="remarks" readOnly={!editableRows[`${title}-${rowIdx}`]} onChange={(e) => handleInputChange(title, rowIdx, "remarks", e.target.value)} value={rowsByCategory[title]?.[rowIdx]?.remarks || ""} />
+                                                                    </Form.Group>
+                                                                )}
+
                                                                 <Form.Control type="text" required placeholder="Enter Die Details" name="bomCategory" hidden value={rowsByCategory[title]?.[rowIdx]?.bomCategory} />
                                                                 <Form.Control type="text" required placeholder="Enter Die Details" name="bomId" hidden value={rowsByCategory[title]?.[rowIdx]?.bomId} />
                                                                 <Form.Control type="text" required placeholder="Enter Die Details" name="bomcategoryInfoId" hidden value={rowsByCategory[title]?.[rowIdx]?.bomcategoryInfoId} />
@@ -748,7 +771,7 @@ const BOMUpdatePage = () => {
                                                             <Button
                                                                 variant="outline-danger"
                                                                 size="sm"
-                                                                onClick={() => handleRemoveRow(title, rowIdx, rowsByCategory[title]?.[rowIdx]?.section)}
+                                                                onClick={() => handleRemoveRow(title, rowIdx, rowsByCategory[title]?.[rowIdx]?.bomcategoryInfoId)}
                                                             >
                                                                 Remove Row
                                                             </Button>
