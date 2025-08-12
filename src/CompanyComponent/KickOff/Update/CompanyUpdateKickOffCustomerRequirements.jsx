@@ -53,11 +53,22 @@ const CompanyUpdateKickOffCustomerRequirements = ({
       <CustomToggle
         eventKey={eventKey}
         activeKey={activeKey}
-        onClick={() => handleAccordionClick(eventKey)}
+        handleAccordionClick={() => handleAccordionClick(eventKey)}
       >
-        Customer Requirements
+        <div className="d-flex justify-content-between">
+          <h5> Customer Requirements</h5>
+        </div>
       </CustomToggle>
 
+      <div className="text-end">
+        <Button
+          variant="primary"
+          className="mt-2 mx-2"
+          onClick={handleUpdateRequirements}
+        >
+          Update Requirements
+        </Button>
+      </div>
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
           {requirements.map((req, idx) => (
@@ -122,8 +133,8 @@ const CompanyUpdateKickOffCustomerRequirements = ({
                   requirementFour: "",
                   kickOffId: id,
                   companyId,
-                  employeeId
-                }
+                  employeeId,
+                },
               ]);
             }}
           >
@@ -131,9 +142,6 @@ const CompanyUpdateKickOffCustomerRequirements = ({
           </Button>
 
           {/* ✅ Update Button */}
-          <Button variant="primary" className="mt-3" onClick={handleUpdateRequirements}>
-            Update Requirements
-          </Button>
         </Card.Body>
       </Accordion.Collapse>
     </Card>

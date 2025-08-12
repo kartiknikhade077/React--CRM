@@ -181,13 +181,19 @@ const CompanyUpdateKickoffSheetCustomerData = ({
         <CustomToggle
           as={Card.Header}
           eventKey={eventKey}
-          onClick={() => handleAccordionClick(eventKey)}
+          handleAccordionClick={() => handleAccordionClick(eventKey)}
         >
           Customer & Project Details
         </CustomToggle>
         <Accordion.Collapse eventKey={eventKey}>
           <Card.Body>
-            <h5>Customer Details</h5>
+            {/* Save Button */}
+            <div className="d-flex justify-content-between">
+              <h5>Customer Details</h5>
+              <Button variant="primary" onClick={handleUpdate}>
+                Update Customer & Project
+              </Button>
+            </div>
             <Row>
               <Col md={6}>
                 <Form.Group>
@@ -356,13 +362,6 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                 </Form.Group>
               </Col>
             </Row>
-
-            {/* Save Button */}
-            <div className="mt-4 text-end">
-              <Button variant="primary" onClick={handleUpdate}>
-                Update Customer & Project
-              </Button>
-            </div>
           </Card.Body>
         </Accordion.Collapse>
       </Card>

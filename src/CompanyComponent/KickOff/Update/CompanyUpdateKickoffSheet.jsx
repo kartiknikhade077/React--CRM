@@ -32,8 +32,10 @@ const CustomToggle = ({ eventKey, activeKey, children, handleAccordionClick }) =
         borderRadius: isActive ? "8px 8px 0 0" : "8px",
       }}
     >
-      <span>{children}</span>
-      {isActive ? <FaChevronUp /> : <FaChevronDown />}
+      
+        <span>{children}</span>
+        {isActive ? <FaChevronUp /> : <FaChevronDown />}
+     
     </div>
   );
 };
