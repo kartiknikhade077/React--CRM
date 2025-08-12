@@ -364,12 +364,39 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }));
   };
 
+  // ✅ Convert only File/Blob to base64 string, pass strings as-is
+  const filesToBase64 = (files) =>
+    Promise.all(
+      files.map((file) => {
+        // Already a string (from backend) → return cleaned base64
+        if (typeof file === "string") {
+          return file.startsWith("data:")
+            ? file.split(",")[1] // remove prefix like data:image/jpeg;base64,
+            : file; // already pure base64
+        }
+
+        // Is a File or Blob → convert to base64 string
+        if (file instanceof File || file instanceof Blob) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result.split(",")[1]); // only the base64 part
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        }
+
+        // Unexpected type → skip
+        return null;
+      })
+    ).then((results) => results.filter(Boolean)); // remove nulls
+
   // ✅ Save Parts API
   const handleUpdateParts = async () => {
     try {
       for (const p of parts) {
+        const imageList = await filesToBase64(p.images);
         const payload = {
-          // itemId:  ,  // ensure this is the backend ID string
+          itemId: p.itemId, // ensure this is the backend ID string
           kickOffId: id,
           itemNo:
             typeof p.itemNo === "string"
@@ -378,7 +405,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           partName: p.partName,
           material: p.material,
           thickness: p.thickness,
+          imageList,
         };
+        console.log("itemNo-->", p.itemId);
         console.log("Updating part with payload:", payload); // Debug log
         await axiosInstance.put("/kickoff/updateItem", payload);
       }
@@ -462,7 +491,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         handleAccordionClick={() => handleAccordionClick(eventKey)}
       >
         Project Registration/Enquiry
-        
       </CustomToggle>
 
       <Accordion.Collapse eventKey={eventKey}>
@@ -568,10 +596,28 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             />
                             <button
                               type="button"
-                              onClick={() => {
-                                const updatedImages = [...part.images];
-                                updatedImages.splice(idx, 1);
-                                updatePart(part.id, "images", updatedImages);
+                              onClick={async () => {
+                                try {
+                                  const image = part.images[idx];
+
+                                  // If backend image (has an ID), delete from DB
+                                  if (image && image.imageId) {
+                                    await axiosInstance.delete(
+                                      `/kickoff/deleteItemImage/${image.imageId}`
+                                    );
+                                    console.log(
+                                      `Image ${image.imageId} deleted from DB`
+                                    );
+                                  }
+
+                                  // Remove from local state
+                                  const updatedImages = [...part.images];
+                                  updatedImages.splice(idx, 1);
+                                  updatePart(part.id, "images", updatedImages);
+                                } catch (err) {
+                                  console.error("Failed to delete image:", err);
+                                  alert("Failed to delete image from server");
+                                }
                               }}
                               style={{
                                 position: "absolute",
@@ -628,23 +674,28 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             const selectedFiles = Array.from(e.target.files);
 
                             // Filter to allow only files <= 1 MB
-                            const validFiles = selectedFiles.filter(file => {
-                              if (file.size > 1024 * 1024) { // 1MB
-                                alert(`${file.name} is larger than 1 MB and will be skipped.`);
+                            const validFiles = selectedFiles.filter((file) => {
+                              if (file.size > 1024 * 1024) {
+                                // 1MB
+                                alert(
+                                  `${file.name} is larger than 1 MB and will be skipped.`
+                                );
                                 return false;
                               }
                               return true;
                             });
 
                             if (validFiles.length > 0) {
-                              updatePart(part.id, "images", [...part.images, ...validFiles]);
+                              updatePart(part.id, "images", [
+                                ...part.images,
+                                ...validFiles,
+                              ]);
                             }
 
                             // Reset file input so the same file can be re-selected
                             e.target.value = "";
                           }}
                         />
-
                       </div>
                     </td>
                     <td className="text-center">
@@ -686,10 +737,11 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 ${activePartItemNo === part.itemNo
-                      ? "bg-primary text-white"
-                      : "bg-light"
-                      }`}
+                    className={`px-3 py-2 me-2 ${
+                      activePartItemNo === part.itemNo
+                        ? "bg-primary text-white"
+                        : "bg-light"
+                    }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >
