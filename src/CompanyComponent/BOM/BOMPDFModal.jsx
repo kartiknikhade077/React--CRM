@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Modal } from "react-bootstrap";
-import { Document, Page, Text, View, PDFViewer,Image   } from "@react-pdf/renderer";
+import { Document, Page, Text, View, PDFViewer, Image } from "@react-pdf/renderer";
 import { BOMPdfStyles } from "./BOMPdfStyles ";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 
@@ -49,7 +49,7 @@ const MyDocument = ({ bomId, bomInfo, bomInfoCategory, bomCategoriesAndItems, co
     return acc;
   }, {});
 
-    // Build base64 image URL
+  // Build base64 image URL
   const logoSrc = companyInfo?.mainLogo
     ? `data:image/jpeg;base64,${companyInfo.mainLogo}`
     : null;
@@ -58,33 +58,33 @@ const MyDocument = ({ bomId, bomInfo, bomInfoCategory, bomCategoriesAndItems, co
     <Document>
       <Page size="A4" orientation="landscape" style={BOMPdfStyles.page}>
 
-      <View style={{ flexDirection: "row", alignItems: "center",borderLeft:"1pt solid #000",borderTop:"1pt solid #000" ,borderRight:"1pt solid #000"}}>
-  
-  {/* Left: Company Logo */}
-  <View style={{ flex: 1, alignItems: "flex-start" }}>
-    <Image
-      src={logoSrc}
-      style={{ width: 100, height: 100 }} // Adjust size as needed
-    />
-  </View>
+        <View style={{ flexDirection: "row", alignItems: "center", borderLeft: "1pt solid #000", borderTop: "1pt solid #000", borderRight: "1pt solid #000" }}>
 
-  {/* Center: Company Info */}
-  <View style={{ flex: 3, alignItems: "center" }}>
-    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-      PLANETTO TOOLTECH PVT. LTD.
-    </Text>
-    <Text style={{ fontSize: 10, textAlign: "center" }}>
-      Plot No.PAP-A24, Phase-IV, MIDC Chakan, Behind Mahindra & Mahindra,
-      Nighoje, Pune-410501
-    </Text>
-    <Text style={{ fontSize: 10, textAlign: "center" }}>
-      Ph: +91 9850624952, Contact: director@Planetto.co.in
-    </Text>
-  </View>
+          {/* Left: Company Logo */}
+          <View style={{ flex: 1, alignItems: "flex-start" }}>
+            <Image
+              src={logoSrc}
+              style={{ width: 100, height: 100 }} // Adjust size as needed
+            />
+          </View>
 
-  {/* Right: Empty space (optional, for balance) */}
-  <View style={{ flex: 1 }} />
-</View>
+          {/* Center: Company Info */}
+          <View style={{ flex: 3, alignItems: "center" }}>
+            <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+              PLANETTO TOOLTECH PVT. LTD.
+            </Text>
+            <Text style={{ fontSize: 10, textAlign: "center" }}>
+              Plot No.PAP-A24, Phase-IV, MIDC Chakan, Behind Mahindra & Mahindra,
+              Nighoje, Pune-410501
+            </Text>
+            <Text style={{ fontSize: 10, textAlign: "center" }}>
+              Ph: +91 9850624952, Contact: director@Planetto.co.in
+            </Text>
+          </View>
+
+          {/* Right: Empty space (optional, for balance) */}
+          <View style={{ flex: 1 }} />
+        </View>
 
         {/* Header Table */}
         <View style={BOMPdfStyles.row}>
@@ -168,6 +168,19 @@ const MyDocument = ({ bomId, bomInfo, bomInfoCategory, bomCategoriesAndItems, co
             </View>
           );
         })}
+       <View style={[BOMPdfStyles.row, { flexDirection: "row" }]}>
+  <View style={BOMPdfStyles.designerSign}>
+    <Text style={BOMPdfStyles.signText}>DESIGN ( SIGN & DATE )</Text>
+  </View>
+  <View style={BOMPdfStyles.teamLeaderSign}>
+    <Text style={BOMPdfStyles.signText}>TEAM LEADER ( SIGN & DATE )</Text>
+  </View>
+  <View style={BOMPdfStyles.teamLeaderSign}>
+    <Text style={BOMPdfStyles.signText}>HOD ( SIGN & DATE )</Text>
+  </View>
+</View>
+
+
       </Page>
     </Document>
   );
