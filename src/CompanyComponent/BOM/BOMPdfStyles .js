@@ -16,7 +16,7 @@ export const BOMPdfStyles = StyleSheet.create({
         borderLeft: "1pt solid #000",
         textAlign: "center"
     },
-//    Last column with right border
+    //    Last column with right border
     colLast: {
         flex: 1,
         padding: 0,
@@ -31,7 +31,8 @@ export const BOMPdfStyles = StyleSheet.create({
         flex: 1,
         borderBottom: "1pt solid #000",
         borderLeft: "1pt solid #000",
-        textAlign: "center"
+        textAlign: "center",
+        minHeight: 25,
     },
     colNoTopLast: {
         flex: 1,
@@ -39,48 +40,49 @@ export const BOMPdfStyles = StyleSheet.create({
         borderBottom: "1pt solid #000",
         borderLeft: "1pt solid #000",
         borderRight: "1pt solid #000",
-        textAlign: "center"
+        textAlign: "center",
+         minHeight: 25,
     },
     smallText: {
         fontSize: 15, // smaller than your default 12
         textAlign: "left"
     },
-        companyName: {
+    companyName: {
         fontSize: 15, // smaller than your default 12
         textAlign: "center",
-         fontWeight: "bold",
+        fontWeight: "bold",
     },
-      infoText: {
+    infoText: {
         fontSize: 12, // smaller than your default 12
         textAlign: "center",
-   
+
     },
-       companyInfo: {
+    companyInfo: {
         flex: 1,
         padding: 5,
         borderTop: "1pt solid #000",
         borderRight: "1pt solid #000",
         textAlign: "center"
     },
- companyInfoLogo: {
+    companyInfoLogo: {
         flex: 1,
         borderTop: "1pt solid #000",
         borderLeft: "1pt solid #000",
         textAlign: "left"
     },
-    
+
 
     categoryTextHeading: {
         fontSize: 15,
         fontWeight: "bold",
         textAlign: "center",  // center the category header
-      
+
         borderLeft: "1pt solid #000",
         borderRight: "1pt solid #000",         // remove top gap
     },
 
     tableRow: {
-         borderTop: "0.5pt solid #000",
+        borderTop: "0.5pt solid #000",
         flexDirection: "row",
         padding: 0,
         margin: 0
@@ -91,7 +93,7 @@ export const BOMPdfStyles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "bold",
         textAlign: "center",
-       
+
         borderBottom: "1pt solid #000",
         padding: 2,
         borderRight: "1pt solid #000" // right border for all except last cell
@@ -120,9 +122,32 @@ export const BOMPdfStyles = StyleSheet.create({
 
     tableCellLast: {
         borderRight: "1pt solid #000"
-    }
-    
+    },
 
+designerSign: {
+  flex: 1, // match proportional width
+  borderRight: "1pt solid #000",
+  borderBottom: "1pt solid #000",
+  borderLeft: "1pt solid #000",
+  minHeight: 60,
+  justifyContent: "flex-end", // bottom align text
+  alignItems: "center",       // center horizontally
+  padding: 4
+},
+teamLeaderSign: {
+  flex: 1, // same width
+  borderRight: "1pt solid #000",
+  borderBottom: "1pt solid #000",
+  minHeight: 60,
+  justifyContent: "flex-end",
+  alignItems: "center",
+  padding: 4
+}
+,
+  signText: {
+        fontSize: 11, // smaller than your default 12
+        textAlign: "left"
+    }
 
 
 });
