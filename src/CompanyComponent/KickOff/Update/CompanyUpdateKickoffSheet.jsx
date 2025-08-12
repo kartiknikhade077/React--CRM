@@ -78,6 +78,7 @@ const CompanyUpdateKickoffSheet = () => {
   const [processesData, setProcessesData] = useState([]);
   const [customerRequirementsData, setCustomerRequirementsData] = useState([]);
   const [signatureData, setSignatureData] = useState([]);
+
   const [employeeList, setEmployeeList] = useState([]);
 
   const handleAccordionClick = (eventKey) => {
@@ -120,6 +121,7 @@ const CompanyUpdateKickoffSheet = () => {
 
 
         setPartsData(data.kickOffItemsList || []);
+        console.log("kickoffItem list data",data.kickOffItemsList);
         setProcessesData(data.itemProcessList || []);
         setCustomerRequirementsData(data.requirementList || []);
         setSignatureData(data.listofSingnature || []);

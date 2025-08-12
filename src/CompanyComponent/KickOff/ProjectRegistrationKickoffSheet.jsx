@@ -659,13 +659,34 @@ const ProjectRegistrationKickoffSheet = ({
                           accept="image/*"
                           multiple
                           style={{ display: "none" }}
+                          // onChange={(e) => {
+                          //   const newImages = Array.from(e.target.files);
+                          //   updatePart(part.id, "images", [
+                          //     ...part.images,
+                          //     ...newImages,
+                          //   ]);
+                          // }}
+
                           onChange={(e) => {
-                            const newImages = Array.from(e.target.files);
-                            updatePart(part.id, "images", [
-                              ...part.images,
-                              ...newImages,
-                            ]);
+                            const selectedFiles = Array.from(e.target.files);
+
+                            // Only allow files <= 1 MB
+                            const validFiles = selectedFiles.filter(file => {
+                              if (file.size > 1024 * 1024) { // 1MB = 1024 * 1024 bytes
+                                alert(`${file.name} is larger than 1 MB and will be skipped.`);
+                                return false;
+                              }
+                              return true;
+                            });
+
+                            if (validFiles.length > 0) {
+                              updatePart(part.id, "images", [...part.images, ...validFiles]);
+                            }
+
+                            // Reset the input so user can re-select the same file if needed
+                            e.target.value = "";
                           }}
+
                         />
                       </div>
                     </td>
@@ -707,11 +728,10 @@ const ProjectRegistrationKickoffSheet = ({
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 cursor-pointer ${
-                      activePartItemNo === part.itemNo
+                    className={`px-3 py-2 me-2 cursor-pointer ${activePartItemNo === part.itemNo
                         ? "bg-primary text-white"
                         : "bg-light"
-                    }`}
+                      }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >

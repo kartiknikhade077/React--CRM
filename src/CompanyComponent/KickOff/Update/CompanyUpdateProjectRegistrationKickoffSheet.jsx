@@ -553,7 +553,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             <img
                               src={
                                 typeof img === "string"
-                                  ? img
+                                  ? img.startsWith("data:")
+                                    ? img
+                                    : `data:image/jpeg;base64,${img}` // or image/png depending on your format
                                   : URL.createObjectURL(img)
                               }
                               alt={`img-${idx}`}
@@ -622,13 +624,26 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           multiple
                           style={{ display: "none" }}
                           onChange={(e) => {
-                            const newImages = Array.from(e.target.files);
-                            updatePart(part.id, "images", [
-                              ...part.images,
-                              ...newImages,
-                            ]);
+                            const selectedFiles = Array.from(e.target.files);
+
+                            // Filter to allow only files <= 1 MB
+                            const validFiles = selectedFiles.filter(file => {
+                              if (file.size > 1024 * 1024) { // 1MB
+                                alert(`${file.name} is larger than 1 MB and will be skipped.`);
+                                return false;
+                              }
+                              return true;
+                            });
+
+                            if (validFiles.length > 0) {
+                              updatePart(part.id, "images", [...part.images, ...validFiles]);
+                            }
+
+                            // Reset file input so the same file can be re-selected
+                            e.target.value = "";
                           }}
                         />
+
                       </div>
                     </td>
                     <td className="text-center">
@@ -670,11 +685,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 ${
-                      activePartItemNo === part.itemNo
-                        ? "bg-primary text-white"
-                        : "bg-light"
-                    }`}
+                    className={`px-3 py-2 me-2 ${activePartItemNo === part.itemNo
+                      ? "bg-primary text-white"
+                      : "bg-light"
+                      }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >
