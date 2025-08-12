@@ -7,12 +7,20 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 
+// import { Modal, Button } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
+import { PDFViewer } from "@react-pdf/renderer";
+import KickOffPDF from "./KickOffPDF";
+
 const KickOffList = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [kickOffList, setKickOffList] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [pageCount, setPageCount] = useState(0);
+
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfData, setPdfData] = useState(null);
 
   const navigate = useNavigate();
 
@@ -27,9 +35,7 @@ const KickOffList = () => {
   // Fetch Data
   useEffect(() => {
     axiosInstance
-      .get(
-        `/kickoff/getAllKickOffs/${currentPage}/${pageSize}`
-      )
+      .get(`/kickoff/getAllKickOffs/${currentPage}/${pageSize}`)
       .then((res) => {
         setKickOffList(res.data.kickOffList);
         setPageCount(res.data.totalPages);
@@ -39,6 +45,23 @@ const KickOffList = () => {
         setPageCount(0);
       });
   }, [currentPage, pageSize]);
+
+
+
+
+  const handlePdfClick = async (kickOffId) => {
+    // Fetch PDF data from API
+    try {
+      const { data } = await axiosInstance.get(
+        `/kickoff/getKickOffInfo/${kickOffId}`
+      );
+    console.log("Kickoffinfo-->",data);
+      setPdfData(data);
+      setShowPdfModal(true); // Show modal when data is set
+    } catch (error) {
+      setPdfData(null);
+    }
+  };
 
   return (
     <>
@@ -98,6 +121,12 @@ const KickOffList = () => {
                           >
                             <i className="bi bi-pencil-square"></i>
                           </button>
+                          <button
+                            className="btn btn-outline-primary btn-sm ms-2"
+                            onClick={() => handlePdfClick(item.kickOffId)}
+                          >
+                            <i className="bi bi-file-pdf"></i>
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -121,6 +150,32 @@ const KickOffList = () => {
           </div>
         </div>
       </div>
+
+      {/* PDF Modal */}
+      <Modal
+        show={showPdfModal}
+        onHide={() => setShowPdfModal(false)}
+        size="xl"
+        dialogClassName="modal-90w"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Kick Off Sheet PDF Preview</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ minHeight: "80vh" }}>
+          {pdfData && (
+            <PDFViewer width="100%" height="700">
+              <KickOffPDF data={pdfData} />
+            </PDFViewer>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowPdfModal(false)}>
+            Close
+          </Button>
+          {/* For exporting/printing, use react-pdf's PDFDownloadLink */}
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };
