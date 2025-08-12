@@ -267,6 +267,60 @@ const ProjectRegistrationKickoffSheet = ({
       });
   }, [selectedProjectId]);
 
+
+
+  // const populatePartsAndProcesses = (data) => {
+  //   const { partProcess, partDetails } = data;
+
+  //   const groupedByItem = {};
+
+  //   // Group processes by itemNo
+  //   partProcess.forEach((item) => {
+  //     const key = `PT-${item.itemNo}`;
+  //     if (!groupedByItem[key]) groupedByItem[key] = [];
+  //     groupedByItem[key].push(item);
+  //   });
+
+  //   const newParts = [];
+  //   const newProcessesByPart = {};
+
+  //   partDetails.forEach((partDetail, index) => {
+  //     const itemNo = `PT-${partDetail.itemNo}`;
+  //     const part = {
+  //       id: Date.now() + index,
+  //       itemNo: itemNo,
+  //       partName: partDetail.partName || "",
+  //       material: partDetail.material || "",
+  //       thickness: partDetail.thickness || "",
+  //       images: [],
+  //     };
+
+  //     newParts.push(part);
+
+  //     const processes = (groupedByItem[itemNo] || []).map((proc, idx) => ({
+  //       id: Date.now() + index * 10 + idx,
+  //       woNo: proc.workOrderNo,
+  //       itemNo: itemNo,
+  //       designer: "", // still hardcoded
+  //       opNo: proc.opNo || "",
+  //       processName: proc.proceess || "",
+  //       length: proc.length || "",
+  //       width: proc.width || "",
+  //       height: proc.height || "",
+  //       remarks: proc.remark || "",
+  //     }));
+
+  //     newProcessesByPart[itemNo] = processes;
+  //   });
+
+  //   setParts(newParts);
+  //   setProcessesByPart(newProcessesByPart);
+
+  //   if (newParts.length > 0) {
+  //     setActivePartItemNo(newParts[0].itemNo);
+  //   }
+  // };
+
   const populatePartsAndProcesses = (data) => {
     const { partProcess, partDetails } = data;
 
@@ -284,13 +338,32 @@ const ProjectRegistrationKickoffSheet = ({
 
     partDetails.forEach((partDetail, index) => {
       const itemNo = `PT-${partDetail.itemNo}`;
+
+      let apiImages = [];
+      if (partDetail.imageList) {
+        if (Array.isArray(partDetail.imageList)) {
+          // Map base64 strings to proper data URLs
+          apiImages = partDetail.imageList.map((base64Str) => ({
+            type: "api",
+            url: `data:image/jpeg;base64,${base64Str}`,
+          }));
+        } else if (typeof partDetail.imageList === "string") {
+          apiImages = [
+            {
+              type: "api",
+              url: `data:image/jpeg;base64,${partDetail.images}`,
+            },
+          ];
+        }
+      }
+
       const part = {
         id: Date.now() + index,
-        itemNo: itemNo,
+        itemNo,
         partName: partDetail.partName || "",
         material: partDetail.material || "",
         thickness: partDetail.thickness || "",
-        images: [],
+        images: apiImages, // base64 images wrapped for rendering
       };
 
       newParts.push(part);
@@ -298,8 +371,8 @@ const ProjectRegistrationKickoffSheet = ({
       const processes = (groupedByItem[itemNo] || []).map((proc, idx) => ({
         id: Date.now() + index * 10 + idx,
         woNo: proc.workOrderNo,
-        itemNo: itemNo,
-        designer: "", // still hardcoded
+        itemNo,
+        designer: "",
         opNo: proc.opNo || "",
         processName: proc.proceess || "",
         length: proc.length || "",
@@ -578,51 +651,57 @@ const ProjectRegistrationKickoffSheet = ({
                           gap: "10px",
                         }}
                       >
-                        {part.images.map((img, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              position: "relative",
-                              width: "100px",
-                              height: "100px",
-                              border: "1px solid #ddd",
-                              borderRadius: "4px",
-                              // overflow: "hidden",
-                            }}
-                          >
-                            <img
-                              src={URL.createObjectURL(img)}
-                              alt={`preview-${idx}`}
+                        {part.images.map((img, idx) => {
+                          const src =
+                            img.type === "api"
+                              ? img.url // already has data:image/jpeg;base64,...
+                              : URL.createObjectURL(img); // for uploaded files
+
+                          return (
+                            <div
+                              key={idx}
                               style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                            />
-                            <button
-                              onClick={() => {
-                                const updatedImages = [...part.images];
-                                updatedImages.splice(idx, 1);
-                                updatePart(part.id, "images", updatedImages);
-                              }}
-                              style={{
-                                position: "absolute",
-                                top: "-8px",
-                                right: "-8px",
-                                background: "red",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "50%",
-                                width: "24px",
-                                height: "24px",
-                                cursor: "pointer",
-                                fontSize: "14px",
+                                position: "relative",
+                                width: "100px",
+                                height: "100px",
+                                border: "1px solid #ddd",
+                                borderRadius: "4px",
                               }}
                             >
-                              ×
-                            </button>
-                          </div>
-                        ))}
+                              <img
+                                src={src}
+                                alt={`preview-${idx}`}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              <button
+                                onClick={() => {
+                                  const updatedImages = [...part.images];
+                                  updatedImages.splice(idx, 1);
+                                  updatePart(part.id, "images", updatedImages);
+                                }}
+                                style={{
+                                  position: "absolute",
+                                  top: "-8px",
+                                  right: "-8px",
+                                  background: "red",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "50%",
+                                  width: "24px",
+                                  height: "24px",
+                                  cursor: "pointer",
+                                  fontSize: "14px",
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
 
                         {/* Add More Images Button */}
                         <div
@@ -671,22 +750,27 @@ const ProjectRegistrationKickoffSheet = ({
                             const selectedFiles = Array.from(e.target.files);
 
                             // Only allow files <= 1 MB
-                            const validFiles = selectedFiles.filter(file => {
-                              if (file.size > 1024 * 1024) { // 1MB = 1024 * 1024 bytes
-                                alert(`${file.name} is larger than 1 MB and will be skipped.`);
+                            const validFiles = selectedFiles.filter((file) => {
+                              if (file.size > 1024 * 1024) {
+                                // 1MB = 1024 * 1024 bytes
+                                alert(
+                                  `${file.name} is larger than 1 MB and will be skipped.`
+                                );
                                 return false;
                               }
                               return true;
                             });
 
                             if (validFiles.length > 0) {
-                              updatePart(part.id, "images", [...part.images, ...validFiles]);
+                              updatePart(part.id, "images", [
+                                ...part.images,
+                                ...validFiles,
+                              ]);
                             }
 
                             // Reset the input so user can re-select the same file if needed
                             e.target.value = "";
                           }}
-
                         />
                       </div>
                     </td>
@@ -728,10 +812,11 @@ const ProjectRegistrationKickoffSheet = ({
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 cursor-pointer ${activePartItemNo === part.itemNo
+                    className={`px-3 py-2 me-2 cursor-pointer ${
+                      activePartItemNo === part.itemNo
                         ? "bg-primary text-white"
                         : "bg-light"
-                      }`}
+                    }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >
