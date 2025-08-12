@@ -86,8 +86,8 @@ const EditMom = ({ onClose, onUpdate,momId }) => {
             setRemark(momInfo.remark);
 
             // Populate select fields
-            if (momInfo.customerName) setSelectedCustomer({ label: momInfo.customerName, value: momInfo.customerName });
-            if (momInfo.projectName) setSelectedProject({ label: momInfo.projectName, value: momInfo.projectName });
+            if (momInfo.customerName) setSelectedCustomer({ label: momInfo.customerName, value: momInfo.customerId });
+            if (momInfo.projectName) setSelectedProject({ label: momInfo.projectName, value: momInfo.projectId });
             if (momInfo.itemNo) setSelectedItem({ label: momInfo.itemNo, value: momInfo.itemNo });
 
             if (momInfo.contactPersonName) {
@@ -174,7 +174,7 @@ const EditMom = ({ onClose, onUpdate,momId }) => {
                 toast.error("Please select a customer first.");
                 return;
             }
-            const customerId = selectedCustomer.fullData.id;
+            const customerId = selectedCustomer.value;
             setIsContactPersonLoading(true);
             const response = await axiosInstance.get(`/customer/getContacts/${customerId}`);
             const data = response.data;
@@ -197,7 +197,7 @@ const EditMom = ({ onClose, onUpdate,momId }) => {
                 return;
             }
 
-            const customerId = selectedCustomer.fullData.id;
+            const customerId = selectedCustomer.value;
             setIsProjectLoading(true);
             const response = await axiosInstance.get(`/project/getProjectByCustomerId/${customerId}`);
             const data = response.data;
@@ -223,7 +223,7 @@ const EditMom = ({ onClose, onUpdate,momId }) => {
                 return;
             }
 
-            const projectId = selectedProject.fullData.projectId;
+            const projectId = selectedProject.value;
             setIsItemLoading(true);
             const response = await axiosInstance.get(`/kickoff/getItemNoByProjectId/${projectId}`);
             const data = response.data;
@@ -247,7 +247,7 @@ const EditMom = ({ onClose, onUpdate,momId }) => {
                 toast.error("Please select a project first.");
                 return;
             } 
-            const projectId = selectedProject.fullData.projectId;
+            const projectId = selectedProject.value;
             setIsEmployeeLoading(true);
             const response = await axiosInstance.get(`/project/getEmployeesbyProjectId/${projectId}`);
             const data = response.data;
@@ -488,10 +488,12 @@ const EditMom = ({ onClose, onUpdate,momId }) => {
                 momId: momId,
                 employeeeId: emplyees.map(emp => emp.value).join(","),
                 customerName: selectedCustomer ? selectedCustomer.label : "",
+                customerId: selectedCustomer ? selectedCustomer.value : "",
                 venue: venue,
                 contactPersonName: contactPerson.map(cp => cp.label).join(","),
                 employeeName: emplyees.map(emp => emp.label).join(","),
                 projectName: selectedProject ? selectedProject.label : "",
+                projectId: selectedProject ? selectedProject.value : "",
                 itemNo: selectedItem ? selectedItem.label : "",
                 createdDate: selectedDate,
                 introduction: introduction,
@@ -622,6 +624,25 @@ const EditMom = ({ onClose, onUpdate,momId }) => {
                 </Col>
                 <Col md={6}>
                     <div className="form-group">
+                    <label>Project <span className="required-label">*</span></label>
+                    <Select
+                        options={projectOptions}
+                        value={selectedProject}
+                        onChange={(selectedOption) => setSelectedProject(selectedOption)}
+                        placeholder="Select a project..."
+                        isClearable
+                        onMenuOpen={fetchProjects}
+                        isLoading={isProjectLoading}
+                        isDisabled={!selectedCustomer}
+                    />
+                    </div>
+                </Col>
+                </Row>
+
+                {/* Row 3: Project and Item No */}
+                <Row>
+                <Col md={6}>
+                    <div className="form-group">
                         <label>Employee <span className="required-label">*</span></label>
                         <Select 
                             options={emplyeeOptions} 
@@ -634,25 +655,6 @@ const EditMom = ({ onClose, onUpdate,momId }) => {
                             onChange={(selectedOption)=> setEmplyees(selectedOption)}
                         />
                     
-                    </div>
-                </Col>
-                </Row>
-
-                {/* Row 3: Project and Item No */}
-                <Row>
-                <Col md={6}>
-                    <div className="form-group">
-                    <label>Project <span className="required-label">*</span></label>
-                    <Select
-                        options={projectOptions}
-                        value={selectedProject}
-                        onChange={(selectedOption) => setSelectedProject(selectedOption)}
-                        placeholder="Select a project..."
-                        isClearable
-                        onMenuOpen={fetchProjects}
-                        isLoading={isProjectLoading}
-                        isDisabled={!selectedCustomer}
-                    />
                     </div>
                 </Col>
                 <Col md={6}>

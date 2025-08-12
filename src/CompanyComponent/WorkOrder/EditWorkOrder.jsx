@@ -86,19 +86,23 @@ import CreatableSelect from "react-select/creatable";
       try {
         const res = await axiosInstance.get(`/work/getWorkOrderById/${workOrderId}`);
         const data = res.data;
+        console.log(data);
         const { workOrder, workImages, workOrderItems } = data;
 
         setFormData({
-          partName: workOrder.partName,
-          customer: workOrder.customerName,
-          project: workOrder.projectName,
-          thickness: workOrder.thickness,
-          material: workOrder.material,
-          partSize: workOrder.partSize,
-          partWeight: workOrder.partWeight,
+            partName: workOrder.partName,
+            customer: workOrder.customerName,
+            customerId: workOrder.customerId,
+            project: workOrder.projectName,
+            projectId: workOrder.projectId,
+            thickness: workOrder.thickness,
+            material: workOrder.material,
+            partSize: workOrder.partSize,
+            partWeight: workOrder.partWeight,
         });
 
         setItemNo(workOrder.itemNo);
+        console.log(workOrderId.customerId);
         setSelectedCustomer(workOrder.customerId || '');
 
         // Pre-fill image blobs
@@ -264,22 +268,39 @@ import CreatableSelect from "react-select/creatable";
   
       if (hasError) return;
       
-      const items = processes.map((p, idx) => {
+      const items = processes.map((p) => {
         const data = tableData[p.id] || {};
+        let woNo = "";
+
+        // This logic correctly mirrors the WO No generation from the table display
+        const visibleManuals = processes.filter(proc => proc.type === 'manual' && !tableData[proc.id]?.scope);
+        const manualIndex = visibleManuals.findIndex(proc => proc.id === p.id);
+
+        if (data.scope) {
+            // If scope is checked, WO No is always 'XX'
+            woNo = "XX";
+        } else if (p.type === "select") {
+            // If it's a dropdown process, use its predefined woNo
+            woNo = p.woNo;
+        } else if (manualIndex !== -1) {
+            // If it's a visible manual process, generate the sequential WO No
+            woNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
+        }
+
         return {
-          itemNo: itemNo,
-          workOrderNo: p.type === 'select' ? p.woNo : `PT-${itemNo}${String.fromCharCode(65 + idx)}`,
-          cancel: data.cancel || false,
-          scope: data.scope || false,
-          operationNumber: parseInt(data.opNo || 0),
-          proceess: data.process || '',
-          length: parseFloat(data.l || 0),
-          width: parseFloat(data.w || 0),
-          height: parseFloat(data.h || 0),
-          remark: data.remarks || '',
-          itemId:data.itemId||null,
+            itemNo: itemNo,
+            workOrderNo: woNo, // Use the correctly calculated woNo
+            cancel: data.cancel || false,
+            scope: data.scope || false,
+            operationNumber: parseInt(data.opNo || 0),
+            proceess: data.process || '',
+            length: parseFloat(data.l || 0),
+            width: parseFloat(data.w || 0),
+            height: parseFloat(data.h || 0),
+            remark: data.remarks || '',
+            itemId: data.itemId || null,
         };
-      });
+    });
 
       const payload = {
         partName: formData.partName,
@@ -499,8 +520,8 @@ import CreatableSelect from "react-select/creatable";
           try {
             const response = await axiosInstance.get("/customer/getCustomerList");  
             const formattedOptions = response.data.map(customer => ({
-              value: customer.customerName,
-              label: customer.customerName,
+              value: customer.companyName,
+              label: customer.companyName,
               id: customer.id
             }));
             setCustomerOptions(formattedOptions);

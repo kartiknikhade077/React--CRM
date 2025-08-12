@@ -648,6 +648,21 @@ const BOMCreatePage = () => {
                                                                                 </Form.Group>
                                                                             )}
 
+                                                                            {item === "REMARKS" && (
+                                                                                <Form.Group controlId={`sec-${title}-${rowIdx}-${idx}`}>
+                                                                                    <Form.Label>REMARKS</Form.Label>
+                                                                                    <Form.Control type="text" placeholder="REMARKS" name="remarks" value={rowsByCategory[title]?.[rowIdx]?.remarks || ""} onChange={(e) =>
+                                                                                        handleInputChangeCategories(
+                                                                                            title,
+                                                                                            rowIdx,
+                                                                                            "remarks",
+                                                                                            e.target.value
+                                                                                        )
+                                                                                    } />
+                                                                                </Form.Group>
+                                                                            )}
+
+
 
                                                                         </div>
                                                                     ))}

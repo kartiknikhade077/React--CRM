@@ -353,10 +353,12 @@ const CreateMom = ({ onClose, onSave }) => {
             const momInfo = {
                 employeeeId: emplyeeIds,
                 customerName: selectedCustomer ? selectedCustomer.label : "",
+                customerId: selectedCustomer ? selectedCustomer.value : "",
                 venue: venue,
                 contactPersonName: contactPersonNames,
                 employeeName: employeeNames,
                 projectName: selectedProject ? selectedProject.label : "",
+                projectId: selectedProject ? selectedProject.value : "",
                 itemNo: selectedItem ? selectedItem.label : "",
                 createdDate: selectedDate,
                 introduction: introduction,
@@ -478,6 +480,25 @@ const CreateMom = ({ onClose, onSave }) => {
                 </Col>
                 <Col md={6}>
                     <div className="form-group">
+                    <label>Project <span className="required-label">*</span></label>
+                    <Select
+                        options={projectOptions}
+                        value={selectedProject}
+                        onChange={(selectedOption) => setSelectedProject(selectedOption)}
+                        placeholder="Select a project..."
+                        isClearable
+                        onMenuOpen={fetchProjects}
+                        isLoading={isProjectLoading}
+                        isDisabled={!selectedCustomer}
+                    />
+                    </div>
+                </Col>
+                </Row>
+
+                {/* Row 3: Project and Item No */}
+                <Row>
+                <Col md={6}>
+                    <div className="form-group">
                         <label>Employee <span className="required-label">*</span></label>
                         <Select 
                             options={emplyeeOptions} 
@@ -490,25 +511,6 @@ const CreateMom = ({ onClose, onSave }) => {
                             onChange={(selectedOption)=> setEmplyees(selectedOption)}
                         />
                     
-                    </div>
-                </Col>
-                </Row>
-
-                {/* Row 3: Project and Item No */}
-                <Row>
-                <Col md={6}>
-                    <div className="form-group">
-                    <label>Project <span className="required-label">*</span></label>
-                    <Select
-                        options={projectOptions}
-                        value={selectedProject}
-                        onChange={(selectedOption) => setSelectedProject(selectedOption)}
-                        placeholder="Select a project..."
-                        isClearable
-                        onMenuOpen={fetchProjects}
-                        isLoading={isProjectLoading}
-                        isDisabled={!selectedCustomer}
-                    />
                     </div>
                 </Col>
                 <Col md={6}>
