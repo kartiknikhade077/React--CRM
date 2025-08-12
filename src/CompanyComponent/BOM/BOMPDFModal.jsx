@@ -1,10 +1,46 @@
 import React, { useEffect, useState } from "react";
 import { Modal } from "react-bootstrap";
-import { Document, Page, Text, View, PDFViewer } from "@react-pdf/renderer";
+import { Document, Page, Text, View, PDFViewer,Image   } from "@react-pdf/renderer";
 import { BOMPdfStyles } from "./BOMPdfStyles ";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 
-const MyDocument = ({ bomId, bomInfo, bomInfoCategory }) => {
+
+const renderCellContent = (colName, item) => {
+  switch (colName) {
+    case "ITEM NO":
+      return item.itemNo || "-";
+    case "ITEM DESCRIPTION":
+      return item.itemDescription || "-";
+    case "MATL":
+      return item.matl || "-";
+    case "FINISH SIZE":
+      // format your finish size columns as needed
+      return `${item.finishSizeHeight || "-"} x ${item.finishSizeLength || "-"} x ${item.finishSizeWidth || "-"}`;
+    case "RAW SIZE":
+      return `${item.rawSizeHeight || "-"} x ${item.rawSizeLength || "-"} x ${item.rawSizeWidth || "-"}`;
+    case "QTY":
+      return item.quantity || "-";
+    case "REMARKS":
+      return item.remarks || "-";
+    case "MODEL WT":
+      return item.modelWeight || "-";
+    case "ORDERING REMARKS":
+      return item.orderingRemarks || "-";
+    case "BOUGHT OUT ITEMS":
+      return item.boughtOutItems || "-";
+    case "BOUGHT OUT QTY":
+      return item.boughtOutQuantity || "-";
+    case "SPECIFICATION":
+      return item.specification || "-";
+    case "SEC.":
+      return item.section || "-";
+    default:
+      return "-";
+  }
+};
+
+
+const MyDocument = ({ bomId, bomInfo, bomInfoCategory, bomCategoriesAndItems, companyInfo }) => {
   const groupedData = bomInfoCategory.reduce((acc, item) => {
     if (!acc[item.bomCategory]) {
       acc[item.bomCategory] = [];
@@ -13,11 +49,42 @@ const MyDocument = ({ bomId, bomInfo, bomInfoCategory }) => {
     return acc;
   }, {});
 
+    // Build base64 image URL
+  const logoSrc = companyInfo?.mainLogo
+    ? `data:image/jpeg;base64,${companyInfo.mainLogo}`
+    : null;
+
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={BOMPdfStyles.page}>
-        <Text style={BOMPdfStyles.title}>BOM PDF</Text>
-        <Text style={BOMPdfStyles.text}>BOM ID: {bomId}</Text>
+
+      <View style={{ flexDirection: "row", alignItems: "center",borderLeft:"1pt solid #000",borderTop:"1pt solid #000" ,borderRight:"1pt solid #000"}}>
+  
+  {/* Left: Company Logo */}
+  <View style={{ flex: 1, alignItems: "flex-start" }}>
+    <Image
+      src={logoSrc}
+      style={{ width: 100, height: 100 }} // Adjust size as needed
+    />
+  </View>
+
+  {/* Center: Company Info */}
+  <View style={{ flex: 3, alignItems: "center" }}>
+    <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+      PLANETTO TOOLTECH PVT. LTD.
+    </Text>
+    <Text style={{ fontSize: 10, textAlign: "center" }}>
+      Plot No.PAP-A24, Phase-IV, MIDC Chakan, Behind Mahindra & Mahindra,
+      Nighoje, Pune-410501
+    </Text>
+    <Text style={{ fontSize: 10, textAlign: "center" }}>
+      Ph: +91 9850624952, Contact: director@Planetto.co.in
+    </Text>
+  </View>
+
+  {/* Right: Empty space (optional, for balance) */}
+  <View style={{ flex: 1 }} />
+</View>
 
         {/* Header Table */}
         <View style={BOMPdfStyles.row}>
@@ -28,53 +95,79 @@ const MyDocument = ({ bomId, bomInfo, bomInfoCategory }) => {
 
         <View style={BOMPdfStyles.row}>
           <View style={BOMPdfStyles.colNoTop}>
-            <Text style={BOMPdfStyles.smallText}>PART DETAILS: {bomInfo.partName}</Text>
+            <Text style={BOMPdfStyles.smallText}> PART DETAILS: {bomInfo.partName}</Text>
           </View>
           <View style={BOMPdfStyles.colNoTopLast}>
-            <Text style={BOMPdfStyles.smallText}>DIE DETAILS: {bomInfo.dieDetails}</Text>
+            <Text style={BOMPdfStyles.smallText}>  DETAILS: {bomInfo.dieDetails}</Text>
           </View>
         </View>
 
         <View style={BOMPdfStyles.row}>
           <View style={BOMPdfStyles.colNoTop}>
-            <Text style={BOMPdfStyles.smallText}>PROJECT DETAIL: {bomInfo.projectDetails}</Text>
+            <Text style={BOMPdfStyles.smallText}> PROJECT DETAIL: {bomInfo.projectDetails}</Text>
           </View>
           <View style={BOMPdfStyles.colNoTopLast}>
-            <Text style={BOMPdfStyles.smallText}>
-              DATE & REV NO: {bomInfo.bomDate} {bomInfo.revisionNumber}
-            </Text>
+            <Text style={BOMPdfStyles.smallText}>  DATE & REV NO: {bomInfo.bomDate} {bomInfo.revisionNumber} </Text>
           </View>
         </View>
 
         {/* Grouped BOM Tables */}
-        {Object.entries(groupedData).map(([category, items]) => (
-          <View key={category} style={{ marginTop: 10 }}>
-            {/* Category Heading */}
-            <Text style={BOMPdfStyles.categoryTextHeading}>{category}</Text>
+        {Object.entries(groupedData).map(([category, items]) => {
+          const configuredColumns = bomCategoriesAndItems[category] || [];
 
-            {/* Table Header */}
-      <View style={BOMPdfStyles.tableRow}>
-  <Text style={[BOMPdfStyles.tableHeader, BOMPdfStyles.tableHeaderFirst]}>Item No</Text>
-  <Text style={BOMPdfStyles.tableHeader}>Description</Text>
-  <Text style={BOMPdfStyles.tableHeader}>Material</Text>
-  <Text style={BOMPdfStyles.tableHeader}>Finish H</Text>
-  <Text style={BOMPdfStyles.tableHeader}>Finish L</Text>
-  <Text style={[BOMPdfStyles.tableHeader, BOMPdfStyles.tableHeaderLast]}>Finish W</Text>
-</View>
+          // Only show columns that have at least one non-empty value in items
+          const columnsToShow = configuredColumns.filter(colName =>
+            items.some(item => {
+              const val = renderCellContent(colName, item);
+              return val !== "-" && val !== null && val !== undefined && val !== "";
+            })
+          );
 
-{items.map((item) => (
-  <View key={item.bomcategoryInfoId} style={BOMPdfStyles.tableRow}>
-    <Text style={[BOMPdfStyles.tableCell, BOMPdfStyles.tableCellFirst]}>{item.itemNo}</Text>
-    <Text style={BOMPdfStyles.tableCell}>{item.itemDescription || "-"}</Text>
-    <Text style={BOMPdfStyles.tableCell}>{item.matl || "-"}</Text>
-    <Text style={BOMPdfStyles.tableCell}>{item.finishSizeHeight}</Text>
-    <Text style={BOMPdfStyles.tableCell}>{item.finishSizeLength}</Text>
-    <Text style={[BOMPdfStyles.tableCell, BOMPdfStyles.tableCellLast]}>{item.finishSizeWidth}</Text>
-  </View>
-))}
+          if (columnsToShow.length === 0) {
+            // No columns with data - skip rendering this category
+            return null;
+          }
 
-          </View>
-        ))}
+          return (
+            <View key={category}>
+              <Text style={BOMPdfStyles.categoryTextHeading}>{category}</Text>
+
+              {/* Table header */}
+              <View style={BOMPdfStyles.tableRow}>
+                {columnsToShow.map((colName, index) => (
+                  <Text
+                    key={colName}
+                    style={[
+                      BOMPdfStyles.tableHeader,
+                      index === 0 ? BOMPdfStyles.tableHeaderFirst : null,
+                      index === columnsToShow.length - 1 ? BOMPdfStyles.tableHeaderLast : null,
+                    ]}
+                  >
+                    {colName}
+                  </Text>
+                ))}
+              </View>
+
+              {/* Table rows */}
+              {items.map(item => (
+                <View key={item.bomcategoryInfoId} style={BOMPdfStyles.tableRow} wrap={false}>
+                  {columnsToShow.map((colName, index) => (
+                    <Text
+                      key={colName}
+                      style={[
+                        BOMPdfStyles.tableCell,
+                        index === 0 ? BOMPdfStyles.tableCellFirst : null,
+                        index === columnsToShow.length - 1 ? BOMPdfStyles.tableCellLast : null,
+                      ]}
+                    >
+                      {renderCellContent(colName, item)}
+                    </Text>
+                  ))}
+                </View>
+              ))}
+            </View>
+          );
+        })}
       </Page>
     </Document>
   );
@@ -84,6 +177,8 @@ const MyDocument = ({ bomId, bomInfo, bomInfoCategory }) => {
 export default function BOMPDFModal({ show, onClose, bomId }) {
   const [bomInfo, setBOMInfo] = useState({});
   const [bomInfoCategory, setBOMInfoCategory] = useState([]);
+  const [bomCategoriesAndItems, setbomCategoriesAndItems] = useState([]);
+  const [companyInfo, setCompanyInfo] = useState([])
 
   useEffect(() => {
     if (bomId) {
@@ -93,12 +188,16 @@ export default function BOMPDFModal({ show, onClose, bomId }) {
 
   const fetchBOMInfoWithCategory = async () => {
     try {
-      console.log("Fetching BOM with ID:", bomId);
-      const response = await axiosInstance.get(`kickoff/getBOMInfoById/${bomId}`);
-      console.log("BOM Data:", response.data);
 
+      const response = await axiosInstance.get(`kickoff/getBOMInfoById/${bomId}`);
       setBOMInfo(response.data.BOMInfo || {});
       setBOMInfoCategory(response.data.BOMInfoCategory || []);
+
+      const categoryResponse = await axiosInstance.get(`kickoff/getCategoryByCompanyId`);
+      setbomCategoriesAndItems(categoryResponse.data);
+
+      const companyInfo = await axiosInstance.get('company/getCompanyInfo')
+      setCompanyInfo(companyInfo.data)
     } catch (error) {
       console.error("Error fetching BOM:", error);
     }
@@ -112,6 +211,8 @@ export default function BOMPDFModal({ show, onClose, bomId }) {
             bomId={bomId}
             bomInfo={bomInfo}
             bomInfoCategory={bomInfoCategory}
+            bomCategoriesAndItems={bomCategoriesAndItems}
+            companyInfo={companyInfo}
           />
         </PDFViewer>
       </Modal.Body>

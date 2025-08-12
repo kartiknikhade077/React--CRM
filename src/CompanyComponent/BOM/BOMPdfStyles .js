@@ -16,7 +16,7 @@ export const BOMPdfStyles = StyleSheet.create({
         borderLeft: "1pt solid #000",
         textAlign: "center"
     },
-    // Last column with right border
+//    Last column with right border
     colLast: {
         flex: 1,
         padding: 0,
@@ -26,37 +26,61 @@ export const BOMPdfStyles = StyleSheet.create({
         borderRight: "1pt solid #000",
         textAlign: "center"
     },
-    // For next row where top border is hidden (joins previous row)
+    // // For next row where top border is hidden (joins previous row)
     colNoTop: {
         flex: 1,
-
         borderBottom: "1pt solid #000",
         borderLeft: "1pt solid #000",
         textAlign: "center"
     },
     colNoTopLast: {
         flex: 1,
-        padding: 5,
+        padding: 0,
         borderBottom: "1pt solid #000",
         borderLeft: "1pt solid #000",
         borderRight: "1pt solid #000",
         textAlign: "center"
     },
     smallText: {
-        fontSize: 12, // smaller than your default 12
+        fontSize: 15, // smaller than your default 12
         textAlign: "left"
     },
+        companyName: {
+        fontSize: 15, // smaller than your default 12
+        textAlign: "center",
+         fontWeight: "bold",
+    },
+      infoText: {
+        fontSize: 12, // smaller than your default 12
+        textAlign: "center",
+   
+    },
+       companyInfo: {
+        flex: 1,
+        padding: 5,
+        borderTop: "1pt solid #000",
+        borderRight: "1pt solid #000",
+        textAlign: "center"
+    },
+ companyInfoLogo: {
+        flex: 1,
+        borderTop: "1pt solid #000",
+        borderLeft: "1pt solid #000",
+        textAlign: "left"
+    },
+    
+
     categoryTextHeading: {
-        fontSize: 12,
+        fontSize: 15,
         fontWeight: "bold",
         textAlign: "center",  // center the category header
-        marginBottom: 0,      // remove bottom gap
-        marginTop: 0,
+      
         borderLeft: "1pt solid #000",
         borderRight: "1pt solid #000",         // remove top gap
     },
 
     tableRow: {
+         borderTop: "0.5pt solid #000",
         flexDirection: "row",
         padding: 0,
         margin: 0
@@ -67,7 +91,7 @@ export const BOMPdfStyles = StyleSheet.create({
         fontSize: 10,
         fontWeight: "bold",
         textAlign: "center",
-        borderTop: "1pt solid #000",
+       
         borderBottom: "1pt solid #000",
         padding: 2,
         borderRight: "1pt solid #000" // right border for all except last cell
@@ -97,6 +121,7 @@ export const BOMPdfStyles = StyleSheet.create({
     tableCellLast: {
         borderRight: "1pt solid #000"
     }
+    
 
 
 
