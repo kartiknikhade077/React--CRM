@@ -7,6 +7,7 @@ import EditMom from "./EditMom";
 import "./Mom.css";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
+import MOMPDFModel from "./MOMPDFModel";
 const MomList = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [page, setPage] = useState(0);
@@ -16,7 +17,8 @@ const MomList = () => {
   const [editId, setEditId] = useState(null);
   const [momList, setMomList] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [showPdf, setShowPdf] = useState(false);
+  const [selectedMomId,setSelectedMomId]=useState("");
   const fetchMomList = async (page, size) => {
     try {
       const response = await axiosInstance.get(`/kickoff/getMOMList/${page}/${size}`);
@@ -51,7 +53,7 @@ const MomList = () => {
     if (formMode === null) {
       fetchMomList(page, size);
     }
-  }, [page, size, formMode]); 
+  }, [page, size, formMode]);
 
   const handleToggle = () => {
     setIsCollapsed(!isCollapsed);
@@ -79,17 +81,17 @@ const MomList = () => {
   };
 
   const handleDeleteClick = async (momId) => {
-      const confirmDelete = window.confirm("Are you sure you want to delete this mom?");
-      if (!confirmDelete) return;
+    const confirmDelete = window.confirm("Are you sure you want to delete this mom?");
+    if (!confirmDelete) return;
 
-      try {
-          await axiosInstance.delete(`/kickoff/deleteMom/${momId}`);
-          toast.success("Work Order deleted successfully.");
-          fetchMomList(page, size);
-      } catch (error) {
-          console.error("Failed to delete work order:", error);
-          toast.error("Failed to delete. Please try again.");
-      }
+    try {
+      await axiosInstance.delete(`/kickoff/deleteMom/${momId}`);
+      toast.success("Work Order deleted successfully.");
+      fetchMomList(page, size);
+    } catch (error) {
+      console.error("Failed to delete work order:", error);
+      toast.error("Failed to delete. Please try again.");
+    }
   };
 
   return (
@@ -107,7 +109,7 @@ const MomList = () => {
           {formMode === "edit" && editId && (
             <EditMom onClose={handleFormClose} onUpdate={handleFormSave} momId={editId} />
           )}
-          
+
           {formMode === null && (
             // --- Main List View ---
             <div className="Checklist-sheet-list-container">
@@ -127,7 +129,7 @@ const MomList = () => {
                         placeholder="Search by project name..."
                         onKeyUp={(e) => {
                           searchMomList(e.target.value);
-                          setPage(0); 
+                          setPage(0);
                         }}
                       />
                     </div>
@@ -174,9 +176,18 @@ const MomList = () => {
                               </button>
                               <button
                                 className="btn btn-sm btn-outline-danger ms-2"
-                                onClick={()=>handleDeleteClick(mom.momId)}
+                                onClick={() => handleDeleteClick(mom.momId)}
                               >
                                 <i className="bi bi-trash"></i>
+                              </button>
+                              <button
+                                className="btn btn-outline-primary btn-sm"
+                                onClick={() => {
+                                  setSelectedMomId(mom.momId);
+                                  setShowPdf(true);
+                                }}
+                              >
+                                <i className="bi bi-eye"></i> Preview PDF
                               </button>
                             </td>
                           </tr>
@@ -202,6 +213,14 @@ const MomList = () => {
                   }}
                 />
               </div>
+              {/* Render the modal just once */}
+              {showPdf && (
+                <MOMPDFModel
+                  show={showPdf}
+                  onClose={() => setShowPdf(false)}
+                  momId={selectedMomId}
+                />
+              )}
             </div>
           )}
         </div>
