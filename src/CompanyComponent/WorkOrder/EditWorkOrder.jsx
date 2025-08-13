@@ -35,6 +35,13 @@ import CreatableSelect from "react-select/creatable";
     const [customerOptions, setCustomerOptions] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState('');
 
+    const [isItemNoUnique, setIsItemNoUnique] = useState(true);
+    const [isCheckingItemNo, setIsCheckingItemNo] = useState(false);
+
+    const [originalItemNo, setOriginalItemNo] = useState(null);
+    const [hasUserEditedItemNo, setHasUserEditedItemNo] = useState(false);
+    
+
     const [formData, setFormData] = useState({
       partName: '',
       customer: '',
@@ -45,6 +52,7 @@ import CreatableSelect from "react-select/creatable";
       material: '',
       partSize: '',
       partWeight: '',
+      partNumber:'',
     });
 
     const [projectOptions, setProjectOptions] = useState([]);
@@ -80,13 +88,25 @@ import CreatableSelect from "react-select/creatable";
       setProcesses(updatedProcesses);
     }, [selectedProcesses]);
 
+  useEffect(() => {
+    if (!itemNo) return;
+    setProcesses(currentProcesses => 
+      currentProcesses.map(p => {
+        if (p.type === 'select') {
+          const suffix = p.woNo.substring(3).replace(/^\d+/, '')
+
+          return { ...p, woNo: `PT-${itemNo}${suffix}` };
+        }
+        return p;
+      })
+    );
+  }, [itemNo]); // This effect will now run every time 'itemNo' changes
 
 
     const fetchWorkOrder = async () => {
       try {
         const res = await axiosInstance.get(`/work/getWorkOrderById/${workOrderId}`);
         const data = res.data;
-        console.log(data);
         const { workOrder, workImages, workOrderItems } = data;
 
         setFormData({
@@ -99,10 +119,13 @@ import CreatableSelect from "react-select/creatable";
             material: workOrder.material,
             partSize: workOrder.partSize,
             partWeight: workOrder.partWeight,
+            partNumber:workOrder.partNumber,
         });
 
         setItemNo(workOrder.itemNo);
-        console.log(workOrderId.customerId);
+        setOriginalItemNo(workOrder.itemNo); 
+        setHasUserEditedItemNo(false);
+        setIsItemNoUnique(true)
         setSelectedCustomer(workOrder.customerId || '');
 
         // Pre-fill image blobs
@@ -234,11 +257,60 @@ import CreatableSelect from "react-select/creatable";
       }
     };
 
+    const handleItemNoChange = (e) => {
+      const value = e.target.value;
+      if (/^\d*$/.test(value)) {
+        setItemNo(value);
+        setHasUserEditedItemNo(true);
+      }
+    };
 
+    const checkItemNoUniqueness = async (number) => {
+      if (!number) {
+          setIsItemNoUnique(true);
+          return;
+      }
+      setIsCheckingItemNo(true);
+      setIsItemNoUnique(true);
+      try {
+          const response = await axiosInstance.get(`/work/checkItemNo/${number}`);
+          console.log(response);
+          setIsItemNoUnique(response.data.isUnique);
+  
+      } catch (error) {
+          toast.error("Could not verify Item Number. Please try again.");
+          setIsItemNoUnique(false); 
+          console.error("Error checking item number uniqueness:", error);
+      } finally {
+          setIsCheckingItemNo(false);
+      }
+    };
+
+    useEffect(() => {
+        if (!hasUserEditedItemNo) {
+            return;
+        }
+        if (String(itemNo) === String(originalItemNo)) {
+            setIsItemNoUnique(true);
+            return;
+        }
+
+      const handler = setTimeout(() => {
+          if (itemNo) {
+              checkItemNoUniqueness(itemNo);
+          } else {
+              setIsItemNoUnique(true);
+          }
+      }, 500); 
+      return () => {
+          clearTimeout(handler);
+      };
+    }, [itemNo, originalItemNo, hasUserEditedItemNo]); 
 
     
     const handleUpdate = async () => {
-      const { partName, customer, project, thickness, material } = formData;
+      const { partName, customer, project, thickness, material,partNumber } = formData;
+      
       let hasError = false;
   
       if (!customer || customer === '-- Select a customer --') {
@@ -265,25 +337,34 @@ import CreatableSelect from "react-select/creatable";
         toast.error("Please enter material");
         hasError = true;
       }
-  
+      
+      if(!partNumber.trim()){
+        toast.error("Please enter part number");
+        hasError = true;
+      }
+
+      if (!itemNo) {
+        toast.error("Item Number cannot be empty.");
+        hasError = true;
+      } else if (!isItemNoUnique) {
+        toast.error("The entered Item Number is already in use by another work order.");
+        hasError = true;
+      }
+      
       if (hasError) return;
       
       const items = processes.map((p) => {
         const data = tableData[p.id] || {};
         let woNo = "";
 
-        // This logic correctly mirrors the WO No generation from the table display
         const visibleManuals = processes.filter(proc => proc.type === 'manual' && !tableData[proc.id]?.scope);
         const manualIndex = visibleManuals.findIndex(proc => proc.id === p.id);
 
         if (data.scope) {
-            // If scope is checked, WO No is always 'XX'
             woNo = "XX";
         } else if (p.type === "select") {
-            // If it's a dropdown process, use its predefined woNo
             woNo = p.woNo;
         } else if (manualIndex !== -1) {
-            // If it's a visible manual process, generate the sequential WO No
             woNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
         }
 
@@ -314,6 +395,7 @@ import CreatableSelect from "react-select/creatable";
         partWeight: formData.partWeight,
         itemNo: itemNo,
         workOrderId,
+        partNumber:formData.partNumber,
       };
 
       const newImagesForm = new FormData();
@@ -647,8 +729,11 @@ import CreatableSelect from "react-select/creatable";
 
 
               </Form.Group>
-
-
+                
+              <Form.Group className="col-md-4 mb-3">
+                <Form.Label>Part Number <span className="text-danger">*</span></Form.Label>
+                  <Form.Control type="text" name="partNumber" value={formData.partNumber} onChange={handleFormChange} />
+              </Form.Group>
 
               <Form.Group className="col-md-4 mb-3">
                 <Form.Label>Part Name <span className="text-danger">*</span></Form.Label>
@@ -726,7 +811,19 @@ import CreatableSelect from "react-select/creatable";
 
           <hr />
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <strong>Item No.: {itemNo}</strong>
+            <Form.Group style={{ maxWidth: '200px' }}>
+              <Form.Label><strong>Item No.</strong></Form.Label>
+              <Form.Control 
+                type="text" 
+                value={itemNo} 
+                onChange={handleItemNoChange}
+                isInvalid={!isItemNoUnique} // Turns the field red if not unique
+              />
+              {isCheckingItemNo && <Form.Text className="text-muted">Checking...</Form.Text>}
+              <Form.Control.Feedback type="invalid">
+                Item number is already in use.
+              </Form.Control.Feedback>
+          </Form.Group>
             <div className="d-flex align-items-center gap-2">
               <strong className="me-2">Workorder Process</strong>
               <Select

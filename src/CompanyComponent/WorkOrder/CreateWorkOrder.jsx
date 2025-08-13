@@ -35,6 +35,9 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   const [customerOptions, setCustomerOptions] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState('');
 
+  const [isItemNoUnique, setIsItemNoUnique] = useState(true);
+  const [isCheckingItemNo, setIsCheckingItemNo] = useState(false);
+
   // State for the main form fields
   const [formData, setFormData] = useState({
     partName: '',
@@ -46,6 +49,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     material: '',
     partSize: '',
     partWeight: '',
+    partNumber:'',
   });
 
   const [projectOptions, setProjectOptions] = useState([]);
@@ -62,6 +66,40 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     }));
     setProcesses([...manualProcesses, ...selectedFromDropdown]);
   }, [selectedProcesses, itemNo]);
+
+  const checkItemNoUniqueness = async (number) => {
+    if (!number) {
+        setIsItemNoUnique(true);
+        return;
+    }
+    setIsCheckingItemNo(true);
+    setIsItemNoUnique(true);
+    try {
+        const response = await axiosInstance.get(`/work/checkItemNo/${number}`);
+        console.log(response);
+        setIsItemNoUnique(response.data.isUnique);
+
+    } catch (error) {
+        toast.error("Could not verify Item Number. Please try again.");
+        setIsItemNoUnique(false); 
+        console.error("Error checking item number uniqueness:", error);
+    } finally {
+        setIsCheckingItemNo(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+        if (itemNo) {
+            checkItemNoUniqueness(itemNo);
+        } else {
+            setIsItemNoUnique(true);
+        }
+    }, 500); 
+    return () => {
+        clearTimeout(handler);
+    };
+  }, [itemNo]);
 
 
   // --- Handlers ---
@@ -125,7 +163,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
 
   const handleSaveClick = async () => {
 
-    const { partName, customer, project, thickness, material } = formData;
+    const { partName, customer, project, thickness, material,partNumber } = formData;
 
     let hasError = false;
 
@@ -151,6 +189,19 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
 
     if (!material.trim()) {
       toast.error("Please enter material");
+      hasError = true;
+    }
+
+    if(!partNumber.trim()){
+      toast.error("Please enter part number");
+      hasError = true;
+    }
+
+    if (!itemNo) {
+      toast.error("Item Number cannot be empty.");
+      hasError = true;
+    } else if (!isItemNoUnique) {
+      toast.error("The entered Item Number is already in use by another work order.");
       hasError = true;
     }
 
@@ -195,6 +246,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     partSize: formData.partSize,
     partWeight: formData.partWeight,
     itemNo: itemNo,
+    partNumber:formData.partNumber,
   };
 
   const formDataToSend = new FormData();
@@ -212,7 +264,6 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     });
     
     if(response.data){
-      fetchItemNo(); // Refresh item number after successful save
       resetForm();
       if(onSave){
         onSave();
@@ -259,6 +310,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
       material: '',
       partSize: '',
       partWeight: '',
+      partNumber:'',
     });
     setImages([]);
     setProcesses([]);
@@ -402,8 +454,10 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   };
   
   useEffect(() => {
-    fetchItemNo();
-  }, []);
+    if (show) {
+      fetchItemNo();
+    }
+  }, [show]);
 
   const fetchItemNo = async () => {
     try {
@@ -437,6 +491,12 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     }
   };
 
+  const handleItemNoChange = (e) => {
+    const value = e.target.value;
+    if (/^\d*$/.test(value)) {
+        setItemNo(value);
+    }
+  };
 
 
   return (
@@ -532,6 +592,11 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
             </Form.Group>
 
             <Form.Group className="col-md-4 mb-3">
+              <Form.Label>Part Number <span className="text-danger">*</span></Form.Label>
+                <Form.Control type="text" name="partNumber" value={formData.partNumber} onChange={handleFormChange} />
+            </Form.Group>
+
+            <Form.Group className="col-md-4 mb-3">
               <Form.Label>Part Name <span className="text-danger">*</span></Form.Label>
               <div style={{ width: "100%" }}>
                 <CreatableSelect
@@ -609,7 +674,20 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
 
         {/* Workorder Process Section */}
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <strong>Item No.: {itemNo}</strong>
+          <Form.Group style={{ maxWidth: '200px' }}>
+              <Form.Label><strong>Item No.</strong></Form.Label>
+              <Form.Control 
+                type="text" 
+                value={itemNo} 
+                onChange={handleItemNoChange}
+                isInvalid={!isItemNoUnique} // Turns the field red if not unique
+              />
+              {isCheckingItemNo && <Form.Text className="text-muted">Checking...</Form.Text>}
+              <Form.Control.Feedback type="invalid">
+                Item number is already in use.
+              </Form.Control.Feedback>
+          </Form.Group>
+
           <div className="d-flex align-items-center gap-2">
             <strong className="me-2">Workorder Process</strong>
             <Select
