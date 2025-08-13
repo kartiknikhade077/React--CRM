@@ -178,25 +178,40 @@ const CompanyCreateKickoffSheet = () => {
       const kickOffId = response.data.kickOffId;
       if (!kickOffId) throw new Error("kickOffId not received");
  
-      // Prepare parts payload with base64 images
       const partItems = await Promise.all(
         partsData.map(async (part) => {
           const itemNoInt =
             typeof part.itemNo === "string"
               ? parseInt(part.itemNo.replace(/^PT-/, ""), 10)
               : part.itemNo;
- 
+
+          // Correctly process both new files and existing API images
+          const imageListAsBase64 = await Promise.all(
+            (part.images || []).map(async (img) => {
+              // Case 1: It's a newly uploaded File object
+              if (img instanceof File) {
+                return fileToBase64(img); // This converts the file to a base64 string
+              }
+              
+              // Case 2: It's an object from the API { type: 'api', url: '...' }
+              if (img && img.type === "api" && img.url) {
+                // The API expects just the base64 data, so we strip the data URL prefix
+                return img.url.split(",")[1];
+              }
+              
+              // Fallback for any other unexpected format (can be removed if not needed)
+              return null;
+            })
+          );
+
           return {
             kickOffId,
             itemNo: itemNoInt,
             partName: part.partName || "",
             material: part.material || "",
             thickness: part.thickness || "",
-            imageList: await Promise.all(
-              (part.images || []).map((img) =>
-                typeof img === "string" ? img : fileToBase64(img)
-              )
-            ),
+            // Filter out any nulls that may have resulted from an unknown image format
+            imageList: imageListAsBase64.filter(Boolean), 
           };
         })
       );

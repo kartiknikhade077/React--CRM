@@ -11,6 +11,7 @@ import {
 } from "react-bootstrap";
 import { FaTrash, FaPlusCircle } from "react-icons/fa";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
+import { toast } from "react-toastify";
 
 const CompanyUpdateProjectRegistrationKickoffSheet = ({
   eventKey,
@@ -30,9 +31,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   projectId,
   projectName,
 }) => {
-  // =================
-  // State definitions
-  // =================
+
   const [projectData, setProjectData] = useState({
     projectId: "",
     projectName: "",
@@ -62,28 +61,34 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       });
   }, []);
 
-  // =========================
-  // Fetch new parts/processes whenever selectedProjectId changes
-  // =========================
   useEffect(() => {
-    // CASE 1: initial load from parent kickoff data (no project switch yet)
     if (!selectedProjectId) {
       if (Array.isArray(initialPartsData) && initialPartsData.length > 0) {
         setParts(
-          initialPartsData.map((p, idx) => ({
-            ...p,
-            id: p.itemId || Date.now() + idx,
-            itemNo:
-              typeof p.itemNo === "string" ? p.itemNo : `PT-${p.itemNo || 0}`,
-            images: Array.isArray(p.imageList) ? p.imageList : [],
-            partName: p.partName || "",
-            material: p.material || "",
-            thickness: p.thickness || "",
-            isNew: false,
-          }))
+          initialPartsData.map((p, idx) => {
+            let loadedImages = [];
+            if (p.imageListWithId && typeof p.imageListWithId === 'object') {
+              loadedImages = Object.entries(p.imageListWithId).map(([imageId, imagePath]) => ({
+                imageId,
+                imagePath,
+              }));
+            }
+
+            return {
+              ...p,
+              id: p.itemId || Date.now() + idx,
+              itemId: p.itemId,
+              itemNo:
+                typeof p.itemNo === "string" ? p.itemNo : `PT-${p.itemNo || 0}`,
+              images: loadedImages, 
+              partName: p.partName || "",
+              material: p.material || "",
+              thickness: p.thickness || "",
+              isNew: false,
+            };
+          })
         );
 
-        // processes
         const grouped = {};
         initialProcessesData.forEach((proc) => {
           const itemNo =
@@ -103,6 +108,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             width: proc.width || "",
             height: proc.height || "",
             remarks: proc.remarks || "",
+            isNewForWorkOrder: false,
           });
         });
         setProcessesByPart(grouped);
@@ -161,6 +167,13 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
     partDetails.forEach((partDetail, index) => {
       const itemNo = `PT-${partDetail.itemNo}`;
+      let loadedImages = [];
+      if (partDetail.imageListWithId && typeof partDetail.imageListWithId === 'object') {
+          loadedImages = Object.entries(partDetail.imageListWithId).map(([imageId, imagePath]) => ({
+              imageId,
+              imagePath,
+          }));
+      }
       const part = {
         id: partDetail.partId || Date.now() + index,
         itemId: partDetail.partId,
@@ -168,7 +181,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         partName: partDetail.partName || "",
         material: partDetail.material || "",
         thickness: partDetail.thickness || "",
-        images: [],
+        images: loadedImages,
         isNew: false,
       };
 
@@ -176,7 +189,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
       const processes = (groupedByItem[itemNo] || []).map((proc, idx) => ({
         id: proc.partProcessId || Date.now() + index * 10 + idx,
-        partProcessId: proc.partProcessId, // Store backend ID
+        partProcessId: proc.partProcessId, 
         woNo: proc.workOrderNo || "",
         itemNo,
         designer: proc.employeeId || "",
@@ -298,6 +311,8 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
   const handleCustomProcessChange = (newSelected) => {
     if (!activePartItemNo) return;
+    const activePart = parts.find((p) => p.itemNo === activePartItemNo);
+    if (!activePart) return;
     const prevSelected = selectedProcessesByPart[activePartItemNo] || [];
     const prevValues = prevSelected.map((p) => p.value);
     const newValues = newSelected?.map((p) => p.value) || [];
@@ -315,6 +330,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       width: "",
       height: "",
       remarks: "",
+      isNewForWorkOrder: activePart.isNew,
     }));
 
     setProcessesByPart((prev) => {
@@ -341,6 +357,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   ];
 
   const addProcess = () => {
+    const activePart = parts.find((p) => p.itemNo === activePartItemNo);
+    if (!activePart) return;
+    
     const existingProcesses = processesByPart[activePartItemNo] || [];
     const manualSuffixes = existingProcesses
       .map((p) => getSuffix(p.woNo))
@@ -363,6 +382,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       width: "",
       height: "",
       remarks: "",
+      isNewForWorkOrder: activePart.isNew,
     };
 
     setProcessesByPart((prev) => ({
@@ -392,8 +412,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         return null;
       })
     ).then((results) => results.filter(Boolean));
-    
-   const handleSaveOrUpdatePart = async (partToSave) => {
+
+
+  const handleSaveOrUpdatePart = async (partToSave) => {
     const imageListForKickoff = await filesToBase64(partToSave.images);
 
     if (partToSave.isNew || !partToSave.itemId) {
@@ -408,7 +429,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           customerId: customerId,
           customerName: customerName,
         };
-        console.log("::::::::::work order playload::::::::::::::",workOrderPayload)
 
         const formData = new FormData();
         formData.append("workOrder", JSON.stringify(workOrderPayload));
@@ -440,22 +460,14 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           p.id === partToSave.id 
             ? { 
                 ...p, 
-                ...savedWorkOrder,
                 id: newPartId, 
+                woId:newPartId,
                 itemId: newPartId,
-                isNew: false 
+                isNew: true, 
               } 
             : p
         ));
-        
-        if (savedWorkOrder.partProcess && savedWorkOrder.partProcess.length > 0) {
-            setProcessesByPart(prev => ({
-                ...prev,
-                [partToSave.itemNo]: savedWorkOrder.partProcess.map(proc => ({...proc, id: proc.partProcessId}))
-            }));
-        }
-
-        alert("Part saved successfully!");
+        toast.success("Part saved successfully!");
 
       } catch (error) {
         console.error("Failed to save new part:", error.response || error);
@@ -485,25 +497,77 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }
   };
 
-  
-
-  // ✅ Save Processes API
   const handleUpdateProcesses = async () => {
     try {
-      const allProcesses = Object.values(processesByPart)
+      const partsWithNewProcesses = parts.filter(part =>
+        (processesByPart[part.itemNo] || []).some(proc => proc.isNewForWorkOrder)
+      );
+
+      const workOrderPromises = partsWithNewProcesses.map(part => {
+        const newProcesses = (processesByPart[part.itemNo] || []).filter(
+          proc => proc.isNewForWorkOrder
+        );
+
+        console.log("new processes",newProcesses);
+        if (newProcesses.length > 0) {
+          const workOrderItemsPayload = newProcesses.map(proc => ({
+            workOrderNo: proc.woNo,
+            employeeId: proc.designer || null,
+            operationNumber: proc.opNo,
+            proceess: proc.processName,
+            length: parseFloat(proc.length) || 0,
+            width: parseFloat(proc.width) || 0,
+            height: parseFloat(proc.height) || 0,
+            remark: proc.remarks || "",
+          }));
+          console.log("workOrderId::::::::::::::::::",part.itemId);
+          console.log("workOrderItems:::::::::::::::::",JSON.stringify(workOrderItemsPayload))
+
+          const processFormData = new FormData();
+          processFormData.append('workOrderId', part.itemId); // Use the saved workOrderId
+          processFormData.append('workOrderItems', JSON.stringify(workOrderItemsPayload));
+          
+          return axiosInstance.post("/work/createWorkOrderItems", processFormData);
+        }
+        return Promise.resolve(); // Return a resolved promise if no new processes
+      });
+
+      await Promise.all(workOrderPromises);
+      if (partsWithNewProcesses.length > 0) {
+        toast.success("New processes saved to work order successfully.");
+
+        // Update state to mark processes as no longer new
+        setProcessesByPart(prev => {
+          const newState = { ...prev };
+          partsWithNewProcesses.forEach(part => {
+            newState[part.itemNo] = newState[part.itemNo].map(proc => ({
+              ...proc,
+              isNewForWorkOrder: false,
+            }));
+          });
+          return newState;
+        });
+      }
+
+    } catch (error) {
+      console.error("Failed to save new processes to work order:", error.response || error);
+      toast.error("Failed to save new processes to work order.");
+      return;
+    }
+
+
+    try {
+      const allProcessesForKickoff = Object.values(processesByPart)
         .flat()
         .map((proc) => ({
-          partProcessId: proc.partProcessId ? proc.partProcessId : null, // null for new
+          partProcessId: proc.partProcessId || null,
           kickOffId: id,
-          itemNo:
+          itemNo: 
             typeof proc.itemNo === "string"
               ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
               : proc.itemNo,
           workOrderNumber: proc.woNo,
-          designerName:
-            proc.designerName ||
-            employeeList.find((e) => e.employeeId === proc.designer)?.name ||
-            "",
+          designerName: employeeList.find(e => e.employeeId === proc.designer)?.name || "",
           employeeId: proc.designer,
           process: proc.processName,
           length: parseFloat(proc.length) || 0,
@@ -511,22 +575,18 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           width: parseFloat(proc.width) || 0,
           remarks: proc.remarks || "",
         }));
-
-      console.log("Sending processes payload:", allProcesses);
-
-      await axiosInstance.put(
-        "/kickoff/updateKickOffItemsProccess",
-        allProcesses
-      );
-
-      alert("Processes updated successfully!");
+        console.log("kick off itemsssssssssssssssssssssss",allProcessesForKickoff)
+      if (allProcessesForKickoff.length > 0) {
+        await axiosInstance.put("/kickoff/updateKickOffItemsProccess", allProcessesForKickoff);
+        toast.success("All processes updated in Kickoff Sheet successfully!");
+      }
     } catch (error) {
-      console.error("Failed to update processes:", error.response || error);
-      alert("Failed to update processes");
+      console.error("Failed to update kickoff processes:", error.response || error);
+      toast.error("Failed to update kickoff processes");
     }
   };
 
-  // Function to fetch the maximum item number from server
+
   const fetchMaxItemNumber = async () => {
     try {
       console.log("Fetching max item number...");
@@ -637,75 +697,87 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           gap: "10px",
                         }}
                       >
-                        {part.images.map((img, idx) => (
-                          <div
-                            key={idx}
-                            style={{
-                              position: "relative",
-                              width: "100px",
-                              height: "100px",
-                              border: "1px solid #ddd",
-                              borderRadius: "4px",
-                            }}
-                          >
-                            <img
-                              src={
-                                typeof img === "string"
-                                  ? img.startsWith("data:")
-                                    ? img
-                                    : `data:image/jpeg;base64,${img}` // or image/png depending on your format
-                                  : URL.createObjectURL(img)
-                              }
-                              alt={`img-${idx}`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  const image = part.images[idx];
+                        {/* ======================= CHANGED SECTION START ======================= */}
+                        {part.images.map((img, idx) => {
+                          // Determine the image source whether it's a new File or an existing image object
+                          let imgSrc = "";
+                          if (img instanceof File) {
+                            imgSrc = URL.createObjectURL(img); // For newly added images
+                          } else if (img && img.imagePath) {
+                            // For existing images from the backend
+                            const path = img.imagePath;
+                            imgSrc = path.startsWith("data:")
+                              ? path
+                              : `data:image/jpeg;base64,${path}`;
+                          }
 
-                                  // If backend image (has an ID), delete from DB
-                                  if (image && image.imageId) {
-                                    await axiosInstance.delete(
-                                      `/kickoff/deleteItemImage/${image.imageId}`
-                                    );
-                                    console.log(
-                                      `Image ${image.imageId} deleted from DB`
-                                    );
-                                  }
-
-                                  // Remove from local state
-                                  const updatedImages = [...part.images];
-                                  updatedImages.splice(idx, 1);
-                                  updatePart(part.id, "images", updatedImages);
-                                } catch (err) {
-                                  console.error("Failed to delete image:", err);
-                                  alert("Failed to delete image from server");
-                                }
-                              }}
+                          return (
+                            <div
+                              key={img.imageId || idx} // Use imageId as key if available
                               style={{
-                                position: "absolute",
-                                top: "-8px",
-                                right: "-8px",
-                                background: "red",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "50%",
-                                width: "24px",
-                                height: "24px",
-                                cursor: "pointer",
-                                fontSize: "14px",
+                                position: "relative",
+                                width: "100px",
+                                height: "100px",
+                                border: "1px solid #ddd",
+                                borderRadius: "4px",
                               }}
                             >
-                              ×
-                            </button>
-                          </div>
-                        ))}
+                              <img
+                                src={imgSrc}
+                                alt={`img-${idx}`}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  // This is now an async function to handle the API call
+                                  try {
+                                    const imageToDelete = part.images[idx];
+
+                                    // If image has an ID, it's from the DB. Delete it via API.
+                                    if (imageToDelete && imageToDelete.imageId) {
+                                      await axiosInstance.delete(
+                                        `/kickoff/deleteItemImage/${imageToDelete.imageId}`
+                                      );
+                                      console.log(
+                                        `Image ${imageToDelete.imageId} deleted from DB`
+                                      );
+                                      toast.success("Image deleted succesfully");
+
+                                    }
+
+                                    // After successful API deletion (or if it's a new file), remove from local state
+                                    const updatedImages = [...part.images];
+                                    updatedImages.splice(idx, 1);
+                                    updatePart(part.id, "images", updatedImages);
+                                  } catch (err) {
+                                    console.error("Failed to delete image:", err);
+                                    alert("Failed to delete image from server");
+                                  }
+                                }}
+                                style={{
+                                  position: "absolute",
+                                  top: "-8px",
+                                  right: "-8px",
+                                  background: "red",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "50%",
+                                  width: "24px",
+                                  height: "24px",
+                                  cursor: "pointer",
+                                  fontSize: "14px",
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )
+                        })}
                         {/* Add More Images */}
                         <div
                           className="d-flex align-items-center justify-content-center"
