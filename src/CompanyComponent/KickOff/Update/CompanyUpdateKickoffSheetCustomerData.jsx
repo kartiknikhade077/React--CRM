@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Accordion, Card, Form, Row, Col, Button } from "react-bootstrap";
+import {
+  Accordion,
+  Card,
+  Form,
+  Row,
+  Col,
+  Button,
+  OverlayTrigger,
+  Tooltip,
+} from "react-bootstrap";
 import Select from "react-select";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
 
@@ -19,6 +28,8 @@ const CompanyUpdateKickoffSheetCustomerData = ({
   const [selectedProject, setSelectedProject] = useState(null);
   const [customers, setCustomers] = useState([]);
 
+  const [isEditing, setIsEditing] = useState(false); // 🔹 New state
+
   // Fetch customers
   useEffect(() => {
     axiosInstance
@@ -30,12 +41,10 @@ const CompanyUpdateKickoffSheetCustomerData = ({
           console.log("checking cust data", res.data);
           setCustomers(res.data);
 
-          console.log("Form data ",formData);
+          console.log("Form data ", formData);
 
           if (formData.companyId) {
-            const cust = res.data.find(
-              (c) => c.id === formData.savedcusomerid
-            );
+            const cust = res.data.find((c) => c.id === formData.savedcusomerid);
             if (cust) {
               const sel = {
                 value: cust.companyId, // for dropdown display
@@ -146,11 +155,10 @@ const CompanyUpdateKickoffSheetCustomerData = ({
     onProjectSelect(projectId);
   };
 
-  
   const handleUpdate = async () => {
     const payload = {
       kickOffId: id,
-      employeeid: null, 
+      employeeid: null,
       projectId: formData.projectId,
       customerName: formData.customerName,
       contactPersonName: formData.contactPerson,
@@ -163,7 +171,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
       kickOffDate: formData.kickOffDate,
       startDate: formData.startDate,
       endDate: formData.endDate,
-      customerId:formData.savedcusomerid,
+      customerId: formData.savedcusomerid,
       createdDateTime: new Date().toISOString(), // or the original if you keep it
     };
 
@@ -174,6 +182,47 @@ const CompanyUpdateKickoffSheetCustomerData = ({
       console.error("Update failed", error);
       alert("Failed to update customer/project details.");
     }
+  };
+
+
+
+  const [originalData, setOriginalData] = useState(null);
+  const [originalCustomer, setOriginalCustomer] = useState(null);
+  const [originalProject, setOriginalProject] = useState(null);
+
+
+  const handleEditClick = () => {
+    setOriginalData(formData); // backup all form fields
+    setOriginalCustomer(selectedCustomer);
+    setOriginalProject(selectedProject);
+    setIsEditing(true);
+  };
+
+  const handleCancelClick = () => {
+    if (originalData) {
+      setFormData(originalData); // restore all fields
+      setSelectedCustomer(originalCustomer);
+      setSelectedProject(originalProject);
+    }
+    setIsEditing(false);
+  };
+
+  const handleSaveClick = () => {
+    handleUpdate();
+    setIsEditing(false);
+  };
+
+
+  const TooltipWrapper = ({ children, show }) => {
+    if (!show) return children; // No tooltip in edit mode
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip id="tooltip-top">Click Edit to make changes</Tooltip>}
+      >
+        <div style={{ width: "100%" }}>{children}</div>
+      </OverlayTrigger>
+    );
   };
 
   return (
@@ -191,15 +240,35 @@ const CompanyUpdateKickoffSheetCustomerData = ({
             {/* Save Button */}
             <div className="d-flex justify-content-between">
               <h5>Customer Details</h5>
-              <Button variant="primary" onClick={handleUpdate}>
-                Update Customer & Project
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button variant="success" onClick={handleSaveClick}>
+                    Save
+                  </Button>
+                  <Button
+                    onClick={handleCancelClick}
+                    variant="btn btn-outline-secondary btn-sm"
+                    className="ms-2"
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="btn btn-outline-dark btn-sm"
+                  onClick={handleEditClick}
+                >
+                  Edit
+                </Button>
+              )}
             </div>
+
             <Row>
               <Col md={6}>
                 <Form.Group>
                   <Form.Label>Select Customer</Form.Label>
                   <Select
+                    isDisabled={!isEditing}
                     value={selectedCustomer}
                     onChange={handleCustomerChange}
                     options={customerList.map((cust) => ({
@@ -214,8 +283,10 @@ const CompanyUpdateKickoffSheetCustomerData = ({
               <Col md={6}>
                 <Form.Group>
                   <Form.Label>Contact Person</Form.Label>
+
                   <Form.Control
                     type="text"
+                    disabled={!isEditing}
                     value={formData.contactPerson}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -231,6 +302,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                   <Form.Label>Phone Number</Form.Label>
                   <Form.Control
                     type="text"
+                    disabled={!isEditing}
                     value={formData.phoneNumber}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -246,6 +318,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                   <Form.Label>Website</Form.Label>
                   <Form.Control
                     type="text"
+                    disabled={!isEditing}
                     value={formData.website}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -261,6 +334,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                   <Form.Label>Billing Address</Form.Label>
                   <Form.Control
                     type="text"
+                    disabled={!isEditing}
                     value={formData.billingAddress}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -276,6 +350,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                   <Form.Label>Shipping Address</Form.Label>
                   <Form.Control
                     type="text"
+                    disabled={!isEditing}
                     value={formData.shippingAddress}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -295,6 +370,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                 <Form.Group>
                   <Form.Label>Select Project</Form.Label>
                   <Select
+                    isDisabled={!isEditing}
                     value={selectedProject}
                     onChange={handleProjectChange}
                     options={projectSelectOptions}
@@ -307,6 +383,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                   <Form.Label>Project Title</Form.Label>
                   <Form.Control
                     type="text"
+                    disabled={!isEditing}
                     value={formData.projectTitle}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -322,6 +399,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                   <Form.Label>Kickoff Date</Form.Label>
                   <Form.Control
                     type="date"
+                    disabled={!isEditing}
                     value={formData.kickOffDate}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -337,6 +415,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                   <Form.Label>Start Date</Form.Label>
                   <Form.Control
                     type="date"
+                    disabled={!isEditing}
                     value={formData.startDate}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -352,6 +431,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
                   <Form.Label>End Date</Form.Label>
                   <Form.Control
                     type="date"
+                    disabled={!isEditing}
                     value={formData.endDate}
                     onChange={(e) =>
                       setFormData((prev) => ({

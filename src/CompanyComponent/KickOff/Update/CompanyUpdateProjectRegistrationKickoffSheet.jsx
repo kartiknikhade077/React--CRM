@@ -31,7 +31,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   projectId,
   projectName,
 }) => {
-
   const [projectData, setProjectData] = useState({
     projectId: "",
     projectName: "",
@@ -67,11 +66,13 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         setParts(
           initialPartsData.map((p, idx) => {
             let loadedImages = [];
-            if (p.imageListWithId && typeof p.imageListWithId === 'object') {
-              loadedImages = Object.entries(p.imageListWithId).map(([imageId, imagePath]) => ({
-                imageId,
-                imagePath,
-              }));
+            if (p.imageListWithId && typeof p.imageListWithId === "object") {
+              loadedImages = Object.entries(p.imageListWithId).map(
+                ([imageId, imagePath]) => ({
+                  imageId,
+                  imagePath,
+                })
+              );
             }
 
             return {
@@ -80,11 +81,12 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
               itemId: p.itemId,
               itemNo:
                 typeof p.itemNo === "string" ? p.itemNo : `PT-${p.itemNo || 0}`,
-              images: loadedImages, 
+              images: loadedImages,
               partName: p.partName || "",
               material: p.material || "",
               thickness: p.thickness || "",
               isNew: false,
+              isEditing: false,
             };
           })
         );
@@ -109,6 +111,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             height: proc.height || "",
             remarks: proc.remarks || "",
             isNewForWorkOrder: false,
+            isEditing: false,
           });
         });
         setProcessesByPart(grouped);
@@ -168,11 +171,16 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     partDetails.forEach((partDetail, index) => {
       const itemNo = `PT-${partDetail.itemNo}`;
       let loadedImages = [];
-      if (partDetail.imageListWithId && typeof partDetail.imageListWithId === 'object') {
-          loadedImages = Object.entries(partDetail.imageListWithId).map(([imageId, imagePath]) => ({
-              imageId,
-              imagePath,
-          }));
+      if (
+        partDetail.imageListWithId &&
+        typeof partDetail.imageListWithId === "object"
+      ) {
+        loadedImages = Object.entries(partDetail.imageListWithId).map(
+          ([imageId, imagePath]) => ({
+            imageId,
+            imagePath,
+          })
+        );
       }
       const part = {
         id: partDetail.partId || Date.now() + index,
@@ -189,7 +197,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
       const processes = (groupedByItem[itemNo] || []).map((proc, idx) => ({
         id: proc.partProcessId || Date.now() + index * 10 + idx,
-        partProcessId: proc.partProcessId, 
+        partProcessId: proc.partProcessId,
         woNo: proc.workOrderNo || "",
         itemNo,
         designer: proc.employeeId || "",
@@ -200,6 +208,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         width: proc.width || "",
         height: proc.height || "",
         remarks: proc.remark || proc.remarks || "",
+        isEditing: false,
       }));
       newProcessesByPart[itemNo] = processes;
     });
@@ -237,10 +246,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   };
 
   const removePart = (id) => {
-    if(id){
-      try{
+    if (id) {
+      try {
         const responce = axiosInstance.delete(`/kickoff/deleteItem/${id}`);
-        
+
         toast.success("Part Deleted successfully");
       } catch (error) {
         console.error("Failed to delete part ", error.response || error);
@@ -279,6 +288,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       thickness: "",
       images: [],
       isNew: true,
+      isEditing: true,
     };
     setParts((prev) => [...prev, newPart]);
     setActivePartItemNo(newItemNo);
@@ -297,13 +307,13 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
   const removeProcess = (id) => {
     console.log("process id", id);
-    if(id){
+    if (id) {
       try {
-          axiosInstance.delete(`/kickoff/deleteItemProcess/${id}`)
-          toast.success("Process Deleted successfully");
+        axiosInstance.delete(`/kickoff/deleteItemProcess/${id}`);
+        toast.success("Process Deleted successfully");
       } catch (error) {
-          toast.error("Error while deleting processes");
-          console.log("Error while deleting processes",error);
+        toast.error("Error while deleting processes");
+        console.log("Error while deleting processes", error);
       }
     }
     setProcessesByPart((prev) => ({
@@ -379,7 +389,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   const addProcess = () => {
     const activePart = parts.find((p) => p.itemNo === activePartItemNo);
     if (!activePart) return;
-    
+
     const existingProcesses = processesByPart[activePartItemNo] || [];
     const manualSuffixes = existingProcesses
       .map((p) => getSuffix(p.woNo))
@@ -403,6 +413,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       height: "",
       remarks: "",
       isNewForWorkOrder: activePart.isNew,
+      isEditing: true,
     };
 
     setProcessesByPart((prev) => ({
@@ -415,11 +426,15 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   const filesToBase64 = (files) =>
     Promise.all(
       files.map((file) => {
-        if (typeof file === 'object' && file.imagePath && !(file instanceof File)) {
-             return file.imagePath;
+        if (
+          typeof file === "object" &&
+          file.imagePath &&
+          !(file instanceof File)
+        ) {
+          return file.imagePath;
         }
         if (typeof file === "string" && file.startsWith("data:")) {
-           return file.split(",")[1];
+          return file.split(",")[1];
         }
         if (file instanceof File || file instanceof Blob) {
           return new Promise((resolve, reject) => {
@@ -432,7 +447,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         return null;
       })
     ).then((results) => results.filter(Boolean));
-
 
   const handleSaveOrUpdatePart = async (partToSave) => {
     const imageListForKickoff = await filesToBase64(partToSave.images);
@@ -453,18 +467,24 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         const formData = new FormData();
         formData.append("workOrder", JSON.stringify(workOrderPayload));
 
-        const imageFiles = partToSave.images.filter(img => img instanceof File);
+        const imageFiles = partToSave.images.filter(
+          (img) => img instanceof File
+        );
         if (imageFiles.length > 0) {
-          imageFiles.forEach(file => {
-            formData.append('images', file);
+          imageFiles.forEach((file) => {
+            formData.append("images", file);
           });
         }
 
-        const workOrderResponse = await axiosInstance.post("/work/createWorkOrderPart", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const workOrderResponse = await axiosInstance.post(
+          "/work/createWorkOrderPart",
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
         const savedWorkOrder = workOrderResponse.data;
-        const newPartId = savedWorkOrder.workOrderId; 
+        const newPartId = savedWorkOrder.workOrderId;
         const kickoffItemPayload = {
           kickOffId: id,
           itemId: null,
@@ -472,28 +492,31 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           partName: partToSave.partName,
           material: partToSave.material,
           thickness: partToSave.thickness,
-          imageList: imageListForKickoff, 
+          imageList: imageListForKickoff,
         };
 
         await axiosInstance.put("/kickoff/updateItem", kickoffItemPayload);
-        setParts(prevParts => prevParts.map(p => 
-          p.id === partToSave.id 
-            ? { 
-                ...p, 
-                id: newPartId, 
-                woId:newPartId,
-                itemId: newPartId,
-                isNew: true, 
-              } 
-            : p
-        ));
+        setParts((prevParts) =>
+          prevParts.map((p) =>
+            p.id === partToSave.id
+              ? {
+                  ...p,
+                  id: newPartId,
+                  woId: newPartId,
+                  itemId: newPartId,
+                  isNew: true,
+                }
+              : p
+          )
+        );
         toast.success("Part saved successfully!");
-
       } catch (error) {
         console.error("Failed to save new part:", error.response || error);
-        alert("Error: Could not save the new part. Please check the data and try again.");
+        alert(
+          "Error: Could not save the new part. Please check the data and try again."
+        );
       }
-    }  else {
+    } else {
       try {
         const kickoffUpdatePayload = {
           itemId: partToSave.itemId,
@@ -502,14 +525,16 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           partName: partToSave.partName,
           material: partToSave.material,
           thickness: partToSave.thickness,
-          imageList: imageListForKickoff
+          imageList: imageListForKickoff,
         };
-        
-        console.log("Updating existing part with payload:", kickoffUpdatePayload);
-        await axiosInstance.put("/kickoff/updateItem", kickoffUpdatePayload);
-        
-        alert("Part updated successfully!");
 
+        console.log(
+          "Updating existing part with payload:",
+          kickoffUpdatePayload
+        );
+        await axiosInstance.put("/kickoff/updateItem", kickoffUpdatePayload);
+
+        alert("Part updated successfully!");
       } catch (error) {
         console.error("Failed to update part:", error.response || error);
         alert("Failed to update part.");
@@ -519,18 +544,20 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
   const handleUpdateProcesses = async () => {
     try {
-      const partsWithNewProcesses = parts.filter(part =>
-        (processesByPart[part.itemNo] || []).some(proc => proc.isNewForWorkOrder)
+      const partsWithNewProcesses = parts.filter((part) =>
+        (processesByPart[part.itemNo] || []).some(
+          (proc) => proc.isNewForWorkOrder
+        )
       );
 
-      const workOrderPromises = partsWithNewProcesses.map(part => {
+      const workOrderPromises = partsWithNewProcesses.map((part) => {
         const newProcesses = (processesByPart[part.itemNo] || []).filter(
-          proc => proc.isNewForWorkOrder
+          (proc) => proc.isNewForWorkOrder
         );
 
-        console.log("new processes",newProcesses);
+        console.log("new processes", newProcesses);
         if (newProcesses.length > 0) {
-          const workOrderItemsPayload = newProcesses.map(proc => ({
+          const workOrderItemsPayload = newProcesses.map((proc) => ({
             workOrderNo: proc.woNo,
             employeeId: proc.designer || null,
             operationNumber: proc.opNo,
@@ -540,14 +567,23 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             height: parseFloat(proc.height) || 0,
             remark: proc.remarks || "",
           }));
-          console.log("workOrderId::::::::::::::::::",part.itemId);
-          console.log("workOrderItems:::::::::::::::::",JSON.stringify(workOrderItemsPayload))
+          console.log("workOrderId::::::::::::::::::", part.itemId);
+          console.log(
+            "workOrderItems:::::::::::::::::",
+            JSON.stringify(workOrderItemsPayload)
+          );
 
           const processFormData = new FormData();
-          processFormData.append('workOrderId', part.itemId); // Use the saved workOrderId
-          processFormData.append('workOrderItems', JSON.stringify(workOrderItemsPayload));
-          
-          return axiosInstance.post("/work/createWorkOrderItems", processFormData);
+          processFormData.append("workOrderId", part.itemId); // Use the saved workOrderId
+          processFormData.append(
+            "workOrderItems",
+            JSON.stringify(workOrderItemsPayload)
+          );
+
+          return axiosInstance.post(
+            "/work/createWorkOrderItems",
+            processFormData
+          );
         }
         return Promise.resolve(); // Return a resolved promise if no new processes
       });
@@ -557,10 +593,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         toast.success("New processes saved to work order successfully.");
 
         // Update state to mark processes as no longer new
-        setProcessesByPart(prev => {
+        setProcessesByPart((prev) => {
           const newState = { ...prev };
-          partsWithNewProcesses.forEach(part => {
-            newState[part.itemNo] = newState[part.itemNo].map(proc => ({
+          partsWithNewProcesses.forEach((part) => {
+            newState[part.itemNo] = newState[part.itemNo].map((proc) => ({
               ...proc,
               isNewForWorkOrder: false,
             }));
@@ -568,13 +604,14 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           return newState;
         });
       }
-
     } catch (error) {
-      console.error("Failed to save new processes to work order:", error.response || error);
+      console.error(
+        "Failed to save new processes to work order:",
+        error.response || error
+      );
       toast.error("Failed to save new processes to work order.");
       return;
     }
-
 
     try {
       const allProcessesForKickoff = Object.values(processesByPart)
@@ -582,12 +619,14 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         .map((proc) => ({
           partProcessId: proc.partProcessId || null,
           kickOffId: id,
-          itemNo: 
+          itemNo:
             typeof proc.itemNo === "string"
               ? parseInt(proc.itemNo.replace(/^PT-/, ""), 10)
               : proc.itemNo,
           workOrderNumber: proc.woNo,
-          designerName: employeeList.find(e => e.employeeId === proc.designer)?.name || "",
+          designerName:
+            employeeList.find((e) => e.employeeId === proc.designer)?.name ||
+            "",
           employeeId: proc.designer,
           process: proc.processName,
           length: parseFloat(proc.length) || 0,
@@ -595,17 +634,25 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           width: parseFloat(proc.width) || 0,
           remarks: proc.remarks || "",
         }));
-        console.log("kick off itemsssssssssssssssssssssss",allProcessesForKickoff)
+      console.log(
+        "kick off itemsssssssssssssssssssssss",
+        allProcessesForKickoff
+      );
       if (allProcessesForKickoff.length > 0) {
-        await axiosInstance.put("/kickoff/updateKickOffItemsProccess", allProcessesForKickoff);
+        await axiosInstance.put(
+          "/kickoff/updateKickOffItemsProccess",
+          allProcessesForKickoff
+        );
         toast.success("All processes updated in Kickoff Sheet successfully!");
       }
     } catch (error) {
-      console.error("Failed to update kickoff processes:", error.response || error);
+      console.error(
+        "Failed to update kickoff processes:",
+        error.response || error
+      );
       toast.error("Failed to update kickoff processes");
     }
   };
-
 
   const fetchMaxItemNumber = async () => {
     try {
@@ -687,6 +734,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                         onChange={(e) =>
                           updatePart(part.id, "partName", e.target.value)
                         }
+                        disabled={!part.isEditing}
                       />
                     </td>
                     <td>
@@ -697,6 +745,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                         onChange={(e) =>
                           updatePart(part.id, "material", e.target.value)
                         }
+                        disabled={!part.isEditing}
                       />
                     </td>
                     <td>
@@ -706,170 +755,236 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                         onChange={(e) =>
                           updatePart(part.id, "thickness", e.target.value)
                         }
+                        disabled={!part.isEditing}
                       />
                     </td>
                     <td>
                       <div
                         style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          gap: "10px",
+                          pointerEvents: part.isEditing ? "auto" : "none",
+                          opacity: part.isEditing ? 1 : 0.5,
                         }}
                       >
-                        {/* ======================= CHANGED SECTION START ======================= */}
-                        {part.images.map((img, idx) => {
-                          // Determine the image source whether it's a new File or an existing image object
-                          let imgSrc = "";
-                          if (img instanceof File) {
-                            imgSrc = URL.createObjectURL(img); // For newly added images
-                          } else if (img && img.imagePath) {
-                            // For existing images from the backend
-                            const path = img.imagePath;
-                            imgSrc = path.startsWith("data:")
-                              ? path
-                              : `data:image/jpeg;base64,${path}`;
-                          }
-
-                          return (
-                            <div
-                              key={img.imageId || idx} // Use imageId as key if available
-                              style={{
-                                position: "relative",
-                                width: "100px",
-                                height: "100px",
-                                border: "1px solid #ddd",
-                                borderRadius: "4px",
-                              }}
-                            >
-                              <img
-                                src={imgSrc}
-                                alt={`img-${idx}`}
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  // This is now an async function to handle the API call
-                                  try {
-                                    const imageToDelete = part.images[idx];
-
-                                    // If image has an ID, it's from the DB. Delete it via API.
-                                    if (imageToDelete && imageToDelete.imageId) {
-                                      await axiosInstance.delete(
-                                        `/kickoff/deleteItemImage/${imageToDelete.imageId}`
-                                      );
-                                      console.log(
-                                        `Image ${imageToDelete.imageId} deleted from DB`
-                                      );
-                                      toast.success("Image deleted succesfully");
-
-                                    }
-
-                                    // After successful API deletion (or if it's a new file), remove from local state
-                                    const updatedImages = [...part.images];
-                                    updatedImages.splice(idx, 1);
-                                    updatePart(part.id, "images", updatedImages);
-                                  } catch (err) {
-                                    console.error("Failed to delete image:", err);
-                                    alert("Failed to delete image from server");
-                                  }
-                                }}
-                                style={{
-                                  position: "absolute",
-                                  top: "-8px",
-                                  right: "-8px",
-                                  background: "red",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "50%",
-                                  width: "24px",
-                                  height: "24px",
-                                  cursor: "pointer",
-                                  fontSize: "14px",
-                                }}
-                              >
-                                ×
-                              </button>
-                            </div>
-                          )
-                        })}
-                        {/* Add More Images */}
                         <div
-                          className="d-flex align-items-center justify-content-center"
                           style={{
-                            border: "2px dashed #ccc",
-                            padding: "12px",
-                            cursor: "pointer",
-                            borderRadius: "6px",
-                            textAlign: "center",
-                            minWidth: "100px",
-                            height: "100px",
+                            display: "flex",
                             flexDirection: "column",
-                            backgroundColor: "#f9f9f9",
+                            alignItems: "center",
+                            gap: "10px",
                           }}
-                          onClick={() =>
-                            document
-                              .getElementById(`multi-image-upload-${part.id}`)
-                              .click()
-                          }
                         >
-                          <div className="text-center text-muted">
-                            <i className="bi bi-plus-circle fs-4" />
-                            <div style={{ fontSize: "12px", marginTop: "4px" }}>
-                              Add More Images
-                            </div>
-                          </div>
-                        </div>
-                        <input
-                          type="file"
-                          id={`multi-image-upload-${part.id}`}
-                          accept="image/*"
-                          multiple
-                          style={{ display: "none" }}
-                          onChange={(e) => {
-                            const selectedFiles = Array.from(e.target.files);
-
-                            // Filter to allow only files <= 1 MB
-                            const validFiles = selectedFiles.filter((file) => {
-                              if (file.size > 1024 * 1024) {
-                                // 1MB
-                                alert(
-                                  `${file.name} is larger than 1 MB and will be skipped.`
-                                );
-                                return false;
-                              }
-                              return true;
-                            });
-
-                            if (validFiles.length > 0) {
-                              updatePart(part.id, "images", [
-                                ...part.images,
-                                ...validFiles,
-                              ]);
+                          {/* ======================= CHANGED SECTION START ======================= */}
+                          {part.images.map((img, idx) => {
+                            // Determine the image source whether it's a new File or an existing image object
+                            let imgSrc = "";
+                            if (img instanceof File) {
+                              imgSrc = URL.createObjectURL(img); // For newly added images
+                            } else if (img && img.imagePath) {
+                              // For existing images from the backend
+                              const path = img.imagePath;
+                              imgSrc = path.startsWith("data:")
+                                ? path
+                                : `data:image/jpeg;base64,${path}`;
                             }
 
-                            // Reset file input so the same file can be re-selected
-                            e.target.value = "";
-                          }}
-                        />
+                            return (
+                              <div
+                                key={img.imageId || idx} // Use imageId as key if available
+                                style={{
+                                  position: "relative",
+                                  width: "100px",
+                                  height: "100px",
+                                  border: "1px solid #ddd",
+                                  borderRadius: "4px",
+                                }}
+                              >
+                                <img
+                                  src={imgSrc}
+                                  alt={`img-${idx}`}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    // This is now an async function to handle the API call
+                                    try {
+                                      const imageToDelete = part.images[idx];
+
+                                      // If image has an ID, it's from the DB. Delete it via API.
+                                      if (
+                                        imageToDelete &&
+                                        imageToDelete.imageId
+                                      ) {
+                                        await axiosInstance.delete(
+                                          `/kickoff/deleteItemImage/${imageToDelete.imageId}`
+                                        );
+                                        console.log(
+                                          `Image ${imageToDelete.imageId} deleted from DB`
+                                        );
+                                        toast.success(
+                                          "Image deleted succesfully"
+                                        );
+                                      }
+
+                                      // After successful API deletion (or if it's a new file), remove from local state
+                                      const updatedImages = [...part.images];
+                                      updatedImages.splice(idx, 1);
+                                      updatePart(
+                                        part.id,
+                                        "images",
+                                        updatedImages
+                                      );
+                                    } catch (err) {
+                                      console.error(
+                                        "Failed to delete image:",
+                                        err
+                                      );
+                                      alert(
+                                        "Failed to delete image from server"
+                                      );
+                                    }
+                                  }}
+                                  style={{
+                                    position: "absolute",
+                                    top: "-8px",
+                                    right: "-8px",
+                                    background: "red",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "50%",
+                                    width: "24px",
+                                    height: "24px",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            );
+                          })}
+                          {/* Add More Images */}
+                          <div
+                            className="d-flex align-items-center justify-content-center"
+                            style={{
+                              border: "2px dashed #ccc",
+                              padding: "12px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              textAlign: "center",
+                              minWidth: "100px",
+                              height: "100px",
+                              flexDirection: "column",
+                              backgroundColor: "#f9f9f9",
+                            }}
+                            onClick={() =>
+                              document
+                                .getElementById(`multi-image-upload-${part.id}`)
+                                .click()
+                            }
+                          >
+                            <div className="text-center text-muted">
+                              <i className="bi bi-plus-circle fs-4" />
+                              <div
+                                style={{ fontSize: "12px", marginTop: "4px" }}
+                              >
+                                Add More Images
+                              </div>
+                            </div>
+                          </div>
+                          <input
+                            type="file"
+                            id={`multi-image-upload-${part.id}`}
+                            accept="image/*"
+                            multiple
+                            style={{ display: "none" }}
+                            onChange={(e) => {
+                              const selectedFiles = Array.from(e.target.files);
+
+                              // Filter to allow only files <= 1 MB
+                              const validFiles = selectedFiles.filter(
+                                (file) => {
+                                  if (file.size > 1024 * 1024) {
+                                    // 1MB
+                                    alert(
+                                      `${file.name} is larger than 1 MB and will be skipped.`
+                                    );
+                                    return false;
+                                  }
+                                  return true;
+                                }
+                              );
+
+                              if (validFiles.length > 0) {
+                                updatePart(part.id, "images", [
+                                  ...part.images,
+                                  ...validFiles,
+                                ]);
+                              }
+
+                              // Reset file input so the same file can be re-selected
+                              e.target.value = "";
+                            }}
+                          />
+                        </div>
                       </div>
                     </td>
-                    <td className="text-center">
+                    {/* <td className="text-center">
                       <Button
                         variant="link"
                         onClick={() => removePart(part.id)}
                         className="text-danger"
+                        disabled={part.isEditing}
                       >
                         <FaTrash />
                       </Button>
 
-                      <Button variant="primary" onClick={() => handleSaveOrUpdatePart(part)}>
-                         {part.isNew ? 'Save' : 'Update'}
+                      <Button
+                        variant="primary"
+                        onClick={() => handleSaveOrUpdatePart(part)}
+                      >
+                        {part.isNew ? "Save" : "Update"}
+                      </Button>
+                    </td> */}
+
+                    <td className="text-center ">
+                      {/* Delete always allowed */}
+
+                      {/* Toggle between Edit and Save */}
+                      <div className="d-flex justify-content-center">
+                        {part.isEditing ? (
+                          <Button
+                            variant="d-block btn btn-outline-success btn-sm"
+                            className="d-block"
+                            onClick={() => {
+                              handleSaveOrUpdatePart(part);
+                              updatePart(part.id, "isEditing", false);
+                            }}
+                          >
+                            Save
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="d-block btn btn-outline-dark btn-sm "
+                            className="d-block"
+                            onClick={() =>
+                              updatePart(part.id, "isEditing", true)
+                            }
+                          >
+                            Edit
+                          </Button>
+                        )}
+                      </div>
+                      <Button
+                        onClick={() => removePart(part.id)}
+                        variant="btn btn-outline-danger btn-sm mt-2"
+                        disabled={part.isEditing} // Prevent delete while editing
+                      >
+                        delete
                       </Button>
                     </td>
                   </tr>
@@ -879,7 +994,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           </Table>
 
           <div className="d-flex justify-content-end mt-3 gap-2  mb-5">
-            <Button onClick={addPart} variant="primary">
+            <Button onClick={addPart} variant="btn btn-outline-primary btn-sm">
               <FaPlusCircle className="me-2 ms-2" /> Add Part
             </Button>
           </div>
@@ -936,6 +1051,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             onChange={(e) =>
                               updateProcess(proc.id, "woNo", e.target.value)
                             }
+                            disabled={!proc.isEditing}
                           />
                         </td>
                         <td>
@@ -944,6 +1060,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             onChange={(e) =>
                               updateProcess(proc.id, "designer", e.target.value)
                             }
+                            disabled={!proc.isEditing}
                           >
                             <option value="">Select Designer</option>
                             {employeeList.map((emp) => (
@@ -962,6 +1079,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             onChange={(e) =>
                               updateProcess(proc.id, "opNo", e.target.value)
                             }
+                            disabled={!proc.isEditing}
                           >
                             <option value="">Select</option>
                             {[
@@ -999,6 +1117,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                                 e.target.value
                               )
                             }
+                            disabled={!proc.isEditing}
                           />
                         </td>
                         <td>
@@ -1007,6 +1126,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             onChange={(e) =>
                               updateProcess(proc.id, "length", e.target.value)
                             }
+                            disabled={!proc.isEditing}
                           />
                         </td>
                         <td>
@@ -1015,6 +1135,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             onChange={(e) =>
                               updateProcess(proc.id, "width", e.target.value)
                             }
+                            disabled={!proc.isEditing}
                           />
                         </td>
                         <td>
@@ -1023,6 +1144,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             onChange={(e) =>
                               updateProcess(proc.id, "height", e.target.value)
                             }
+                            disabled={!proc.isEditing}
                           />
                         </td>
                         <td>
@@ -1031,9 +1153,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             onChange={(e) =>
                               updateProcess(proc.id, "remarks", e.target.value)
                             }
+                            disabled={!proc.isEditing}
                           />
                         </td>
-                        <td className="text-center">
+                        {/* <td className="text-center">
                           <Button
                             variant="link"
                             onClick={() => removeProcess(proc.id)}
@@ -1047,6 +1170,58 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             onClick={handleUpdateProcesses}
                           >
                             Update{" "}
+                          </Button>
+                        </td> */}
+
+                        <td className="text-center">
+                          <div className="d-flex justify-content-center">
+                            {proc.isEditing ? (
+                              <Button
+                                variant="btn btn-outline-success btn-sm "
+                                onClick={() => {
+                                  handleUpdateProcesses(); // or row-specific save
+                                  setProcessesByPart((prev) => ({
+                                    ...prev,
+                                    [activePartItemNo]: prev[
+                                      activePartItemNo
+                                    ].map((p) =>
+                                      p.id === proc.id
+                                        ? { ...p, isEditing: false }
+                                        : p
+                                    ),
+                                  }));
+                                }}
+                              >
+                                Save
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="d-block btn btn-outline-dark btn-sm "
+                                className="d-block"
+                                onClick={() =>
+                                  setProcessesByPart((prev) => ({
+                                    ...prev,
+                                    [activePartItemNo]: prev[
+                                      activePartItemNo
+                                    ].map((p) =>
+                                      p.id === proc.id
+                                        ? { ...p, isEditing: true }
+                                        : p
+                                    ),
+                                  }))
+                                }
+                              >
+                                Edit
+                              </Button>
+                            )}
+                          </div>
+                          <Button
+                            variant="btn btn-outline-danger btn-sm mt-2"
+                            onClick={() => removeProcess(proc.id)}
+                            className=""
+                            disabled={proc.isEditing} // Don’t allow delete while editing
+                          >
+                            delete
                           </Button>
                         </td>
                       </tr>
@@ -1077,7 +1252,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                       container: (base) => ({ ...base, width: "300px" }),
                     }}
                   />
-                  <Button onClick={addProcess} variant="primary">
+                  <Button
+                    onClick={addProcess}
+                    variant="btn btn-outline-primary btn-sm"
+                  >
                     <FaPlusCircle className="me-2" /> Add Another Process
                   </Button>
                 </div>

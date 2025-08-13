@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Accordion, Card, Form, Row, Col, Button } from "react-bootstrap";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
-
+import { FaTrash, FaPlusCircle } from "react-icons/fa";
 const CompanyUpdateKickOffSignature = ({
   eventKey,
   activeKey,
@@ -9,10 +9,10 @@ const CompanyUpdateKickOffSignature = ({
   handleAccordionClick,
   onSignatureChange,
   initialSignatureData = [],
-  id // ✅ Pass KickOffId from parent
+  id, // ✅ Pass KickOffId from parent
 }) => {
   const [signatures, setSignatures] = useState(initialSignatureData);
-
+  const [isEditable, setIsEditable] = useState(false);
   // Sync state from props
   useEffect(() => {
     setSignatures(initialSignatureData);
@@ -32,7 +32,7 @@ const CompanyUpdateKickOffSignature = ({
         id: null,
         kickOffId: id,
         departments: "",
-        headName: ""
+        headName: "",
       },
     ]);
   };
@@ -46,13 +46,14 @@ const CompanyUpdateKickOffSignature = ({
   // ✅ Independent Save for Signatures
   const handleUpdateSignatures = async () => {
     try {
-      const payload = signatures.map(sig => ({
+      const payload = signatures.map((sig) => ({
         ...sig,
-        kickOffId: id
+        kickOffId: id,
       }));
 
       await axiosInstance.put("/kickoff/updateKickOffSignature", payload);
       alert("Signatures updated successfully!");
+       setIsEditable(false); 
     } catch (error) {
       console.error("Failed to update signatures:", error);
       alert("Failed to update signatures");
@@ -70,20 +71,41 @@ const CompanyUpdateKickOffSignature = ({
       </CustomToggle>
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
+          {/* Top Right Buttons */}
           <div className="text-end">
-        
-
-            <Button
-              onClick={handleUpdateSignatures}
-              variant="primary"
-              className="mt-2 mx-2"
-            >
-              Update Signatures
-            </Button>
+            {!isEditable ? (
+              <Button
+                onClick={() => setIsEditable(true)}
+                variant="btn btn-outline-dark btn-sm"
+                className="mt-2 mx-2"
+              >
+                Edit
+              </Button>
+            ) : (
+              <>
+                <Button
+                  onClick={handleUpdateSignatures}
+                  variant="btn btn-outline-success btn-sm"
+                  className="mt-2 mx-2"
+                >
+                  Save
+                </Button>
+                <Button
+                  onClick={() => {
+                    setSignatures(initialSignatureData);
+                    setIsEditable(false);
+                  }}
+                  variant="btn btn-outline-secondary btn-sm"
+                  className="mt-2 mx-2"
+                >
+                  Cancel
+                </Button>
+              </>
+            )}
           </div>
 
           {signatures.map((sig, idx) => (
-            <Row key={sig.id || idx} className="mb-3 align-items-center">
+            <Row key={sig.id || idx} className="mb-3 ">
               <Col md={5}>
                 <Form.Group controlId={`departments-${idx}`}>
                   <Form.Label>Department</Form.Label>
@@ -93,6 +115,7 @@ const CompanyUpdateKickOffSignature = ({
                     onChange={(e) =>
                       handleChange(idx, "departments", e.target.value)
                     }
+                    disabled={!isEditable}
                   />
                 </Form.Group>
               </Col>
@@ -105,15 +128,16 @@ const CompanyUpdateKickOffSignature = ({
                     onChange={(e) =>
                       handleChange(idx, "headName", e.target.value)
                     }
+                    disabled={!isEditable}
                   />
                 </Form.Group>
               </Col>
-              <Col md={2} className="d-flex align-items-center">
+              <Col md={2} className="d-flex align-items-end p-0">
                 <Button
-                  variant="danger"
+                  variant="btn btn-outline-danger btn-sm"
                   onClick={() => handleRemoveSignature(idx)}
                 >
-                  Remove
+                  delete
                 </Button>
               </Col>
             </Row>

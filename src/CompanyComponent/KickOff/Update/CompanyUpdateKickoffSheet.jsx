@@ -20,7 +20,9 @@ const CustomToggle = ({ eventKey, activeKey, children, handleAccordionClick }) =
     <div
       onClick={() => handleAccordionClick(eventKey)}
       style={{
-        background: "#1a3c8c",
+        background: " #54565b",
+
+        // #1a3c8c
         color: "#fff",
         padding: "12px 16px",
         cursor: "pointer",
@@ -32,10 +34,8 @@ const CustomToggle = ({ eventKey, activeKey, children, handleAccordionClick }) =
         borderRadius: isActive ? "8px 8px 0 0" : "8px",
       }}
     >
-      
-        <span>{children}</span>
-        {isActive ? <FaChevronUp /> : <FaChevronDown />}
-     
+      <span>{children}</span>
+      {isActive ? <FaChevronUp /> : <FaChevronDown />}
     </div>
   );
 };
@@ -213,12 +213,12 @@ const CompanyUpdateKickoffSheet = () => {
             </Accordion>
 
             <div className="d-flex justify-content-end gap-2 mt-4 p-3 bg-white rounded-bottom shadow-sm">
-              <Button
+              {/* <Button
                 variant="outline-primary"
                 onClick={() => alert("Preview Clicked")}
               >
                 Preview
-              </Button>
+              </Button> */}
               {/* <Button variant="primary" onClick={handleSave}>
                 <i className="bi bi-save me-1"></i> Update
               </Button> */}
