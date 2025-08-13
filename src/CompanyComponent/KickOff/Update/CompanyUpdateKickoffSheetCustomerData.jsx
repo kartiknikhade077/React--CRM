@@ -146,11 +146,11 @@ const CompanyUpdateKickoffSheetCustomerData = ({
     onProjectSelect(projectId);
   };
 
-  // --- ✅ Independent SAVE Function for this child ---
+  
   const handleUpdate = async () => {
     const payload = {
       kickOffId: id,
-      employeeid: null, // or pass actual employee id if available
+      employeeid: null, 
       projectId: formData.projectId,
       customerName: formData.customerName,
       contactPersonName: formData.contactPerson,
@@ -163,6 +163,7 @@ const CompanyUpdateKickoffSheetCustomerData = ({
       kickOffDate: formData.kickOffDate,
       startDate: formData.startDate,
       endDate: formData.endDate,
+      customerId:formData.savedcusomerid,
       createdDateTime: new Date().toISOString(), // or the original if you keep it
     };
 

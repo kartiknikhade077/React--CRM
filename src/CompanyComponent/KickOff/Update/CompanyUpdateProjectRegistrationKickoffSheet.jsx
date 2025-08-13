@@ -237,6 +237,16 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   };
 
   const removePart = (id) => {
+    if(id){
+      try{
+        const responce = axiosInstance.delete(`/kickoff/deleteItem/${id}`);
+        
+        toast.success("Part Deleted successfully");
+      } catch (error) {
+        console.error("Failed to delete part ", error.response || error);
+        toast.error("Failed to delete part");
+      }
+    }
     setParts((prev) => prev.filter((part) => part.id !== id));
     const part = parts.find((p) => p.id === id);
     if (part && processesByPart[part.itemNo]) {
@@ -286,6 +296,16 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   };
 
   const removeProcess = (id) => {
+    console.log("process id", id);
+    if(id){
+      try {
+          axiosInstance.delete(`/kickoff/deleteItemProcess/${id}`)
+          toast.success("Process Deleted successfully");
+      } catch (error) {
+          toast.error("Error while deleting processes");
+          console.log("Error while deleting processes",error);
+      }
+    }
     setProcessesByPart((prev) => ({
       ...prev,
       [activePartItemNo]: (prev[activePartItemNo] || []).filter(
