@@ -8,13 +8,13 @@ import CreatableSelect from "react-select/creatable";
 
 
 // The master list of predefined processes for the dropdown
-const processOptions = [
-  { value: 'IF', label: 'IF' },
-  { value: 'UL', label: 'UL' },
-  { value: 'CF', label: 'CF' },
-  { value: 'LF', label: 'LF' },
-  { value: 'TL', label: 'TL' },
-];
+// const processOptions = [
+//   { value: 'IF', label: 'IF' },
+//   { value: 'UL', label: 'UL' },
+//   { value: 'CF', label: 'CF' },
+//   { value: 'LF', label: 'LF' },
+//   { value: 'TL', label: 'TL' },
+// ];
 
 const CreateWorkOrder = ({ show, onClose, onSave }) => {
   const fileInputRef = useRef(null);
@@ -37,6 +37,12 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
 
   const [isItemNoUnique, setIsItemNoUnique] = useState(true);
   const [isCheckingItemNo, setIsCheckingItemNo] = useState(false);
+
+  const [processOptions,setProcessOptions] = useState([]);
+  const [processLoading,setProcessLoading] = useState();
+
+  const [processesSuggestionsOptions, setProcessesSuggestionsOptions] = useState([]);
+  const [processesSuggestionsLoading, setProcessesSuggestionsLoading] = useState();
 
   // State for the main form fields
   const [formData, setFormData] = useState({
@@ -100,6 +106,54 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
         clearTimeout(handler);
     };
   }, [itemNo]);
+
+
+  useEffect(() => {
+    if (show) {
+      fetchProcesses();
+      fetchProcessesSuggestions();
+    }
+  }, [show]);
+
+  const fetchProcesses = async () => {
+    setProcessLoading(true);
+    try {
+      const res = await axiosInstance.get("/work/getAllWorkOrderProcesses");
+      const data = res.data;
+
+      const option = data.map((process)=>({
+        value:process.processName,
+        label:process.processName
+      }))
+
+      setProcessOptions(option);
+    } catch (error) {
+      toast.error("Failed to load processes");
+      console.error(error);
+    } finally {
+      setProcessLoading(false);
+    }
+  };
+
+  const fetchProcessesSuggestions = async () => {
+    setProcessesSuggestionsLoading(true);
+    try {
+      const res = await axiosInstance.get("/work/getAllProcesses");
+      const data = res.data;
+
+      const option = data.map((process)=>({
+        value:process.processName,
+        label:process.processName
+      }))
+
+      setProcessesSuggestionsOptions(option);
+    } catch (error) {
+      toast.error("Failed to load processes");
+      console.error(error);
+    } finally {
+      setProcessesSuggestionsLoading(false);
+    }
+  };
 
 
   // --- Handlers ---
@@ -221,12 +275,19 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
       woNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
     }
 
+    let operationNumberValue;
+    if (p.type === 'select') {
+        operationNumberValue = 0;
+    } else {
+        operationNumberValue = rowData.opNo ? parseInt(rowData.opNo, 10) : -1;
+    }
+
     return {
       itemNo: itemNo,
       workOrderNo: woNo,
       cancel: rowData.cancel || false,
       scope: rowData.scope || false,
-      operationNumber: parseInt(rowData.opNo || '0'),
+      operationNumber: operationNumberValue,
       proceess: rowData.process || '',
       length: parseFloat(rowData.l || '0'),
       width: parseFloat(rowData.w || '0'),
@@ -698,6 +759,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
               onChange={setSelectedProcesses}
               placeholder="Select from list..."
               className="flex-grow-1"
+              isLoading={processLoading}
               styles={{ container: base => ({ ...base, width: '300px' }) }}
             />
             <Button variant="primary" onClick={handleAddManualProcess}>
@@ -712,11 +774,11 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
             <tr>
               <th>Cancel</th>
               <th>Scope</th>
-              <th style={{ width: "160px" }}>WO No</th>
-              <th>OP No</th>
+              <th style={{ width: "10%" }}>WO No</th>
+              <th style={{ width: "8%" }}>Op No</th>
               <th>Process</th>
-              <th colSpan="3">Quoted Die Sizes (mm)</th>
-              <th>Remarks</th>
+              <th colSpan="3"style={{ width: "23%" }}>Quoted Die Sizes (mm)</th>
+              <th style={{ width: "15%" }}>Remarks</th>
               <th>Actions</th>
             </tr>
             <tr>
@@ -735,19 +797,13 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
           <tbody className="text-center">
             {processes.map((p) => {
               const isScoped = tableData[p.id]?.scope || false;
-
               const visibleManuals = processes
                 .filter(proc => proc.type === 'manual' && !tableData[proc.id]?.scope);
-
               const manualIndex = visibleManuals.findIndex(proc => proc.id === p.id);
-              
               const generatedWoNo = manualIndex >= 0 
                 ? `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`
                 : '';
-
               const displayWoNo = isScoped ? 'XX' : (p.type === 'select' ? p.woNo : generatedWoNo);
-
-
 
               return (
                 <tr key={p.id}>
@@ -778,11 +834,12 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                         onChange={(e) => handleTableInputChange(p.id, 'opNo', e.target.value)}
                         >
                         <option value="">Select</option>
-                        {Array.from({ length: 40 }, (_, i) => {
-                            const value = String((i + 1) * 5).padStart(2, '0');
+                        {Array.from({ length: 21 }, (_, i) => {
+                            const value = (i === 0) ? 5 : i * 10;
+                            const displayValue = String(value).padStart(2, '0');
                             return (
                             <option key={value} value={value}>
-                                {value}
+                                {displayValue}
                             </option>
                             );
                         })}
@@ -791,7 +848,32 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                   </td>
 
                   <td className="align-middle">
-                    <Form.Control size="sm" type="text" value={tableData[p.id]?.process || ''} onChange={e => handleTableInputChange(p.id, 'process', e.target.value)} />
+                    {p.type === 'select' ? (
+                      <Select
+                        options={processesSuggestionsOptions}
+                        isLoading={processesSuggestionsLoading}
+                        value={processesSuggestionsOptions.find(option => option.value === tableData[p.id]?.process)}
+                        onChange={(selectedOption) =>
+                          handleTableInputChange(p.id, "process", selectedOption ? selectedOption.value : "")
+                        }
+                        placeholder="Select Process..."
+                        styles={{ 
+                          control: base => ({ ...base, minHeight: '31px', height: '31px' }),
+                          indicatorsContainer: base => ({...base, height: '31px'}),
+                          valueContainer: base => ({...base, top: '-2px'}),
+                          singleValue: base => ({...base, top: '-2px'})
+                        }}
+                        isClearable={true}
+                      />
+                    ) : (
+                      <Form.Control 
+                          size="sm" 
+                          type="text" 
+                          value={tableData[p.id]?.process || ''} 
+                          onChange={e => handleTableInputChange(p.id, 'process', e.target.value)}
+                          placeholder="Enter Manual Process"
+                      />
+                    )}
                   </td>
                   <td className="align-middle">
                     <Form.Control size="sm" type="number" step="any" min="0" value={tableData[p.id]?.l || ''} onChange={e => handleTableInputChange(p.id, 'l', e.target.value)}/>

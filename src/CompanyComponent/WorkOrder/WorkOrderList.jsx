@@ -10,6 +10,8 @@ import CreateThickness from "./CreateThickness";
 import CreateMaterial from "./CreateMaterial";
 import CreatePart from "./CreatePart";
 import { toast } from "react-toastify";
+import CreateWorkOrderProcess from "./CreateWorkOrderProcess";
+import CreateProcesses from "./CreateProcess";
 
 const WorkOrderList = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -23,6 +25,9 @@ const WorkOrderList = () => {
     const [addThikenessModal,setAddThikenessModal] = useState(false);
     const [addMaterialModal,setAddMaterialModal] = useState(false);
     const [addPartsModal,setAddPartsModal] = useState(false);
+    const [workOrderProcessModal,setWorkOrderProcessModal] = useState(false);
+    const [addProcessModal,setAddProcessModal] = useState(false);
+
 
 
     useEffect(() => {
@@ -114,6 +119,18 @@ const WorkOrderList = () => {
                             <div className="col-md-6 d-flex justify-content-end">
                                 <button
                                     className="btn btn-dark me-1"
+                                    onClick={() =>setWorkOrderProcessModal(true)}
+                                >
+                                    + Add Process
+                                </button>
+                                <button
+                                    className="btn btn-dark me-1"
+                                    onClick={() =>setAddProcessModal(true)}
+                                >
+                                    + Add Process Suggestions
+                                </button>
+                                <button
+                                    className="btn btn-dark me-1"
                                     onClick={() =>setAddPartsModal(true)}
                                 >
                                     + Add Parts
@@ -147,7 +164,7 @@ const WorkOrderList = () => {
                                     <th>Item Number	</th>
                                     <th>Customer</th>
                                     <th>Project</th>
-                                    <th>Part Size</th>
+                                    <th>Part Number</th>
                                     <th>Part Name</th>
                                     <th>Material</th>
                                     <th>Thikness</th>
@@ -162,7 +179,7 @@ const WorkOrderList = () => {
                                         <td>{workOrder.itemNo}</td>
                                         <td>{workOrder.customerName}</td>
                                         <td>{workOrder.projectName}</td>
-                                        <td>{workOrder.partSize}</td>
+                                        <td>{workOrder.partNumber}</td>
                                         <td>{workOrder.partName}</td>
                                         <td>{workOrder.material}</td>
                                         <td>{workOrder.thickness}</td>
@@ -235,6 +252,16 @@ const WorkOrderList = () => {
             <CreatePart
                 show={addPartsModal}
                 onClose={()=>setAddPartsModal(false)}
+            />
+
+            <CreateWorkOrderProcess
+                show={workOrderProcessModal}
+                onClose={()=>setWorkOrderProcessModal(false)}
+            />
+
+            <CreateProcesses
+                show={addProcessModal}
+                onClose={()=>setAddProcessModal(false)}
             />
 
         </div>
