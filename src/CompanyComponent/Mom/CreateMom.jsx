@@ -172,7 +172,10 @@ const CreateMom = ({ onClose, onSave }) => {
             setIsItemLoading(true);
             const response = await axiosInstance.get(`/kickoff/getItemNoByProjectId/${projectId}`);
             const data = response.data;
-
+            if(data.length===0){
+              toast.error("Kick Off Not Creted For Selected Project ");
+                setIsItemLoading(false);
+            }
             const options = data.map(item => ({
                 value: item,
                 label: item
