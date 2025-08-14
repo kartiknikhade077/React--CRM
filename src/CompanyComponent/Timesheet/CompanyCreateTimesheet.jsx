@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Form, Row, Col, Dropdown } from "react-bootstrap";
 import axiosInstance from "../../BaseComponet/axiosInstance";
-
+import Select from "react-select";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
@@ -18,6 +18,63 @@ const CompanyCreateTimesheet = ({
   const [employeeList, setEmployeeList] = useState([]);
   const [searchTermDesigner, setSearchTermDesigner] = useState("");
   const [timeError, setTimeError] = useState("");
+  const [itemList, setItemList] = useState([])
+  const [selectedItem, setSelectedItem] = useState(0)
+  const [workOrderNumberList, setWorkOrderNumberList] = useState([])
+  const [selectedWorkorder, setSelectedWorkOrde] = useState("")
+
+  const fetchItems = async () => {
+    setSelectedWorkOrde("");
+    const response = await axiosInstance.get("/work/getItemList");
+
+    const options = response.data.map(item => ({
+      value: item,
+      label: item
+    }));
+
+    options.push({
+      value: 0,
+      label: "Other"
+    });
+
+    setItemList(options);
+  };
+
+  const fetchWorkOrders = async () => {
+    let options = [{ value: "Other", label: "Other" }];
+
+    if (selectedItem.value === 0) {
+      options = [
+        { value: "WRM MEETING", label: "WRM MEETING" },
+        { value: "VENDER VISIT", label: "VENDER VISIT" },
+        { value: "TRAINING", label: "TRAINING" },
+        { value: "RFQ PREPRATION", label: "RFQ PREPRATION" },
+        { value: "PROJECT", label: "PROJECT" },
+        { value: "ONLINE MEETING", label: "ONLINE MEETING" },
+        { value: "MORNING  MEETING", label: "MORNING  MEETING" },
+        { value: "MIS  MEETING", label: "MIS  MEETING" },
+        { value: "IT WORK", label: "IT WORK" },
+        { value: "INTERNAL DAP", label: "INTERNAL DAP" },
+        { value: "FEASIBILITY", label: "FEASIBILITY" },
+        { value: "CUSTOMER VISIT", label: "CUSTOMER VISIT" },
+        { value: "CUSTOMER DAP", label: "CUSTOMER DAP" },
+        { value: "CELEBRATION", label: "CELEBRATION" },
+        { value: "OTHER", label: "OTHER" }
+      ];
+    } else {
+      const response = await axiosInstance.get(
+        `/work/getWorkOrderByItemNo/${selectedItem.value}`
+      );
+      options = response.data.map(item => ({
+        value: item,
+        label: item
+      }));
+    }
+
+    setWorkOrderNumberList(options);
+  };
+
+
 
   const handleDesignerChange = (e) => {
     const selectedDesignerId = e.target.value;
@@ -42,6 +99,7 @@ const CompanyCreateTimesheet = ({
     fromTime: "",
     toTime: "",
     remarks: "",
+    itemNumber:0
   });
 
   const handleChange = (e) => {
@@ -82,67 +140,67 @@ const CompanyCreateTimesheet = ({
     });
   };
 
-const handleSubmit = async () => {
-  const {
-    date,
-    itemNumber,
-    workOrder,
-    designer,
-    designerId: employeeId,
-    fromTime,
-    toTime,
-    remarks,
-  } = formData;
+  const handleSubmit = async () => {
+    const {
+      date,
+      itemNumber,
+      workOrder,
+      designer,
+      designerId: employeeId,
+      fromTime,
+      toTime,
+      remarks,
+    } = formData;
 
-  if (!date || !workOrder || !designer || !employeeId || !fromTime || !toTime) {
+    if (!date || !workOrder || !designer || !employeeId || !fromTime || !toTime) {
       toast.error("Please fill in all required fields.");
-    return;
-  }
-
-  const from = new Date(`1970-01-01T${fromTime}`);
-  const to = new Date(`1970-01-01T${toTime}`);
-
-  if (to <= from) {
-    setTimeError("To Time must be greater than From Time.");
-    return;
-  } else {
-    setTimeError("");
-  }
-
-  // Append seconds if missing
-  const formattedFromTime = fromTime.length === 5 ? `${fromTime}:00` : fromTime;
-  const formattedToTime = toTime.length === 5 ? `${toTime}:00` : toTime;
-
-  const payload = {
-    employeeId: employeeId,
-    itemNumber: itemNumber,
-    workOrderNo: workOrder,
-    designerName: designer,
-    startTime: formattedFromTime,
-    endTime: formattedToTime,
-    totalTime: calculateTotalTime(fromTime, toTime),
-    remarks: remarks,
-    createDate: date,
-  };
-
-  try {
-    const response = await axiosInstance.post(
-      "/timesheet/createTimeSheet",
-      payload
-    );
-
-    if (response.status === 200 || response.status === 201) {
-           toast.success("Timesheet Created Successfully");
-      if (onSuccess) onSuccess();
-      resetForm();
-      setTimeError("");
-      handleClose();
+      return;
     }
-  } catch (error) {
-    console.error("Failed to create timesheet:", error);
-     toast.error("Error creating timesheet");
-  }
-};
+
+    const from = new Date(`1970-01-01T${fromTime}`);
+    const to = new Date(`1970-01-01T${toTime}`);
+
+    if (to <= from) {
+      setTimeError("To Time must be greater than From Time.");
+      return;
+    } else {
+      setTimeError("");
+    }
+
+    // Append seconds if missing
+    const formattedFromTime = fromTime.length === 5 ? `${fromTime}:00` : fromTime;
+    const formattedToTime = toTime.length === 5 ? `${toTime}:00` : toTime;
+
+    const payload = {
+      employeeId: employeeId,
+      itemNumber: itemNumber,
+      workOrderNo: workOrder,
+      designerName: designer,
+      startTime: formattedFromTime,
+      endTime: formattedToTime,
+      totalTime: calculateTotalTime(fromTime, toTime),
+      remarks: remarks,
+      createDate: date,
+    };
+
+    try {
+      const response = await axiosInstance.post(
+        "/timesheet/createTimeSheet",
+        payload
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Timesheet Created Successfully");
+        if (onSuccess) onSuccess();
+        resetForm();
+        setTimeError("");
+        handleClose();
+      }
+    } catch (error) {
+      console.error("Failed to create timesheet:", error);
+      toast.error("Error creating timesheet");
+    }
+  };
 
 
   useEffect(() => {
@@ -202,36 +260,52 @@ const handleSubmit = async () => {
               </Col>
 
               <Col md={4}>
-                <Form.Group className="mb-2">
-                  <Form.Label>
-                    {" "}
-                    <span className="text-danger">*</span>Work Order No.
+                <Form.Group>
+                  <Form.Label className="fw-semibold">
+                    <span className="text-danger">*</span> Item Number
                   </Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter Work Order No."
-                    value={formData.workOrder}
-                    onChange={(e) =>
-                      setFormData({ ...formData, workOrder: e.target.value })
-                    }
+                  <Select
+                    options={itemList}
+                    value={selectedItem}
+                     onChange={(selectedOption) => {
+                      setSelectedItem(selectedOption);
+                      setFormData({
+                        ...formData,
+                        itemNumber: selectedOption?.value || 0
+                      });
+                    }}
+                    placeholder="Select a item..."
+                    isClearable
+                    onMenuOpen={fetchItems}
                   />
                 </Form.Group>
               </Col>
 
               <Col md={4}>
-                <Form.Group>
-                  <Form.Label className="fw-semibold">
-                    <span className="text-danger">*</span> Item Number
+                <Form.Group className="mb-2">
+                  <Form.Label>
+                    Work Order No.
                   </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="itemNumber"
-                    placeholder="Enter Item Number"
-                    value={formData.itemNumber}
-                    onChange={handleChange}
+                  <Select
+                    options={workOrderNumberList}
+                    value={selectedWorkorder}
+                    onChange={(selectedOption) => {
+                      setSelectedWorkOrde(selectedOption);
+                      setFormData({
+                        ...formData,
+                        workOrder: selectedOption?.value || ""
+                      });
+                    }}
+
+                    placeholder="Select a WorkOrder..."
+                    isClearable
+                    onMenuOpen={fetchWorkOrders}
+                    isDisabled={!selectedItem}
                   />
                 </Form.Group>
               </Col>
+
+
             </Row>
 
             {/* Row 2 - Time & Remarks */}

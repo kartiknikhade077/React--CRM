@@ -4,15 +4,22 @@
   import Select from "react-select";
   import axiosInstance from "../../BaseComponet/axiosInstance";
   import { toast } from "react-toastify";
-import CreatableSelect from "react-select/creatable";
+  import CreatableSelect from "react-select/creatable";
 
-  const processOptions = [
-    { value: 'IF', label: 'IF' },
-    { value: 'UL', label: 'UL' },
-    { value: 'CF', label: 'CF' },
-    { value: 'LF', label: 'LF' },
-    { value: 'TL', label: 'TL' },
-  ];
+  // const processOptions = [
+  //   { value: 'IF', label: 'IF' },
+  //   { value: 'UL', label: 'UL' },
+  //   { value: 'CF', label: 'CF' },
+  //   { value: 'LF', label: 'LF' },
+  //   { value: 'TL', label: 'TL' },
+  // ];
+
+  const staticProcessDropdownOptions = [
+    "CMM",
+    "BLUE LIGHT SCAN",
+    "LASER SCAN",
+    "VISUAL INSPECTION",
+];
 
 
   const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
@@ -41,6 +48,12 @@ import CreatableSelect from "react-select/creatable";
     const [originalItemNo, setOriginalItemNo] = useState(null);
     const [hasUserEditedItemNo, setHasUserEditedItemNo] = useState(false);
     
+    const [processOptions,setProcessOptions] = useState([]);
+    const [processLoading,setProcessLoading] = useState();
+
+    const [processesSuggestionsOptions, setProcessesSuggestionsOptions] = useState([]);
+    const [processesSuggestionsLoading, setProcessesSuggestionsLoading] = useState();
+    
 
     const [formData, setFormData] = useState({
       partName: '',
@@ -59,115 +72,181 @@ import CreatableSelect from "react-select/creatable";
     const [disabledProcessValues, setDisabledProcessValues] = useState([]);
 
     useEffect(() => {
-      if (workOrderId) {
-        fetchWorkOrder();
-      }
-    }, [workOrderId]);
-
-    useEffect(() => {
-      const allProcesses = [...processes];
-
-      const manualProcesses = allProcesses.filter(p => p.type === 'manual');
-      const existingSelectIds = new Set(allProcesses.filter(p => p.type === 'select').map(p => p.id));
-
-      const newSelects = selectedProcesses
-        .filter(opt => !existingSelectIds.has(opt.value) && !disabledProcessValues.includes(opt.value))
-        .map(opt => ({
-          id: opt.value,
-          type: 'select',
-          woNo: `PT-${itemNo}${opt.value}`,
-        }));
-
-      // Combine and ensure manual first, then unique selects
-      const updatedProcesses = [
-        ...manualProcesses,
-        ...[...allProcesses.filter(p => p.type === 'select'), ...newSelects]
-          .filter((p, index, self) => self.findIndex(x => x.id === p.id) === index),
-      ];
-
-      setProcesses(updatedProcesses);
-    }, [selectedProcesses]);
-
-  useEffect(() => {
-    if (!itemNo) return;
-    setProcesses(currentProcesses => 
-      currentProcesses.map(p => {
-        if (p.type === 'select') {
-          const suffix = p.woNo.substring(3).replace(/^\d+/, '')
-
-          return { ...p, woNo: `PT-${itemNo}${suffix}` };
+      const loadInitialData = async () => {
+        const fetchedProcessOpts = await fetchProcesses();
+        const fetchedSuggetionProcesses = await fetchProcessesSuggestions();
+        if (fetchedProcessOpts && workOrderId && fetchedSuggetionProcesses) {
+          await fetchWorkOrder(fetchedProcessOpts);
         }
-        return p;
-      })
-    );
-  }, [itemNo]); // This effect will now run every time 'itemNo' changes
+      };
+
+      if (show && workOrderId) {
+        loadInitialData();
+      }
+      return () => {
+        setProcesses([]);
+        setTableData({});
+        setExistingImages([]);
+        setImages([]);
+        setSelectedProcesses([]);
+        setDisabledProcessValues([]);
+      };
+    }, [workOrderId, show]);
 
 
-    const fetchWorkOrder = async () => {
-      try {
-        const res = await axiosInstance.get(`/work/getWorkOrderById/${workOrderId}`);
-        const data = res.data;
-        const { workOrder, workImages, workOrderItems } = data;
-
-        setFormData({
-            partName: workOrder.partName,
-            customer: workOrder.customerName,
-            customerId: workOrder.customerId,
-            project: workOrder.projectName,
-            projectId: workOrder.projectId,
-            thickness: workOrder.thickness,
-            material: workOrder.material,
-            partSize: workOrder.partSize,
-            partWeight: workOrder.partWeight,
-            partNumber:workOrder.partNumber,
-        });
-
-        setItemNo(workOrder.itemNo);
-        setOriginalItemNo(workOrder.itemNo); 
-        setHasUserEditedItemNo(false);
-        setIsItemNoUnique(true)
-        setSelectedCustomer(workOrder.customerId || '');
-
-        // Pre-fill image blobs
-        setExistingImages(workImages || []);
-
-        // Pre-fill processes
-        const manualProcs = [];
-        const selectProcs = [];
-        const usedSelectValues = [];
-
-        const table = {};
-        workOrderItems.forEach((item, idx) => {
-          const suffix = item.workOrderNo.replace(/^.*?PT-\d+/, '').trim(); 
-          const isSelectProcess = processOptions.some(opt => opt.value === suffix);
-
-          const id = isSelectProcess ? `select-${idx}` : `manual-${nextId.current++}`;
-
-          if (isSelectProcess) {
-            usedSelectValues.push(suffix);
-            selectProcs.push({ id, type: 'select', woNo: item.workOrderNo });
-          } else {
-            manualProcs.push({ id, type: 'manual' });
-          }
-
-          table[id] = {
-            cancel: item.cancel,
-            scope: item.scope,
-            opNo: item.operationNumber,
-            process: item.proceess,
-            l: item.length,
-            w: item.width,
-            h: item.height,
-            remarks: item.remark,
-            itemId:item.itemId,
+useEffect(() => {
+  setProcesses(currentProcesses => {
+      const manualProcesses = currentProcesses.filter(p => p.type === 'manual');
+      const newSelectProcesses = selectedProcesses.map(option => {
+          return {
+              id: option.value,
+              type: 'select',
+              woNo: `PT-${itemNo || ''}${option.value}`,
           };
-        });
+      });
+      return [...manualProcesses, ...newSelectProcesses];
+  });
+  setTableData(currentTableData => {
+      const newTableData = { ...currentTableData };
+      const selectedIds = new Set(selectedProcesses.map(opt => opt.value));
+      for (const processId in newTableData) {
+          if (!processId.startsWith('manual-')) {
+              if (!selectedIds.has(processId)) {
+                  delete newTableData[processId];
+              }
+          }
+      }
+      return newTableData;
+  });
 
-        setProcesses([...manualProcs, ...selectProcs]);
-        setTableData(table);
-        setDisabledProcessValues(usedSelectValues);
+}, [selectedProcesses, itemNo]);
+  
+  const fetchWorkOrder = async (pOptions) => { 
+      try {
+          const res = await axiosInstance.get(`/work/getWorkOrderById/${workOrderId}`);
+          const data = res.data;
+          const { workOrder, workImages, workOrderItems } = data;
+
+          setFormData({
+              partName: workOrder.partName,
+              customer: workOrder.customerName,
+              customerId: workOrder.customerId,
+              project: workOrder.projectName,
+              projectId: workOrder.projectId,
+              thickness: workOrder.thickness,
+              material: workOrder.material,
+              partSize: workOrder.partSize,
+              partWeight: workOrder.partWeight,
+              partNumber: workOrder.partNumber,
+          });
+
+          setItemNo(workOrder.itemNo);
+          setOriginalItemNo(workOrder.itemNo);
+          setHasUserEditedItemNo(false);
+          setIsItemNoUnique(true);
+          setSelectedCustomer(workOrder.customerId || '');
+          setExistingImages(workImages || []);
+
+          const manualProcs = [];
+          const selectProcs = [];
+          const usedSelectValues = new Set(); 
+          const table = {};
+
+          workOrderItems.forEach((item) => {
+              const isSelectProcess = item.operationNumber === 0;
+              const suffix = item.workOrderNo.replace(/^.*?PT-\d+/, '').trim();
+              const id = isSelectProcess ? suffix : `manual-${nextId.current++}`;
+
+              if (isSelectProcess) {
+                  usedSelectValues.add(suffix);
+                  selectProcs.push({ id: suffix, type: 'select', woNo: item.workOrderNo });
+              } else {
+                  manualProcs.push({ id, type: 'manual' });
+              }
+              
+              table[id] = {
+                  cancel: item.cancel,
+                  scope: item.scope,
+                  opNo: item.operationNumber,
+                  process: item.proceess,
+                  l: item.length,
+                  w: item.width,
+                  h: item.height,
+                  remarks: item.remark,
+                  itemId: item.itemId,
+              };
+          });
+
+          const combinedProcessOptions = [...pOptions];
+          const usedSelectValuesArray = Array.from(usedSelectValues);
+
+          usedSelectValuesArray.forEach(val => {
+              const isArchived = !pOptions.some(opt => opt.value === val);
+              if (isArchived) {
+                  combinedProcessOptions.push({ value: val, label: `${val} (Archived)` });
+              }
+          });
+          
+          setProcessOptions(combinedProcessOptions);
+
+          const selectedOptionsForUI = usedSelectValuesArray.map(val => {
+              const foundOption = combinedProcessOptions.find(opt => opt.value === val);
+              return foundOption || { value: val, label: val };
+          });
+
+          setSelectedProcesses(selectedOptionsForUI);
+          
+          setProcesses([...manualProcs, ...selectProcs]);
+          setTableData(table);
+          setDisabledProcessValues([]);
+
       } catch (err) {
-        console.error("Error loading work order:", err);
+          console.error("Error loading work order:", err);
+          toast.error("Failed to load work order details.");
+      }
+  };
+    
+  const fetchProcesses = async () => {
+    setProcessLoading(true);
+    try {
+      const res = await axiosInstance.get("/work/getAllWorkOrderProcesses");
+      const data = res.data;
+
+      const options = data.map((process) => ({
+        value: process.processName,
+        label: process.processName
+      }));
+
+      setProcessOptions(options);
+      return options;
+    } catch (error) {
+      toast.error("Failed to load processes");
+      console.error(error);
+      return null;
+    } finally {
+      setProcessLoading(false);
+    }
+  };
+
+  const fetchProcessesSuggestions = async () => {
+      setProcessesSuggestionsLoading(true);
+      try {
+        const res = await axiosInstance.get("/work/getAllProcesses");
+        const data = res.data;
+  
+        const option = data.map((process)=>({
+          value:process.processName,
+          label:process.processName
+        }))
+  
+        setProcessesSuggestionsOptions(option);
+        return option;
+      } catch (error) {
+        toast.error("Failed to load processes");
+        console.error(error);
+        return null;
+      } finally {
+        setProcessesSuggestionsLoading(false);
       }
     };
 
@@ -613,6 +692,31 @@ import CreatableSelect from "react-select/creatable";
             setIsCustomerLoading(false);
           }
         };
+    
+    // Add this new handler function to your component
+  const handleProcessSelectionChange = async (newlySelectedOptions) => {
+      const newSelection = newlySelectedOptions || [];
+      const newSelectedIds = new Set(newSelection.map(opt => opt.value));
+      const removedProcess = selectedProcesses.find(oldOpt => !newSelectedIds.has(oldOpt.value));
+
+      if (removedProcess) {
+          const processIdToRemove = removedProcess.value;
+          const itemData = tableData[processIdToRemove];
+
+          if (itemData && itemData.itemId) {
+              try {
+                  const res = await axiosInstance.delete(`/work/deleteWorkOrderItem/${itemData.itemId}`);
+                  if (res.data) {
+                      toast.success(`Process "${processIdToRemove}" removed successfully!`);
+                  }
+              } catch (error) {
+                  toast.error(`Failed to remove process "${processIdToRemove}".`);
+                  console.error("Error deleting work order item:", error);
+              }
+          }
+      }
+      setSelectedProcesses(newSelection);
+  };
 
 
     return (
@@ -827,16 +931,16 @@ import CreatableSelect from "react-select/creatable";
             <div className="d-flex align-items-center gap-2">
               <strong className="me-2">Workorder Process</strong>
               <Select
-                isMulti
-                isClearable
-                options={processOptions.filter(opt => !disabledProcessValues.includes(opt.value))}
-                value={selectedProcesses}
-                onChange={(selected) => {
-                  setSelectedProcesses(selected || []);
-                }}
-                placeholder="Select from list..."
-                className="flex-grow-1"
-                styles={{ container: base => ({ ...base, width: '300px' }) }}
+                  isMulti
+                  isClearable
+                  options={processOptions.filter(opt => !disabledProcessValues.includes(opt.value))}
+                  value={selectedProcesses}
+                  // Use the new, smarter handler function
+                  onChange={handleProcessSelectionChange}
+                  placeholder="Select from list..."
+                  className="flex-grow-1"
+                  isLoading={processLoading}
+                  styles={{ container: base => ({ ...base, width: '300px' }) }}
               />
 
               <Button variant="primary" onClick={handleAddManualProcess}>
@@ -850,11 +954,11 @@ import CreatableSelect from "react-select/creatable";
               <tr>
                 <th>Cancel</th>
                 <th>Scope</th>
-                <th>WO No</th>
-                <th>Op No</th>
+                <th style={{ width: "10%" }}>WO No</th>
+                <th style={{ width: "8%" }}>Op No</th>
                 <th>Process</th>
-                <th colSpan="3">Quoted Die Sizes (mm)</th>
-                <th>Remarks</th>
+                <th colSpan="3"style={{ width: "23%" }}>Quoted Die Sizes (mm)</th>
+                <th style={{ width: "15%" }}>Remarks</th>
                 <th>Action</th>
               </tr>
               <tr>
@@ -917,18 +1021,46 @@ import CreatableSelect from "react-select/creatable";
                           onChange={(e) => handleTableInputChange(p.id, 'opNo', e.target.value)}
                           >
                           <option value="">Select</option>
-                          {Array.from({ length: 40 }, (_, i) => {
-                              const value = String((i + 1) * 5).padStart(2, '0');
+                            {Array.from({ length: 21 }, (_, i) => {
+                              const value = (i === 0) ? 5 : i * 10;
+                              const displayValue = String(value).padStart(2, '0');
                               return (
                               <option key={value} value={value}>
-                                  {value}
+                                  {displayValue}
                               </option>
                               );
                           })}
                           </select>
                       )}
                     </td>
-                    <td><Form.Control size="sm" value={data.process || ''} onChange={e => handleTableInputChange(p.id, 'process', e.target.value)} /></td>
+                      <td className="align-middle">
+                      {p.type === 'select' ? (
+                        <Select
+                          options={processesSuggestionsOptions}
+                          isLoading={processesSuggestionsLoading}
+                          value={processesSuggestionsOptions.find(option => option.value === tableData[p.id]?.process)}
+                          onChange={(selectedOption) =>
+                            handleTableInputChange(p.id, "process", selectedOption ? selectedOption.value : "")
+                          }
+                          placeholder="Select Process..."
+                          styles={{ 
+                            control: base => ({ ...base, minHeight: '31px', height: '31px' }),
+                            indicatorsContainer: base => ({...base, height: '31px'}),
+                            valueContainer: base => ({...base, top: '-2px'}),
+                            singleValue: base => ({...base, top: '-2px'})
+                          }}
+                          isClearable={true}
+                        />
+                      ) : (
+                        <Form.Control 
+                            size="sm" 
+                            type="text" 
+                            value={tableData[p.id]?.process || ''} 
+                            onChange={e => handleTableInputChange(p.id, 'process', e.target.value)}
+                            placeholder="Enter Manual Process"
+                        />
+                      )}
+                    </td>
                     <td><Form.Control size="sm" type="number" step="any" min="0" value={data.l || ''} onChange={e => handleTableInputChange(p.id, 'l', e.target.value)} /></td>
                     <td><Form.Control size="sm" type="number" step="any" min="0" value={data.w || ''} onChange={e => handleTableInputChange(p.id, 'w', e.target.value)} /></td>
                     <td><Form.Control size="sm" type="number" step="any" min="0" value={data.h || ''} onChange={e => handleTableInputChange(p.id, 'h', e.target.value)} /></td>
