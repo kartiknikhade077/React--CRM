@@ -10,6 +10,8 @@ import {
   Font,
 } from "@react-pdf/renderer";
 
+import PlanetoLOGO from "../../Assets/CRm-Planeto-Logo.png";
+// C:\CRM Project\React--CRM\src\Assets\CRm-Planeto-Logo.png
 // Example font registration if needed
 // Font.register({ family: 'Roboto', src: 'url-to-font.ttf' });
 
@@ -88,7 +90,6 @@ const styles = StyleSheet.create({
     borderTop: 1,
     borderStyle: "solid",
     borderColor: "#eee",
-
   },
 
   highlighted: { backgroundColor: "#FFFFAA" },
@@ -304,6 +305,10 @@ const styles = StyleSheet.create({
   txteBold: {
     fontWeight: "bold",
   },
+
+  selectReqBgColor: {
+    backgroundColor: "#f7ff5c",
+  },
 });
 
 function getReqValue(requirements, type, i = "One") {
@@ -325,9 +330,13 @@ const KickOffPDF = ({ data }) => {
       <Page size="A4" style={styles.page}>
         {/* HEADER */}
         <View style={styles.header}>
-          {/* <View>
-
-          </View> */}
+          <View>
+            {" "}
+            <Image
+              source={PlanetoLOGO}
+              style={{ width: 80, height: 50, resizeMode: "contain" }}
+            />
+          </View>
           <Text style={styles.header1}>PROJECT KICK OFF SHEET</Text>
           {/* <Text>
             Work Orders:{" "}
@@ -470,7 +479,7 @@ const KickOffPDF = ({ data }) => {
                 (proc) => proc.itemNo === item.itemNo
               );
               console.log("processes.length", processes);
-              // If the item has processes:
+
               if (processes.length > 0) {
                 return processes.map((proc, idx) => (
                   <View style={styles.tableRow} key={`${item.itemId}-${idx}`}>
@@ -532,35 +541,36 @@ const KickOffPDF = ({ data }) => {
                   </View>
                 ));
               } else {
-                // If no processes, show full row with merged columns
-                return (
-                  <View style={styles.tableRow} key={item.itemId}>
-                    <Text style={[styles.tableCell, { flex: 1.5 }]}>
-                      {item.partName} / {item.material} / {item.thickness}
-                    </Text>
-                    <View style={styles.tableCell}>
-                      {item.imageList &&
-                        item.imageList.length > 0 &&
-                        item.imageList.map((imgBase64, imgIdx) => (
-                          <Image
-                            key={imgIdx}
-                            src={`data:image/png;base64,${imgBase64}`}
-                            style={{ width: 32, height: 32, marginBottom: 2 }}
-                          />
-                        ))}
-                    </View>
-                    {/* Empty process columns if no process */}
-                    {Array(7)
-                      .fill("")
-                      .map((_, i) => (
-                        <Text style={styles.tableCell} key={i}></Text>
-                      ))}
-                  </View>
-                );
+                // return (
+                //   <View style={styles.tableRow} key={item.itemId}>
+                //     <Text style={[styles.tableCell, { flex: 1.5 }]}>
+                //       {item.partName} / {item.material} / {item.thickness}
+                //     </Text>
+                //     <View style={styles.tableCell}>
+                //       {item.imageList &&
+                //         item.imageList.length > 0 &&
+                //         item.imageList.map((imgBase64, imgIdx) => (
+                //           <Image
+                //             key={imgIdx}
+                //             src={`data:image/png;base64,${imgBase64}`}
+                //             style={{ width: 32, height: 32, marginBottom: 2 }}
+                //           />
+                //         ))}
+                //     </View>
+                //     {/* Empty process columns if no process */}
+                //     {Array(7)
+                //       .fill("")
+                //       .map((_, i) => (
+                //         <Text style={styles.tableCell} key={i}></Text>
+                //       ))}
+                //   </View>
+                // );
               }
             })}
           </View>
         </View>
+
+        
 
         {/* Customer Requirements Table */}
         <View style={styles.section}>
@@ -587,17 +597,49 @@ const KickOffPDF = ({ data }) => {
                 >
                   {type}
                 </Text>
-                <Text style={[styles.tableCell, styles.txteCenter]}>
-                  {getReqValue(requirementList, type, "One")}
+                <Text
+                  style={[
+                    styles.tableCell,
+                    styles.txteCenter,
+                    getReqValue(requirementList, type, "One")
+                      ? styles.selectReqBgColor
+                      : null,
+                  ]}
+                >
+                  {getReqValue(requirementList, type, "One") || "N/A"}
                 </Text>
-                <Text style={[styles.tableCell, styles.txteCenter]}>
-                  {getReqValue(requirementList, type, "Two")}
+                <Text
+                  style={[
+                    styles.tableCell,
+                    styles.txteCenter,
+                    getReqValue(requirementList, type, "Two")
+                      ? styles.selectReqBgColor
+                      : null,
+                  ]}
+                >
+                  {getReqValue(requirementList, type, "Two") || "N/A"}
                 </Text>
-                <Text style={[styles.tableCell, styles.txteCenter]}>
-                  {getReqValue(requirementList, type, "Three")}
+                <Text
+                  style={[
+                    styles.tableCell,
+                    styles.txteCenter,
+                    getReqValue(requirementList, type, "Three")
+                      ? styles.selectReqBgColor
+                      : null,
+                  ]}
+                >
+                  {getReqValue(requirementList, type, "Three") || "N/A"}
                 </Text>
-                <Text style={[styles.tableCell, styles.txteCenter]}>
-                  {getReqValue(requirementList, type, "Four")}
+                <Text
+                  style={[
+                    styles.tableCell,
+                    styles.txteCenter,
+                    getReqValue(requirementList, type, "Four")
+                      ? styles.selectReqBgColor
+                      : null,
+                  ]}
+                >
+                  {getReqValue(requirementList, type, "Four") || "N/A"}
                 </Text>
               </View>
             ))}

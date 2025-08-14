@@ -143,7 +143,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     axiosInstance
       .get(`/work/getWorkOrderItemsByProjectId/${selectedProjectId}`)
       .then((res) => {
+
+          
         if (res.data) {
+
           populatePartsAndProcesses(res.data);
         }
       })

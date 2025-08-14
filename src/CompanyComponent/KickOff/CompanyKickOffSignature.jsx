@@ -62,6 +62,11 @@ const CompanyKickOffSignature = ({
         onChange={(selectedOption) => handleChange(selectedOption, deptIndex)}
         placeholder="Select staff"
         isClearable
+        menuPortalTarget={document.body}
+        styles={{
+          menuPortal: (base) => ({ ...base, zIndex: 9999 }), // Make sure it's above other elements
+          menu: (base) => ({ ...base, zIndex: 9999 }),
+        }}
         // styles or other props can be customized here
       />
     );
