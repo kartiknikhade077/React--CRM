@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Modal, Button, Form, Table } from "react-bootstrap";
-import { FaTrash } from "react-icons/fa";
+import { FaPlus, FaTrash } from "react-icons/fa";
 import Select from "react-select";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
@@ -178,13 +178,39 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   const handleAddManualProcess = () => {
     const newId = `manual-${nextId.current}`;
     setProcesses(prev => {
-      const newManual = { id: newId, type: 'manual' };
-      const manual = [...prev.filter(p => p.type === 'manual'), newManual];
+      const newManual = { id: newId, type: 'manual', sub: false, parentId: null };
+      const manualAndSub = [...prev.filter(p => p.type === 'manual'), newManual];
       const selected = prev.filter(p => p.type === 'select');
-      return [...manual, ...selected];
+      return [...manualAndSub, ...selected];
     });
-
     nextId.current += 1;
+  };
+
+  const handleAddSubProcess = (parentId) => {
+    const newId = `manual-${nextId.current}`;
+    const newSubProcess = {
+      id: newId,
+      type: 'manual',
+      sub: true,
+      parentId: parentId,
+    };
+    nextId.current += 1;
+
+    setProcesses(prev => {
+        const parentIndex = prev.findIndex(p => p.id === parentId);
+        if (parentIndex === -1) return prev; 
+        let lastChildIndex = parentIndex;
+        for (let i = prev.length - 1; i > parentIndex; i--) {
+            if (prev[i].parentId === parentId) {
+                lastChildIndex = i;
+                break;
+            }
+        }
+
+        const newProcesses = [...prev];
+        newProcesses.splice(lastChildIndex + 1, 0, newSubProcess);
+        return newProcesses;
+    });
   };
 
   const handleDeleteRow = (id, type) => {
@@ -216,124 +242,115 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
   };
 
   const handleSaveClick = async () => {
-
     const { partName, customer, project, thickness, material,partNumber } = formData;
-
     let hasError = false;
 
-    if (!customer || customer === '-- Select a customer --') {
-      toast.error("Please select a customer");
-      hasError = true;
-    }
-
-    if (!project) {
-      toast.error("Please select a project");
-      hasError = true;
-    }
-
-    if (!partName.trim()) {
-      toast.error("Please enter part name");
-      hasError = true;
-    }
-
-    if (!thickness.trim()) {
-      toast.error("Please enter thickness");
-      hasError = true;
-    }
-
-    if (!material.trim()) {
-      toast.error("Please enter material");
-      hasError = true;
-    }
-
-    if(!partNumber.trim()){
-      toast.error("Please enter part number");
-      hasError = true;
-    }
-
-    if (!itemNo) {
-      toast.error("Item Number cannot be empty.");
-      hasError = true;
-    } else if (!isItemNoUnique) {
-      toast.error("The entered Item Number is already in use by another work order.");
-      hasError = true;
-    }
-
+    if (!customer || customer === '-- Select a customer --') { toast.error("Please select a customer"); hasError = true; }
+    if (!project) { toast.error("Please select a project"); hasError = true; }
+    if (!partName.trim()) { toast.error("Please enter part name"); hasError = true; }
+    if (!thickness.trim()) { toast.error("Please enter thickness"); hasError = true; }
+    if (!material.trim()) { toast.error("Please enter material"); hasError = true; }
+    if (!partNumber.trim()){ toast.error("Please enter part number"); hasError = true; }
+    if (!itemNo) { toast.error("Item Number cannot be empty."); hasError = true; } 
+    else if (!isItemNoUnique) { toast.error("The entered Item Number is already in use."); hasError = true; }
     if (hasError) return;
-
-    const processDetails = processes.map((p, idx) => {
-    const manualIndex = processes.filter(proc => proc.type === 'manual').findIndex(proc => proc.id === p.id);
-    const rowData = tableData[p.id] || {};
     
-    let woNo = "";
-    
-    if (rowData.scope) {
-      woNo = "XX";
-    } else if (p.type === "select") {
-      woNo = p.woNo;
-    } else {
-      woNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
-    }
+    const processDetails = [];
+    const visibleManualParents = processes.filter(p => p.type === 'manual' && !p.sub && !tableData[p.id]?.scope);
 
-    let operationNumberValue;
-    if (p.type === 'select') {
-        operationNumberValue = 0;
-    } else {
-        operationNumberValue = rowData.opNo ? parseInt(rowData.opNo, 10) : -1;
-    }
+    processes.forEach(p => {
+        const rowData = tableData[p.id] || {};
+        let woNo = "";
+        let isScoped = rowData.scope || false;
+        
+        let parentWorkOrderNoForPayload = null; 
 
-    return {
-      itemNo: itemNo,
-      workOrderNo: woNo,
-      cancel: rowData.cancel || false,
-      scope: rowData.scope || false,
-      operationNumber: operationNumberValue,
-      proceess: rowData.process || '',
-      length: parseFloat(rowData.l || '0'),
-      width: parseFloat(rowData.w || '0'),
-      height: parseFloat(rowData.h || '0'),
-      remark: rowData.remarks || '',
-    };
-  });
+        if (p.sub) {
+            const parentProcess = processes.find(parent => parent.id === p.parentId);
+            if (parentProcess && (tableData[parentProcess.id]?.scope || false)) {
+                return; 
+            }
+            const parentIndex = visibleManualParents.findIndex(parent => parent.id === p.parentId);
+            if (parentIndex >= 0) { 
+                const parentWoNo = `PT-${itemNo}${String.fromCharCode(65 + parentIndex)}`;
+                parentWorkOrderNoForPayload = parentWoNo; 
+            }
+        }
 
-  const workOrderPayload = {
-    partName: formData.partName,
-    customerName: formData.customer,
-    customerId: formData.customerId,
-    material: formData.material,
-    projectName: formData.project,
-    projectId: formData.projectId,
-    thickness: parseFloat(formData.thickness),
-    partSize: formData.partSize,
-    partWeight: formData.partWeight,
-    itemNo: itemNo,
-    partNumber:formData.partNumber,
-  };
+        if (isScoped) {
+            woNo = "XX";
+        } else if (p.type === "select") {
+            woNo = p.woNo;
+        } else if (p.sub) {
+            if (parentWorkOrderNoForPayload) {
+                const visibleSiblings = processes.filter(s => s.parentId === p.parentId && !tableData[s.id]?.scope);
+                const subIndex = visibleSiblings.findIndex(s => s.id === p.id);
+                woNo = `${parentWorkOrderNoForPayload}${subIndex + 1}`;
+            } else {
+                woNo = "XX";
+                parentWorkOrderNoForPayload = "XX";
+            }
+        } else {
+            const manualIndex = visibleManualParents.findIndex(proc => proc.id === p.id);
+            woNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
+        }
 
-  const formDataToSend = new FormData();
-  formDataToSend.append("workOrder", JSON.stringify(workOrderPayload));
-  formDataToSend.append("workOrderItems", JSON.stringify(processDetails));
-  images.forEach(img => {
-    formDataToSend.append("images", img.file); 
-  });
+        let operationNumberValue;
+        if (p.type === 'select') {
+            operationNumberValue = 0;
+        } else {
+            operationNumberValue = rowData.opNo ? parseInt(rowData.opNo, 10) : -1;
+        }
 
-  try {
-    const response = await axiosInstance.post("/work/createWorkOrder", formDataToSend, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+        processDetails.push({
+            itemNo: itemNo,
+            workOrderNo: woNo,
+            cancel: rowData.cancel || false,
+            scope: rowData.scope || false,
+            operationNumber: operationNumberValue,
+            proceess: rowData.process,
+            length: parseFloat(rowData.l || '0'),
+            width: parseFloat(rowData.w || '0'),
+            height: parseFloat(rowData.h || '0'),
+            remark: rowData.remarks || '',
+            parentWorkOrderNo: parentWorkOrderNoForPayload,
+        });
     });
-    
-    if(response.data){
-      resetForm();
-      if(onSave){
-        onSave();
+
+    const workOrderPayload = {
+      partName: formData.partName,
+      customerName: formData.customer,
+      customerId: formData.customerId,
+      material: formData.material,
+      projectName: formData.project,
+      projectId: formData.projectId,
+      thickness: parseFloat(formData.thickness),
+      partSize: formData.partSize,
+      partWeight: formData.partWeight,
+      itemNo: itemNo,
+      partNumber:formData.partNumber,
+    };
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("workOrder", JSON.stringify(workOrderPayload));
+    formDataToSend.append("workOrderItems", JSON.stringify(processDetails));
+    images.forEach(img => {
+      formDataToSend.append("images", img.file); 
+    });
+
+    try {
+      const response = await axiosInstance.post("/work/createWorkOrder", formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if(response.data){
+        resetForm();
+        if(onSave){ onSave(); }
       }
+    } catch (error) {
+      console.error("❌ Submission failed:", error);
+      toast.error(error.response?.data?.message || "Submission failed!");
     }
-  } catch (error) {
-    console.error("❌ Submission failed:", error);
-  }
-};
+  };
 
 
   const fetchProjects = async () => {
@@ -795,18 +812,40 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
             </tr>
           </thead>
           <tbody className="text-center">
-            {processes.map((p) => {
-              const isScoped = tableData[p.id]?.scope || false;
-              const visibleManuals = processes
-                .filter(proc => proc.type === 'manual' && !tableData[proc.id]?.scope);
-              const manualIndex = visibleManuals.findIndex(proc => proc.id === p.id);
-              const generatedWoNo = manualIndex >= 0 
-                ? `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`
-                : '';
-              const displayWoNo = isScoped ? 'XX' : (p.type === 'select' ? p.woNo : generatedWoNo);
+             {processes.map((p) => {
+                const isScoped = tableData[p.id]?.scope || false;
+                let displayWoNo = '';
 
+                if (isScoped) {
+                  displayWoNo = 'XX';
+                } else if (p.type === 'select') {
+                  displayWoNo = p.woNo;
+                } else if (p.sub) { 
+                  const parentExists = processes.some(parent => parent.id === p.parentId);
+
+                  if (!parentExists) {
+                    displayWoNo = 'XX';
+                  } else {
+                    const visibleManualParents = processes.filter(proc => proc.type === 'manual' && !proc.sub && !tableData[proc.id]?.scope);
+                    const parentIndex = visibleManualParents.findIndex(parent => parent.id === p.parentId);
+                    
+                    if (parentIndex >= 0) {
+                        const parentWoNo = `PT-${itemNo}${String.fromCharCode(65 + parentIndex)}`;
+                        const visibleSiblings = processes.filter(s => s.parentId === p.parentId && !tableData[s.id]?.scope);
+                        const subIndex = visibleSiblings.findIndex(s => s.id === p.id);
+                        displayWoNo = `${parentWoNo}${subIndex + 1}`;
+                    } else {
+                        displayWoNo = 'XX';
+                    }
+                  }
+                } else { 
+                  const visibleManualParents = processes.filter(proc => proc.type === 'manual' && !proc.sub && !tableData[proc.id]?.scope);
+                  const manualIndex = visibleManualParents.findIndex(proc => proc.id === p.id);
+                  displayWoNo = manualIndex >= 0 ? `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}` : '';
+                }
+              
               return (
-                <tr key={p.id}>
+                <tr key={p.id} className={p.sub ? 'sub-process-row' : ''}>
                   <td className="align-middle">
                     <Form.Check 
                       type="checkbox" 
@@ -891,6 +930,11 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                     <Button variant="link" className="text-danger" onClick={() => handleDeleteRow(p.id, p.type)}>
                       <FaTrash />
                     </Button>
+                    {p.type === 'manual' && !p.sub && (
+                        <Button variant="link" className="text-success p-0 me-2" onClick={() => handleAddSubProcess(p.id)} title="Add Sub-Process">
+                            <FaPlus />
+                        </Button>
+                    )}
                   </td>
                 </tr>
               );

@@ -78,9 +78,6 @@ const WorkOrderList = () => {
     };
 
     const handleDeleteClick = async (workOrderId) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete this Work Order?");
-        if (!confirmDelete) return;
-
         try {
             await axiosInstance.delete(`/work/deleteWorkOrder/${workOrderId}`);
             toast.success("Work Order deleted successfully.");
