@@ -57,7 +57,7 @@ const LeadsList = () => {
       );
       setLeads(response.data.leadList);
       setTotalPages(response.data.totalPages);
-      setColumnSequence(response.data.columnSequence); // Column config from backend
+      setColumnSequence(response.data.columnSequence || []); // Column config from backend
     } catch (error) {
       console.error("Failed to fetch Leads:", error);
     }
@@ -236,7 +236,7 @@ const handleConvertToCustomer = (lead) => {
                               )}
                             </Draggable>
                           ))}
-                          <th>Status</th>
+                          <th>RFQ Status</th>
                           <th>Edit</th>
                         </tr>
                         {provided.placeholder}

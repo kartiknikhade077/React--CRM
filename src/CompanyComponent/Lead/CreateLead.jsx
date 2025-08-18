@@ -12,11 +12,14 @@ const CreateLead = ({ show, onClose, onSave }) => {
   const [originalColumnNames, setOriginalColumnNames] = useState({});
 
   const fixedColumnNames = [
-    "Company Name",
+    "RFQ Date",
     "Customer Name",
+    "Project Name",
     "Email",
     "Mobile Number",
     "Address",
+    "RFQ Summary",
+    "Remarks"
   ];
 
   const defaultColumns = fixedColumnNames.map((name, index) => ({
@@ -134,6 +137,7 @@ const CreateLead = ({ show, onClose, onSave }) => {
     }
   };
 
+
   const handleFieldChange = (name, value) => {
     setLead((prev) => ({ ...prev, [name]: value }));
   };
@@ -172,9 +176,13 @@ const CreateLead = ({ show, onClose, onSave }) => {
   };
 
   const createLead = () => {
+     const today = new Date().toISOString().split("T")[0];
     const payload = {
       columns: columnList,
-      lead: lead,
+    lead: {
+      ...lead,
+      "RFQ Date": lead["RFQ Date"] || today, // ensure default
+    },
     };
     saveLead(payload);
   };
@@ -218,7 +226,7 @@ const CreateLead = ({ show, onClose, onSave }) => {
                   size="sm"
                   onClick={() => setShowCustomization(false)}
                 >
-                 Exit Customization
+                  Exit Customization
                 </Button>
               </div>
             )}
@@ -233,24 +241,36 @@ const CreateLead = ({ show, onClose, onSave }) => {
         </div>
       </Modal.Header>
 
-    
+
 
       <Modal.Body>
         {!showCustomization ? (
           // SIMPLE MODE
+
           <div className="row">
             {columnList.map((col, index) => (
               <div className="col-md-6 mb-3" key={index}>
                 <label className="form-label fw-semibold">{col.name}</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder={`Enter ${col.name}`}
-                  value={lead[col.name] || ""}
-                  onChange={(e) => handleFieldChange(col.name, e.target.value)}
-                />
+
+                {col.name === "RFQ Date" ? (
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={lead[col.name] || new Date().toISOString().split("T")[0]} // default today
+                    onChange={(e) => handleFieldChange(col.name, e.target.value)}
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder={`Enter ${col.name}`}
+                    value={lead[col.name] || ""}
+                    onChange={(e) => handleFieldChange(col.name, e.target.value)}
+                  />
+                )}
               </div>
             ))}
+
           </div>
         ) : (
           // CUSTOMIZATION MODE
@@ -289,7 +309,7 @@ const CreateLead = ({ show, onClose, onSave }) => {
                                       col.name
                                     )}
                                   />
-                           
+
 
                                   {!fixedColumnNames.includes(col.name) && (
                                     <Button
