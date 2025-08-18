@@ -324,7 +324,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
       material: formData.material,
       projectName: formData.project,
       projectId: formData.projectId,
-      thickness: parseFloat(formData.thickness),
+      thickness: formData.thickness,
       partSize: formData.partSize,
       partWeight: formData.partWeight,
       itemNo: itemNo,

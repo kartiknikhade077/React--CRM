@@ -153,12 +153,6 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             setIsItemNoUnique(true);
             setSelectedCustomer(workOrder.customerId || '');
             setExistingImages(workImages || []);
-
-            const sortedWorkOrderItems = [...workOrderItems].sort((a, b) => {
-                if (a.workOrderNo === 'XX') return 1;
-                if (b.workOrderNo === 'XX') return -1;
-                return a.workOrderNo.localeCompare(b.workOrderNo);
-            });
             
             const finalProcesses = [];
             const finalTableData = {};
@@ -166,7 +160,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             const usedSelectValues = new Set();
             const woNoToIdMap = {};
 
-            sortedWorkOrderItems.forEach(item => {
+            workOrderItems.forEach(item => {
                 const isSelectType = item.operationNumber === 0;
                 const id = isSelectType ? item.workOrderNo.replace(/^.*?PT-\d+/, '').trim() : `manual-${nextId.current++}`;
                 
@@ -360,7 +354,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             material: formData.material,
             projectName: formData.project,
             projectId: formData.projectId,
-            thickness: parseFloat(formData.thickness),
+            thickness: formData.thickness,
             partSize: formData.partSize,
             partWeight: formData.partWeight,
             itemNo: itemNo,
