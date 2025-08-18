@@ -16,11 +16,14 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
   const [showConvertModal, setShowConvertModal] = useState(false);
 
   const fixedColumnNames = [
-    "Company Name",
+    "RFQ Date",
     "Customer Name",
+    "Project Name",
     "Email",
     "Mobile Number",
     "Address",
+    "RFQ Summary",
+    "Remarks"
   ];
 
   const defaultFixedColumns = fixedColumnNames.map((name, index) => ({
@@ -221,16 +224,27 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
               {columnList.map((col, index) => (
                 <div className="col-md-6 mb-3" key={index}>
                   <label className="form-label fw-semibold">{col.name}</label>
+                    {col.name === "RFQ Date" ? (
+                  <input
+                    type="date"
+                    className="form-control"
+                    placeholder={`Enter ${col.name}`}
+                    value={lead[col.name] || new Date().toISOString().split("T")[0]} // default today
+                    onChange={(e) =>
+                      handleFieldChange(col.name, e.target.value)
+                    }
+                  />
+                  ): (
                   <input
                     type="text"
                     className="form-control"
                     placeholder={`Enter ${col.name}`}
                     value={lead[col.name] || ""}
-                    onChange={(e) =>
-                      handleFieldChange(col.name, e.target.value)
-                    }
+                    onChange={(e) => handleFieldChange(col.name, e.target.value)}
                   />
+                    )}
                 </div>
+                
               ))}
             </div>
           ) : (

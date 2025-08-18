@@ -32,7 +32,7 @@ const ConvertToCustomerLead = ({
     if (fixedData) {
       const baseData = {
         customerName: fixedData.customerName || "",
-        companyName: fixedData.company || "",
+        companyName: fixedData.customerName || "",
         email: fixedData.email || "",
         phoneNumber: fixedData.phone || "",
         website: fixedData.website || "",
@@ -98,16 +98,13 @@ const ConvertToCustomerLead = ({
       await axiosInstance.post("customer/createCustomer", formData);
       toast.success("Customer created successfully!");
 
-      console.log("Deleting lead with ID:", leadData?.id);
-
       // Step 2: Delete lead
       if (leadData?.id) {
         await axiosInstance.delete(`/lead/deleteLead/${leadData.id}`);
       } else {
         console.warn("No lead ID found, cannot delete lead.");
       }
-      console.log("Deleting lead with ID:", leadData?.id);
-
+    
 
       // Step 3: Close modal and refresh lead list
       onClose();
@@ -128,13 +125,21 @@ const ConvertToCustomerLead = ({
       <Modal.Body>
         <Form onSubmit={handleSubmit}>
           <div className="row">
-            <Form.Group className="col-md-6 mb-3">
+            {/* <Form.Group className="col-md-6 mb-3">
               <Form.Label>First Name</Form.Label>
               <Form.Control
                 name="customerName"
                 value={formData.customerName}
                 onChange={handleChange}
                 required
+              />
+            </Form.Group> */}
+               <Form.Group className="col-md-6 mb-3">
+              <Form.Label>Company</Form.Label>
+              <Form.Control
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
               />
             </Form.Group>
 
@@ -147,14 +152,7 @@ const ConvertToCustomerLead = ({
               />
             </Form.Group>
 
-            <Form.Group className="col-md-6 mb-3">
-              <Form.Label>Company</Form.Label>
-              <Form.Control
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleChange}
-              />
-            </Form.Group>
+         
 
             <Form.Group className="col-md-6 mb-3">
               <Form.Label>Phone</Form.Label>
@@ -240,7 +238,7 @@ const ConvertToCustomerLead = ({
           </Button>
 
           <Button type="submit" variant="primary">
-            Submit
+           Convert To Customer
           </Button>
         </Form>
       </Modal.Body>

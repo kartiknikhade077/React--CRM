@@ -5,10 +5,12 @@ import { MOMPdfStyles } from "./MOMPdfStyles";
 import axiosInstance from "../../BaseComponet/axiosInstance";
 
 // PDF Content
-const MyDocument = ({ momData, momEntries }) => {
+const MyDocument = ({ momData, momEntries, workOrder, workOrderItemProcess }) => {
 
   const momInfo = momData.momInfo
   const momEntriesData = momEntries
+  const workOrderInfo = workOrder
+  const workOrderItemProcessData = workOrderItemProcess;
 
   // Group by workOrderNo
   const groupedEntries = momEntriesData.reduce((acc, entry) => {
@@ -18,18 +20,38 @@ const MyDocument = ({ momData, momEntries }) => {
     return acc;
   }, {});
 
+  // Map workOrderItemProcess by workOrderNo
+  const workOrderProcessMap = workOrderItemProcessData.reduce((acc, item) => {
+    if (!item.workOrderNo) return acc;
+    acc[item.workOrderNo] = {
+      operationNumber: item.operationNumber,
+      process: item.proceess
+    };
+    return acc;
+  }, {});
+
+  // Map tool name by workOrderNo (take first non-empty one)
+  const toolNameMap = momEntriesData.reduce((acc, entry) => {
+    if (!entry.workOrderNo) return acc;
+    if (!acc[entry.workOrderNo] && entry.tooleName?.trim()) {
+      acc[entry.workOrderNo] = entry.tooleName;
+    }
+    return acc;
+  }, {});
+
+
+
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={MOMPdfStyles.page}>
         {/* Row 1 */}
         <View style={MOMPdfStyles.row}>
-          {/* <Text style={MOMPdfStyles.titleCell}> MOM- {momInfo.customerName}</Text> */}
-
+          <Text style={MOMPdfStyles.titleCellHeading}> MOM-{workOrderInfo.partNumber}_{workOrderInfo.partName} Dies DAP MOM SHEET</Text>
         </View>
         <View style={MOMPdfStyles.row}>
-          <Text style={MOMPdfStyles.infoCell}> Project :{momInfo.projectName}</Text>
-          <Text style={MOMPdfStyles.infoCell}> Venue : {momInfo.venue}</Text>
-          <Text style={MOMPdfStyles.infoCell}> Date : {momInfo.createdDate} </Text>
+          <Text style={MOMPdfStyles.titleCellLeft}> Project :{momInfo.projectName}</Text>
+          <Text style={MOMPdfStyles.titleCell}> Venue : {momInfo.venue}</Text>
+          <Text style={MOMPdfStyles.titleCell}> Date : {momInfo.createdDate} </Text>
 
         </View>
         <View style={MOMPdfStyles.row}>
@@ -110,58 +132,94 @@ const MyDocument = ({ momData, momEntries }) => {
 
 
 
-        {Object.keys(groupedEntries).map((workOrderNo) => (
-          <View key={workOrderNo} style={{ marginTop: 10 }}>
-            <View style={MOMPdfStyles.row}>
-              <Text style={MOMPdfStyles.workOrderHeader}>
-                Work Order No: {workOrderNo}
-              </Text>
-            </View>
+        {Object.keys(groupedEntries).map((workOrderNo) => {
+          const toolName = toolNameMap[workOrderNo] || "No Tool Name";
+          const processInfo = workOrderProcessMap[workOrderNo] || {};
 
-            {groupedEntries[workOrderNo].map((entry, index) => (
-              <View style={MOMPdfStyles.row} key={entry.momEntryId || `${workOrderNo}-${index}`}>
-                <Text style={MOMPdfStyles.cell}>{index + 1}</Text>
-                <Text style={MOMPdfStyles.cell}>{entry.observation || ""}</Text>
-                <Text style={MOMPdfStyles.cell}>{entry.details || ""}</Text>
-
-                {/* Illustration Images */}
-                <View style={MOMPdfStyles.cell}>
-                  {(entry.illustrationImages || []).map((img, i) => (
-                    <Image
-                      key={i}
-                      src={img.image}
-                      style={MOMPdfStyles.image}
-                    />
-                  ))}
-                </View>
-
-
-                {/* Corrected Images */}
-                <View style={MOMPdfStyles.cell}>
-                  {(entry.correctedImages || []).map((img, i) => (
-                    <Image
-                      key={i}
-                      src={img.image}
-                      style={MOMPdfStyles.image}
-                    />
-                  ))}
-                </View>
-
-                <Text style={MOMPdfStyles.cell}>{entry.correctedPoints || ""}</Text>
-                <Text style={MOMPdfStyles.cell}>{entry.responsibleAndTarget || ""}</Text>
+          return (
+            <View key={workOrderNo}>
+              {/* Work order header with tool name */}
+              <View style={MOMPdfStyles.row}>
+                <Text style={MOMPdfStyles.workOrderHeader}>
+                  {workOrderInfo.partName} _ {workOrderNo} _ {toolName}
+                </Text>
               </View>
-            ))}
-          </View>
-        ))}
+
+              {/* Operation number and process */}
+              <View style={MOMPdfStyles.row}>
+                <Text style={MOMPdfStyles.workOrderHeader}>
+                  OP-{processInfo.operationNumber}({processInfo.process || "N/A"})
+                </Text>
+              </View>
+
+              <View style={MOMPdfStyles.row}>
+               <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}> Die Size</Text>.
+                <Text style={MOMPdfStyles.cell}>As per attached annexure</Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}>For info</Text>
+
+              </View>
+               <View style={MOMPdfStyles.row}>
+               <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}> Die Size</Text>.
+                <Text style={MOMPdfStyles.cell}>As per attached annexure</Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}>For info</Text>
+
+              </View>
+               <View style={MOMPdfStyles.row}>
+               <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}> Die Size</Text>.
+                <Text style={MOMPdfStyles.cell}>As per attached annexure</Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}></Text>
+                <Text style={MOMPdfStyles.cell}>For info</Text>
+
+              </View>
 
 
+              {/* Entries table */}
+              {groupedEntries[workOrderNo].map((entry, index) => (
 
 
+                <View style={MOMPdfStyles.row} key={entry.momEntryId || `${workOrderNo}-${index}`}>
+                  <Text style={MOMPdfStyles.cell}>{index + 1}</Text>
+                  <Text style={MOMPdfStyles.cell}>{entry.observation || ""}</Text>
+                  <Text style={MOMPdfStyles.cell}>{entry.details || ""}</Text>
 
+                  {/* Illustration Images */}
+                  <View style={MOMPdfStyles.cell}>
+                    {(entry.illustrationImages || []).map((img, i) => (
+                      <Image key={i} src={img.image} style={MOMPdfStyles.image} />
+                    ))}
+                  </View>
 
+                  {/* Corrected Images */}
+                  <View style={MOMPdfStyles.cell}>
+                    {(entry.correctedImages || []).map((img, i) => (
+                      <Image key={i} src={img.image} style={MOMPdfStyles.image} />
+                    ))}
+                  </View>
 
-
-
+                  <Text style={MOMPdfStyles.cell}>{entry.correctedPoints || ""}</Text>
+                  <Text style={MOMPdfStyles.cell}>{entry.responsibleAndTarget || ""}</Text>
+                </View>
+              ))}
+            </View>
+        
+          );
+        })}
+        <View style={MOMPdfStyles.row}>
+          <Text style={MOMPdfStyles.RemarkCell}>
+            Remarks :  {momInfo.remark}
+          </Text>
+        </View>
       </Page>
     </Document>
   );
@@ -170,6 +228,8 @@ const MyDocument = ({ momData, momEntries }) => {
 export default function MOMPDFModel({ show, onClose, momId }) {
   const [momData, setMomData] = useState({});
   const [momEntries, setMOMEntries] = useState([]);
+  const [workOrder, setWorkOrder] = useState({})
+  const [workOrderItemProcess, setWorkOrderItemProccess] = useState([])
   useEffect(() => {
     fetchMomData();
   }, [momId]); // run when momId changes
@@ -180,6 +240,14 @@ export default function MOMPDFModel({ show, onClose, momId }) {
       const response = await axiosInstance.get(`/kickoff/getSingleMomById/${momId}`);
       setMomData(response.data);
       setMOMEntries(response.data.momEntries);
+
+      const workOrderResponse = await axiosInstance.get(`/work/geSingletWorkOrderItemNo/${response.data.momInfo.itemNo}`)
+      setWorkOrder(workOrderResponse.data)
+
+      const workOrderItemProcessResponse = await axiosInstance.get(`/work/getWorkOrderById/${workOrderResponse.data.workOrderId}`)
+      setWorkOrderItemProccess(workOrderItemProcessResponse.data.workOrderItems);
+
+
     } catch (error) {
       console.error(error);
     }
@@ -192,6 +260,8 @@ export default function MOMPDFModel({ show, onClose, momId }) {
           <MyDocument
             momData={momData}
             momEntries={momEntries}
+            workOrder={workOrder}
+            workOrderItemProcess={workOrderItemProcess}
           />
         </PDFViewer>
       </Modal.Body>

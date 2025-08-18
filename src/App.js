@@ -20,8 +20,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Department from "./CompanyComponent/Department";
 
-import LeadCompany from "./CompanyComponent/LeadCompany";
-import UpdateLead from "./CompanyComponent/UpdateLead";
+
 
 import CompanyProject from "./CompanyComponent/Project/CompanyProject";
 import StaffMembers from "./CompanyComponent/StaffMembers";
@@ -180,22 +179,9 @@ const App = () => {
           }
         />
 
-        <Route
-          path="/Leadcompany"
-          element={
-            <ProtectedRoute>
-              <LeadCompany />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/UpdateLead/:leadId"
-          element={
-            <ProtectedRoute>
-              <UpdateLead />
-            </ProtectedRoute>
-          }
-        />
+    
+        
+    
 
         <Route
           path="/CompanyBankDetailsSetting"
