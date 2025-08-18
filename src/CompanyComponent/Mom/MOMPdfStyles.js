@@ -11,14 +11,38 @@ export const MOMPdfStyles = StyleSheet.create({
 
     // paddingVertical: 8,
   },
-  titleCell: {
+   titleCellHeading: {
+    paddingTop:5,
+    flex: 1,
+    fontSize: 20,
+    borderLeft: "1px solid #ccc",
+    borderBottom: "1px solid #ccc",
+    borderTop: "1px solid #ccc",
+    borderRight: "1px solid #ccc",
+    textAlign: "center",
+    minHeight:40,
+    fontWeight: 2
+  },
+  titleCellLeft: {
+    paddingTop:5,
     flex: 1,
     fontSize: 20,
     borderBottom: "1px solid #ccc",
     borderTop: "1px solid #ccc",
     borderLeft: "1px solid #ccc",
     borderRight: "1px solid #ccc",
-    textAlign: "center",
+    textAlign: "left",
+    minHeight:40
+  },
+  titleCell: {
+    paddingTop:5,
+    flex: 1,
+    fontSize: 20,
+    borderBottom: "1px solid #ccc",
+    borderTop: "1px solid #ccc",
+    borderRight: "1px solid #ccc",
+    textAlign: "left",
+    minHeight:40
   },
   infoCell: {
     flex: 1,
@@ -27,6 +51,7 @@ export const MOMPdfStyles = StyleSheet.create({
     borderLeft: "1px solid #ccc",
     borderRight: "1px solid #ccc",
     textAlign: "center",
+     minHeight:30
   },
 
   customerSerialNo: {
@@ -101,7 +126,7 @@ export const MOMPdfStyles = StyleSheet.create({
     flex: 1,
     fontSize:15,
     borderBottom: "1px solid #ccc",
-    borderTop: "1px solid #ccc",
+ 
     borderLeft: "1px solid #ccc",
     borderRight: "1px solid #ccc",
     textAlign: "left",
@@ -142,7 +167,19 @@ workOrderHeader:{
  borderLeft: "1px solid #ccc",
   borderRight: "1px solid #ccc",
    borderBottom: "1px solid #ccc",
- padding:0
+ padding:0,
+   fontSize: 12,
+},
+RemarkCell: {
+  flex:1,
+  width: 80,
+  fontSize: 12,
+  fontWeight :2,
+  borderBottom: "1px solid #ccc",
+  borderLeft: "1px solid #ccc",
+  borderRight: "1px solid #ccc",
+  textAlign: "left",
+  padding: 2
 }
 
 
