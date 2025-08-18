@@ -49,10 +49,10 @@ const CreateCustomer = ({ show, onClose, onSave }) => {
                                             <input className="form-control" name="companyName" />
                                         </div>
 
-                                        <div className="col-md-6 mb-3">
+                                        {/* <div className="col-md-6 mb-3">
                                             <label className="form-label">Customer Name</label>
                                             <input className="form-control" name="customerName" />
-                                        </div>
+                                        </div> */}
 
                                         <div className="col-md-6 mb-3">
                                             <label className="form-label">Phone</label>
