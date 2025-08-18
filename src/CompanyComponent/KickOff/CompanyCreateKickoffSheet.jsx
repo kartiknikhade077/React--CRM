@@ -17,7 +17,7 @@ const CustomToggle = ({ children, eventKey, activeKey, onClick }) => (
   <div
     onClick={onClick}
     style={{
-      background: "#1a3c8c",
+      background: "#54565b",
       color: "#fff",
       padding: "12px 16px",
       cursor: "pointer",
@@ -105,8 +105,7 @@ const CompanyCreateKickoffSheet = () => {
       const processDetails = processesForPart.map((p) => ({
         itemNo: partItemNumber,
         workOrderNo: p.woNo,
-        cancel: false,
-        scope: false,
+     
         operationNumber: parseInt(p.opNo || "0"),
         proceess: p.processName || "",
         length: parseFloat(p.length || "0"),
@@ -115,6 +114,7 @@ const CompanyCreateKickoffSheet = () => {
         remark: p.remarks || "",
       }));
 
+      console.log("print process details1", processDetails);
       const workOrderPayload = {
         partName: part.partName,
         customerName: customerName,
@@ -233,13 +233,16 @@ const CompanyCreateKickoffSheet = () => {
           workOrderNumber: proc.woNo || proc.workOrderNumber || "", // Adjust key if needed
           designerName: emp ? emp.name : "",
           employeeId: proc.employeeId || proc.designer || "",
- 
+
           operationNumber: proc.opNo || "",
           process: proc.processName || proc.process || "",
           length: parseFloat(proc.length) || 0,
           height: parseFloat(proc.height) || 0,
           width: parseFloat(proc.width) || 0,
           remarks: proc.remarks || "",
+          // Force boolean values
+          cancel: proc.cancel,
+          scope: proc.scope ,
         };
       });
       console.log("processesData ==", processesPayload);

@@ -266,6 +266,7 @@ const ProjectRegistrationKickoffSheet = ({
       .get(`/work/getWorkOrderItemsByProjectId/${selectedProjectId}`)
       .then((res) => {
         const data = res.data;
+                console.log("get wrork order --",data);
         populatePartsAndProcesses(data);
       })
       .catch((err) => {
@@ -329,6 +330,7 @@ const ProjectRegistrationKickoffSheet = ({
 
   const populatePartsAndProcesses = (data) => {
     const { partProcess, partDetails } = data;
+    console.log("part process::::::::",partProcess)
 
     const groupedByItem = {};
 
@@ -378,6 +380,8 @@ const ProjectRegistrationKickoffSheet = ({
       const processes = (groupedByItem[itemNo] || []).map((proc, idx) => ({
         id: Date.now() + index * 10 + idx,
         woNo: proc.workOrderNo,
+        cancel:proc.cancel,
+        scope:proc.scope,
         itemNo,
         designer: "",
         opNo: proc.opNo || "",
@@ -387,7 +391,7 @@ const ProjectRegistrationKickoffSheet = ({
         height: proc.height || "",
         remarks: proc.remark || "",
       }));
-
+      console.log("process@@@@@@@@@@@",processes);
       newProcessesByPart[itemNo] = processes;
     });
 
@@ -784,7 +788,11 @@ const ProjectRegistrationKickoffSheet = ({
                     </td>
 
                     <td className="text-center">
-                      <Button variant="link" onClick={() => removePart(part.id)} className="text-danger">
+                      <Button
+                        variant="link"
+                        onClick={() => removePart(part.id)}
+                        className="text-danger"
+                      >
                         <FaTrash />
                       </Button>
                     </td>
@@ -795,7 +803,7 @@ const ProjectRegistrationKickoffSheet = ({
           </Table>
 
           <div className="d-flex justify-content-end mt-3 mb-5">
-            <Button onClick={addPart} variant="primary">
+            <Button onClick={addPart} variant="btn btn-outline-primary btn-sm">
               <FaPlusCircle className="me-2" /> Add Part
             </Button>
           </div>
@@ -985,11 +993,13 @@ const ProjectRegistrationKickoffSheet = ({
                       container: (base) => ({ ...base, width: "300px" }),
                     }}
                   />
-                  <Button onClick={addProcess} variant="primary">
+                  <Button
+                    onClick={addProcess}
+                    variant="btn btn-outline-primary btn-sm"
+                  >
                     <FaPlusCircle className="me-2" /> Add Another Process
                   </Button>
                 </div>
-                
               )}
             </div>
           )}
