@@ -343,6 +343,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       if(response.data){
+        toast.success("Work Order created successfully.");
         resetForm();
         if(onSave){ onSave(); }
       }
@@ -696,27 +697,6 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
             </Form.Group>
 
             <Form.Group className="col-md-4 mb-3">
-              <Form.Label>Thickness<span className="text-danger">*</span></Form.Label>
-              <div style={{ width: "100%" }}>
-                <CreatableSelect
-                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
-                  isClearable
-                  onMenuOpen={fetchThickness}
-                  onChange={handleThicknessSelect}
-                  onCreateOption={handleThicknessCreateOption}
-                  options={thicknessOptions}
-                  isLoading={loadingThickness}
-                  placeholder="Search or create thickness..."
-                  value={
-                    formData.thickness
-                      ? { label: formData.thickness, value: formData.thickness }
-                      : null
-                  }
-                />
-              </div>
-            </Form.Group>
-
-            <Form.Group className="col-md-4 mb-3">
               <Form.Label>Material <span className="text-danger">*</span></Form.Label>
               <div style={{ width: "100%" }}>
                 <CreatableSelect
@@ -731,6 +711,27 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                   value={
                     formData.material
                       ? { label: formData.material, value: formData.material }
+                      : null
+                  }
+                />
+              </div>
+            </Form.Group>
+
+            <Form.Group className="col-md-4 mb-3">
+              <Form.Label>Thickness<span className="text-danger">*</span></Form.Label>
+              <div style={{ width: "100%" }}>
+                <CreatableSelect
+                  styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                  isClearable
+                  onMenuOpen={fetchThickness}
+                  onChange={handleThicknessSelect}
+                  onCreateOption={handleThicknessCreateOption}
+                  options={thicknessOptions}
+                  isLoading={loadingThickness}
+                  placeholder="Search or create thickness..."
+                  value={
+                    formData.thickness
+                      ? { label: formData.thickness, value: formData.thickness }
                       : null
                   }
                 />
@@ -896,7 +897,8 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
                           handleTableInputChange(p.id, "process", selectedOption ? selectedOption.value : "")
                         }
                         placeholder="Select Process..."
-                        styles={{ 
+                        menuPosition="fixed"
+                        styles={{
                           control: base => ({ ...base, minHeight: '31px', height: '31px' }),
                           indicatorsContainer: base => ({...base, height: '31px'}),
                           valueContainer: base => ({...base, top: '-2px'}),

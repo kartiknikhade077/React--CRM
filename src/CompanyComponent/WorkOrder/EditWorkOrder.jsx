@@ -34,6 +34,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
     const [processLoading, setProcessLoading] = useState();
     const [processesSuggestionsOptions, setProcessesSuggestionsOptions] = useState([]);
     const [processesSuggestionsLoading, setProcessesSuggestionsLoading] = useState();
+    const [itemsToDelete, setItemsToDelete] = useState([]);
 
     const [formData, setFormData] = useState({
         partName: '',
@@ -70,6 +71,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             setImages([]);
             setSelectedProcesses([]);
             setDisabledProcessValues([]);
+            setItemsToDelete([]);
         };
     }, [workOrderId, show]);
 
@@ -131,6 +133,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             const data = res.data;
             const { workOrder, workImages, workOrderItems } = data;
 
+            // Set form data for the top section
             setFormData({
                 partName: workOrder.partName,
                 customer: workOrder.customerName,
@@ -151,80 +154,56 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             setSelectedCustomer(workOrder.customerId || '');
             setExistingImages(workImages || []);
 
+            const sortedWorkOrderItems = [...workOrderItems].sort((a, b) => {
+                if (a.workOrderNo === 'XX') return 1;
+                if (b.workOrderNo === 'XX') return -1;
+                return a.workOrderNo.localeCompare(b.workOrderNo);
+            });
+            
             const finalProcesses = [];
             const finalTableData = {};
             const selectedFromDropdown = [];
             const usedSelectValues = new Set();
-            const parentWoToIdMap = {};
+            const woNoToIdMap = {};
 
-            const manualItems = workOrderItems.filter(item => item.operationNumber !== 0);
-            const selectItems = workOrderItems.filter(item => item.operationNumber === 0);
-            
-            const parentItems = manualItems.filter(item => !item.parentWorkOrderNo);
-            const orphanItems = manualItems.filter(item => item.parentWorkOrderNo === 'XX');
-            const childItems = manualItems.filter(item => !!item.parentWorkOrderNo && item.parentWorkOrderNo !== 'XX');
+            sortedWorkOrderItems.forEach(item => {
+                const isSelectType = item.operationNumber === 0;
+                const id = isSelectType ? item.workOrderNo.replace(/^.*?PT-\d+/, '').trim() : `manual-${nextId.current++}`;
+                
+                woNoToIdMap[item.workOrderNo] = id;
+                
+                let parentId = null;
+                if (item.parentWorkOrderNo && item.parentWorkOrderNo !== 'XX') {
+                    parentId = woNoToIdMap[item.parentWorkOrderNo];
+                }
 
-            orphanItems.forEach(orphan => {
-                const orphanId = `manual-${nextId.current++}`;
-                finalProcesses.push({ id: orphanId, type: 'manual', sub: true, parentId: null, isOrphan: true });
-                finalTableData[orphanId] = {
-                    cancel: orphan.cancel, scope: orphan.scope, opNo: orphan.operationNumber === -1 ? '' : orphan.operationNumber, process: orphan.proceess, l: orphan.length, w: orphan.width, h: orphan.height, remarks: orphan.remark, itemId: orphan.itemId
-                };
-            });
-
-            parentItems.forEach(parent => {
-                const parentId = `manual-${nextId.current++}`;
-                parentWoToIdMap[parent.workOrderNo] = parentId;
-                finalProcesses.push({ id: parentId, type: 'manual', sub: false, parentId: null, isOrphan: false });
-                finalTableData[parentId] = {
-                    cancel: parent.cancel, 
-                    scope: parent.scope, 
-                    opNo: parent.operationNumber === -1 ? '' : parent.operationNumber, 
-                    process: parent.proceess, 
-                    l: parent.length, 
-                    w: parent.width, 
-                    h: parent.height, 
-                    remarks: parent.remark, 
-                    itemId: parent.itemId
-                };
-
-                const childrenOfThisParent = childItems
-                    .filter(child => child.parentWorkOrderNo === parent.workOrderNo)
-                    .sort((a, b) => a.workOrderNo.localeCompare(b.workOrderNo));
-
-                childrenOfThisParent.forEach(child => {
-                    const childId = `manual-${nextId.current++}`;
-                    finalProcesses.push({ id: childId, type: 'manual', sub: true, parentId: parentId, isOrphan: false });
-                    finalTableData[childId] = {
-                        cancel: child.cancel, 
-                        scope: child.scope, 
-                        opNo: child.operationNumber === -1 ? '' : child.operationNumber, 
-                        process: child.proceess, l: child.length, 
-                        w: child.width, 
-                        h: child.height, 
-                        remarks: child.remark, 
-                        itemId: child.itemId
-                    };
+                finalProcesses.push({
+                    id: id,
+                    type: isSelectType ? 'select' : 'manual',
+                    sub: !!parentId,
+                    parentId: parentId,
+                    isOrphan: item.parentWorkOrderNo === 'XX',
+                    woNo: item.workOrderNo,
                 });
-            });
-            
-            selectItems.forEach(item => {
-                const suffix = item.workOrderNo.replace(/^.*?PT-\d+/, '').trim();
-                const id = suffix;
-                usedSelectValues.add(suffix);
-                finalProcesses.push({ id, type: 'select', woNo: item.workOrderNo, isOrphan: false });
+
                 finalTableData[id] = {
-                    cancel: item.cancel, 
-                    scope: item.scope, opNo: 0, 
-                    process: item.proceess, 
-                    l: item.length, 
-                    w: item.width, 
-                    h: item.height, 
-                    remarks: item.remark, 
-                    itemId: item.itemId
+                    cancel: item.cancel,
+                    scope: item.scope,
+                    opNo: item.operationNumber === -1 ? '' : item.operationNumber,
+                    process: item.proceess,
+                    l: item.length,
+                    w: item.width,
+                    h: item.height,
+                    remarks: item.remark,
+                    itemId: item.itemId,
                 };
-                const option = pOptions.find(opt => opt.value === id) || { value: id, label: `${id} (Archived)`};
-                selectedFromDropdown.push(option);
+
+                if (isSelectType) {
+                    const suffix = item.workOrderNo.replace(/^.*?PT-\d+/, '').trim();
+                    usedSelectValues.add(suffix);
+                    const option = pOptions.find(opt => opt.value === suffix) || { value: suffix, label: `${suffix} (Archived)` };
+                    selectedFromDropdown.push(option);
+                }
             });
 
             const combinedProcessOptions = [...pOptions];
@@ -262,6 +241,20 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
         
         if (hasError) return;
 
+        if (itemsToDelete.length > 0) {
+            try {
+                await axiosInstance.delete("/work/deleteWorkOrderItems", { 
+                    data: itemsToDelete 
+                });
+                console.log("Successfully deleted staged items:", itemsToDelete);
+
+            } catch (error) {
+                console.error("❌ Failed to delete processes:", error);
+                toast.error("Could not delete the removed processes. Please try again.");
+                return; 
+            }
+        }
+
         const processDetails = [];
         const visibleManualParents = processes.filter(p => p.type === 'manual' && !p.sub && !tableData[p.id]?.scope);
 
@@ -270,7 +263,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             if (p.isOrphan) {
               processDetails.push({
                   workOrderNo: 'XX',
-                  parentWorkOrderNo: 'XX', // Preserve the orphaned state on save
+                  parentWorkOrderNo: 'XX',
                   itemNo: itemNo,
                   cancel: rowData.cancel || false,
                   scope: rowData.scope || false,
@@ -533,15 +526,10 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
         setSelectedProcesses(prev => prev.filter(p => p.value !== suffix));
         setDisabledProcessValues(prev => prev.filter(val => val !== suffix));
       }
-
-      try {
-        if (itemId) {
-          const res = await axiosInstance.delete(`/work/deleteWorkOrderItem/${itemId}`);
-          if (res.data) toast.success("Item Deleted successfully!");
-        }
-      } catch (error) {
-        console.error("Error deleting work order item:", error);
-      }
+      if (itemId) {
+        setItemsToDelete(prev => [...prev, itemId]);
+    }
+      
     };
 
 
@@ -778,18 +766,10 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
       if (removedProcess) {
           const processIdToRemove = removedProcess.value;
           const itemData = tableData[processIdToRemove];
-
-          if (itemData && itemData.itemId) {
-              try {
-                  const res = await axiosInstance.delete(`/work/deleteWorkOrderItem/${itemData.itemId}`);
-                  if (res.data) {
-                      toast.success(`Process "${processIdToRemove}" removed successfully!`);
-                  }
-              } catch (error) {
-                  toast.error(`Failed to remove process "${processIdToRemove}".`);
-                  console.error("Error deleting work order item:", error);
-              }
-          }
+        
+            if (itemData && itemData.itemId) {
+                setItemsToDelete(prev => [...prev, itemData.itemId]);
+            }
       }
       setSelectedProcesses(newSelection);
   };
@@ -937,27 +917,6 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
                     </Form.Group>
 
                     <Form.Group className="col-md-4 mb-3">
-                      <Form.Label>Thickness<span className="text-danger">*</span></Form.Label>
-                      <div style={{ width: "100%" }}>
-                        <CreatableSelect
-                          styles={{ container: (base) => ({ ...base, width: "100%" }) }}
-                          isClearable
-                          onMenuOpen={fetchThickness}
-                          onChange={handleThicknessSelect}
-                          onCreateOption={handleThicknessCreateOption}
-                          options={thicknessOptions}
-                          isLoading={loadingThickness}
-                          placeholder="Search or create thickness..."
-                          value={
-                            formData.thickness
-                              ? { label: formData.thickness, value: formData.thickness }
-                              : null
-                          }
-                        />
-                      </div>
-                    </Form.Group>
-
-                    <Form.Group className="col-md-4 mb-3">
                       <Form.Label>Material <span className="text-danger">*</span></Form.Label>
                       <div style={{ width: "100%" }}>
                         <CreatableSelect
@@ -972,6 +931,27 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
                           value={
                             formData.material
                               ? { label: formData.material, value: formData.material }
+                              : null
+                          }
+                        />
+                      </div>
+                    </Form.Group>
+
+                    <Form.Group className="col-md-4 mb-3">
+                      <Form.Label>Thickness<span className="text-danger">*</span></Form.Label>
+                      <div style={{ width: "100%" }}>
+                        <CreatableSelect
+                          styles={{ container: (base) => ({ ...base, width: "100%" }) }}
+                          isClearable
+                          onMenuOpen={fetchThickness}
+                          onChange={handleThicknessSelect}
+                          onCreateOption={handleThicknessCreateOption}
+                          options={thicknessOptions}
+                          isLoading={loadingThickness}
+                          placeholder="Search or create thickness..."
+                          value={
+                            formData.thickness
+                              ? { label: formData.thickness, value: formData.thickness }
                               : null
                           }
                         />
@@ -1046,21 +1026,21 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
                         {processes.map((p) => {
                             const data = tableData[p.id] || {};
                             const isScoped = data.scope || false;
+
                             let displayWoNo = '';
 
-                            // --- MODIFIED: WO No display logic for hierarchy ---
                             if (p.isOrphan) {
                                 displayWoNo = 'XX';
                             } else if (isScoped) {
                                 displayWoNo = 'XX';
                             } else if (p.type === 'select') {
-                                displayWoNo = p.woNo;
+                                displayWoNo = `PT-${itemNo || ''}${p.id}`;
                             } else if (p.sub) {
                                 const parentExists = processes.some(parent => parent.id === p.parentId);
                                 if (!parentExists) {
                                     displayWoNo = 'XX';
                                 } else {
-                                    const visibleManualParents = processes.filter(proc => proc.type === 'manual' && !proc.sub && !tableData[proc.id]?.scope);
+                                    const visibleManualParents = processes.filter(proc => proc.type === 'manual' && !proc.sub && !proc.isOrphan && !tableData[proc.id]?.scope);
                                     const parentIndex = visibleManualParents.findIndex(parent => parent.id === p.parentId);
                                     if (parentIndex >= 0) {
                                         const parentWoNo = `PT-${itemNo}${String.fromCharCode(65 + parentIndex)}`;
@@ -1071,14 +1051,15 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
                                         displayWoNo = 'XX';
                                     }
                                 }
-                            } else { // Manual Parent
-                                const visibleManualParents = processes.filter(proc => proc.type === 'manual' && !proc.sub && !tableData[proc.id]?.scope);
+                            } else {
+                                const visibleManualParents = processes.filter(proc => proc.type === 'manual' && !proc.sub && !proc.isOrphan && !tableData[proc.id]?.scope);
                                 const manualIndex = visibleManualParents.findIndex(proc => proc.id === p.id);
-                                displayWoNo = manualIndex >= 0 ? `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}` : '';
+                                displayWoNo = manualIndex >= 0 ? `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}` : 'XX';
                             }
+                            p.woNo = displayWoNo;
 
                             return (
-                                <tr key={p.id} className={p.sub ? 'sub-process-row' : ''}>
+                                <tr key={p.id} className={(p.sub || p.isOrphan) ? 'sub-process-row' : ''}>
                                     <td className="align-middle">
                                         <Form.Check
                                             type="checkbox"
@@ -1120,6 +1101,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
                                                 value={processesSuggestionsOptions.find(option => option.value === data.process)}
                                                 onChange={(selectedOption) => handleTableInputChange(p.id, "process", selectedOption ? selectedOption.value : "")}
                                                 placeholder="Select Process..."
+                                                menuPosition="fixed"
                                                 styles={{
                                                     control: base => ({ ...base, minHeight: '31px', height: '31px' }),
                                                     indicatorsContainer: base => ({ ...base, height: '31px' }),
@@ -1142,12 +1124,11 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
                                     <td><Form.Control size="sm" type="number" step="any" min="0" value={data.w || ''} onChange={e => handleTableInputChange(p.id, 'w', e.target.value)} /></td>
                                     <td><Form.Control size="sm" type="number" step="any" min="0" value={data.h || ''} onChange={e => handleTableInputChange(p.id, 'h', e.target.value)} /></td>
                                     <td><Form.Control size="sm" value={data.remarks || ''} onChange={e => handleTableInputChange(p.id, 'remarks', e.target.value)} /></td>
-                                    {/* --- NEW: Actions column with Add Sub-Process button --- */}
                                     <td className="align-middle">
                                         <Button variant="link" className="text-danger p-0" onClick={() => handleDeleteRow(p.id, data.itemId)}>
                                             <FaTrash />
                                         </Button>
-                                        {p.type === 'manual' && !p.sub && (
+                                        {p.type === 'manual' && !p.sub && !p.isOrphan &&(
                                             <Button variant="link" className="text-success p-0 ms-2" onClick={() => handleAddSubProcess(p.id)} title="Add Sub-Process">
                                                 <FaPlus />
                                             </Button>
