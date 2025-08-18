@@ -52,7 +52,16 @@ const styles = StyleSheet.create({
     borderColor: "#eee",
   },
 
-  tableRow: { flexDirection: "row" },
+  tableRow: { flexDirection: "row", alignItems: "stretch" },
+
+  tableRow2: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "red",
+  },
+
   tableRow1: { flexDirection: "row" },
   tableCell: {
     flex: 1,
@@ -61,9 +70,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderStyle: "solid",
     borderColor: "#eee",
-    //  textAlign: "center",
+    // alignItems: "center",
+    justifyContent: "center",
+    // textAlign: "center",
   },
 
+  tableCellFirstcol: {
+    flex: 1,
+    padding: 4,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#eee",
+    alignItems: "center",
+    justifyContent: "center",
+    // textAlign: "center",
+  },
   tableCellBlank: {
     flex: 1,
     padding: 4,
@@ -164,6 +186,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     flex: 1,
     padding: 4,
+    borderRightWidth: 1,
+    borderLeftWidth: 1,
+    borderTop: 0,
+    borderColor: "#eee",
+  },
+
+  custmerReqTit: {
+    flex: 1,
+    fontSize: 10,
+    padding: 4,
+    borderRightWidth: 1,
+    borderLeftWidth: 1,
+    borderTop: 1,
+    borderColor: "#eee",
   },
 
   tableTH: {
@@ -308,6 +344,17 @@ const styles = StyleSheet.create({
 
   selectReqBgColor: {
     backgroundColor: "#f7ff5c",
+  },
+
+  tableCellRedBGcolor: {
+    backgroundColor: "#ff5b5b",
+  },
+  tableCellYellowBGcolor: {
+    backgroundColor: "#ffff6e",
+  },
+
+  alignItmCnter: {
+    alignItems: "center",
   },
 });
 
@@ -478,103 +525,147 @@ const KickOffPDF = ({ data }) => {
               const processes = itemProcessList.filter(
                 (proc) => proc.itemNo === item.itemNo
               );
-              console.log("processes.length", processes);
 
-              if (processes.length > 0) {
-                return processes.map((proc, idx) => (
-                  <View style={styles.tableRow} key={`${item.itemId}-${idx}`}>
-                    {/* Merge first two columns (only in the first row) */}
-                    {idx === 0 ? (
-                      <>
-                        <Text style={[styles.tableCell2, { flex: 1.5 }]}>
-                          <Text>
-                            {item.partName}
-                            {"\n"}
-                            Matl = {item.material}
-                            {"\n"}
-                            Thk = {item.thickness}
-                          </Text>
-                        </Text>
-                        <View style={styles.tableCell1}>
-                          {item.imageList &&
-                            item.imageList.length > 0 &&
-                            item.imageList.map((imgBase64, imgIdx) => (
-                              <Image
-                                key={imgIdx}
-                                src={`data:image/png;base64,${imgBase64}`}
-                                style={{
-                                  width: 32,
-                                  height: 32,
-                                  marginBottom: 2,
-                                }}
-                              />
+              return (
+                <View key={item.itemId}>
+                  <View style={[styles.tableRow, { alignItems: "stretch" }]}>
+                    {/* Parent → Part Details */}
+                    <Text style={[styles.tableCellFirstcol, { flex: 1.05 }]}>
+                      {item.partName}
+                      {"\n"}Matl = {item.material}
+                      {"\n"}Thk = {item.thickness}
+                    </Text>
+                    <View style={[styles.tableCellFirstcol, { flex: 0.7 }]}>
+                      {item.imageList?.map((imgBase64, imgIdx) => (
+                        <Image
+                          key={imgIdx}
+                          src={`data:image/png;base64,${imgBase64}`}
+                          style={{ width: 32, height: 32, marginBottom: 2 }}
+                        />
+                      ))}
+                    </View>
+
+                    {/* Child rows container → all processes */}
+                    <View style={{ flex: 7, flexDirection: "column" }}>
+                      {processes.length > 0 ? (
+                        processes.map((proc, idx) => (
+                          <View
+                            style={[styles.tableRow, { flex: 1 }]}
+                            key={`${item.itemId}-${idx}`}
+                          >
+                            <View
+                              style={[
+                                styles.tableCell,
+                                proc.cancel ? styles.tableCellRedBGcolor : null,
+                                proc.scope
+                                  ? styles.tableCellYellowBGcolor
+                                  : null,
+                              ]}
+                            >
+                              <Text>{proc.workOrderNumber}</Text>
+                            </View>
+
+                            <View
+                              style={[
+                                styles.tableCell,
+                                proc.cancel ? styles.tableCellRedBGcolor : null,
+                                proc.scope
+                                  ? styles.tableCellYellowBGcolor
+                                  : null,
+                              ]}
+                            >
+                              <Text>{proc.operationNumber || ""}</Text>
+                            </View>
+
+                            <View
+                              style={[
+                                styles.tableCell,
+                                { flex: 2.5 },
+                                proc.cancel ? styles.tableCellRedBGcolor : null,
+                                proc.scope
+                                  ? styles.tableCellYellowBGcolor
+                                  : null,
+                              ]}
+                            >
+                              <Text>{proc.process}</Text>
+                            </View>
+
+                            <View
+                              style={[
+                                styles.tableCell,
+                                styles.txteCenter,
+                                proc.cancel ? styles.tableCellRedBGcolor : null,
+                                proc.scope
+                                  ? styles.tableCellYellowBGcolor
+                                  : null,
+                              ]}
+                            >
+                              <Text>{proc.length}</Text>
+                            </View>
+
+                            <View
+                              style={[
+                                styles.tableCell,
+                                styles.txteCenter,
+                                proc.cancel ? styles.tableCellRedBGcolor : null,
+                                proc.scope
+                                  ? styles.tableCellYellowBGcolor
+                                  : null,
+                              ]}
+                            >
+                              <Text>{proc.width}</Text>{" "}
+                            </View>
+
+                            <View
+                              style={[
+                                styles.tableCell,
+                                styles.txteCenter,
+                                proc.cancel ? styles.tableCellRedBGcolor : null,
+                                proc.scope
+                                  ? styles.tableCellYellowBGcolor
+                                  : null,
+                              ]}
+                            >
+                              <Text>{proc.height}</Text>{" "}
+                            </View>
+
+                            <View
+                              style={[
+                                styles.tableCell,
+                                styles.txteCenter,
+                                proc.cancel ? styles.tableCellRedBGcolor : null,
+                                proc.scope
+                                  ? styles.tableCellYellowBGcolor
+                                  : null,
+                              ]}
+                            >
+                              <Text>{proc.remarks}</Text>{" "}
+                            </View>
+                          </View>
+                        ))
+                      ) : (
+                        // Empty row if no process
+                        <View style={styles.tableRow}>
+                          {Array(7)
+                            .fill("")
+                            .map((_, i) => (
+                              <Text style={styles.tableCell} key={i}></Text>
                             ))}
                         </View>
-                      </>
-                    ) : (
-                      <>
-                        {/* Blank cells for alignment (merged visually) */}
-                        <Text
-                          style={[styles.tableCellBlank, { flex: 1.5 }]}
-                        ></Text>
-                        <View style={[styles.tableCellBlank]}></View>
-                      </>
-                    )}
-                    {/* Process columns */}
-                    <Text style={styles.tableCell}>{proc.workOrderNumber}</Text>
-                    <Text style={styles.tableCell}>
-                      {proc.operationNumber || ""}
-                    </Text>
-                    <Text style={[styles.tableCell, { flex: 2.5 }]}>
-                      {proc.process}
-                    </Text>
-                    <Text style={[styles.tableCell, styles.txteCenter]}>
-                      {proc.length}
-                    </Text>
-                    <Text style={[styles.tableCell, styles.txteCenter]}>
-                      {proc.width}
-                    </Text>
-                    <Text style={[styles.tableCell, styles.txteCenter]}>
-                      {proc.height}
-                    </Text>
-                    <Text style={styles.tableCell}>{proc.remarks}</Text>
+                      )}
+                    </View>
                   </View>
-                ));
-              } else {
-                // return (
-                //   <View style={styles.tableRow} key={item.itemId}>
-                //     <Text style={[styles.tableCell, { flex: 1.5 }]}>
-                //       {item.partName} / {item.material} / {item.thickness}
-                //     </Text>
-                //     <View style={styles.tableCell}>
-                //       {item.imageList &&
-                //         item.imageList.length > 0 &&
-                //         item.imageList.map((imgBase64, imgIdx) => (
-                //           <Image
-                //             key={imgIdx}
-                //             src={`data:image/png;base64,${imgBase64}`}
-                //             style={{ width: 32, height: 32, marginBottom: 2 }}
-                //           />
-                //         ))}
-                //     </View>
-                //     {/* Empty process columns if no process */}
-                //     {Array(7)
-                //       .fill("")
-                //       .map((_, i) => (
-                //         <Text style={styles.tableCell} key={i}></Text>
-                //       ))}
-                //   </View>
-                // );
-              }
+                </View>
+              );
             })}
           </View>
         </View>
 
-        
-
         {/* Customer Requirements Table */}
+        <Text style={[styles.txteBold, styles.custmerReqTit]}>
+          Customer Requirements
+        </Text>
         <View style={styles.section}>
-          <Text style={styles.txteBold}>Customer Requirements</Text>
           <View style={styles.table1}>
             {[
               "Inserts (Main/CAM)",
@@ -647,7 +738,7 @@ const KickOffPDF = ({ data }) => {
         </View>
 
         {/* Signature Table */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text>Signature</Text>
           <View style={styles.table1}>
             {listofSingnature.map((sig) => (
@@ -660,10 +751,45 @@ const KickOffPDF = ({ data }) => {
             ))}
           </View>
 
-          {/* Footer */}
+
           <View style={styles.footer}>
             <Text>Mr. Shriram Handibag</Text>
             <Text>PLANNETTO TOOLTECH PVT LTD</Text>
+          </View>
+        </View> */}
+
+        <View style={[styles.section, { flexDirection: "row" }]}>
+          {/* Left: Signature Table */}
+          <View style={{ flex: 4 }}>
+            {/* <Text>Signature</Text> */}
+            <View style={styles.table1}>
+              {listofSingnature.map((sig) => (
+                <View style={styles.tableRow1} key={sig.id}>
+                  <Text style={styles.tableCell}>{sig.departments}</Text>
+                  <Text style={styles.tableCell}>{sig.headName}</Text>
+                  <Text style={[styles.tableCell, { flex: 0.5 }]}>Sign</Text>
+                  <Text style={styles.tableCell}></Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Right: Footer, vertically centered */}
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "flex-end", // Aligns children to the bottom vertically
+              alignItems: "center",
+              borderWidth: 1, // Optional: for table-like border
+              marginLeft: 4, // Optional: small gap between columns
+            }}
+          >
+            <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
+              Mr. Shriram Handibag
+            </Text>
+            <Text style={{ fontWeight: "bold" }}>
+              PLANETTO TOOLTECH PVT LTD
+            </Text>
           </View>
         </View>
       </Page>

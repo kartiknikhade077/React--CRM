@@ -23,7 +23,6 @@ const ProjectRegistrationKickoffSheet = ({
   onProjectDataChange,
   onPartsChange,
   onProcessesChange,
-
 }) => {
   const [projectData, setProjectData] = useState({
     projectId: "",
@@ -58,7 +57,6 @@ const ProjectRegistrationKickoffSheet = ({
     .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
 
   const sortedProcesses = [...manualProcesses, ...workorderProcesses];
-
 
   const filteredProcesses = sortedProcesses.filter(
     (proc) => proc.itemNo === activePartItemNo
@@ -240,10 +238,7 @@ const ProjectRegistrationKickoffSheet = ({
   const [selectedProjectId, setSelectedProjectId] = useState("");
 
   useEffect(() => {
-    
-
     if (customerId) {
-      
       axiosInstance
         .get(`/project/getProjectByCustomerId/${customerId}`)
         .then((res) => {
@@ -266,15 +261,13 @@ const ProjectRegistrationKickoffSheet = ({
       .get(`/work/getWorkOrderItemsByProjectId/${selectedProjectId}`)
       .then((res) => {
         const data = res.data;
-                console.log("get wrork order --",data);
+        console.log("get wrork order --", data);
         populatePartsAndProcesses(data);
       })
       .catch((err) => {
         console.error("Error fetching part/process data:", err);
       });
   }, [selectedProjectId]);
-
-
 
   // const populatePartsAndProcesses = (data) => {
   //   const { partProcess, partDetails } = data;
@@ -330,7 +323,7 @@ const ProjectRegistrationKickoffSheet = ({
 
   const populatePartsAndProcesses = (data) => {
     const { partProcess, partDetails } = data;
-    console.log("part process::::::::",partProcess)
+    console.log("part process::::::::", partProcess);
 
     const groupedByItem = {};
 
@@ -380,8 +373,8 @@ const ProjectRegistrationKickoffSheet = ({
       const processes = (groupedByItem[itemNo] || []).map((proc, idx) => ({
         id: Date.now() + index * 10 + idx,
         woNo: proc.workOrderNo,
-        cancel:proc.cancel,
-        scope:proc.scope,
+        cancel: proc.cancel,
+        scope: proc.scope,
         itemNo,
         designer: "",
         opNo: proc.opNo || "",
@@ -391,7 +384,7 @@ const ProjectRegistrationKickoffSheet = ({
         height: proc.height || "",
         remarks: proc.remark || "",
       }));
-      console.log("process@@@@@@@@@@@",processes);
+      console.log("process@@@@@@@@@@@", processes);
       newProcessesByPart[itemNo] = processes;
     });
 
@@ -472,7 +465,6 @@ const ProjectRegistrationKickoffSheet = ({
         console.error("Failed to fetch employee list:", err);
       });
   }, []);
-
 
   return (
     <Card className="mb-3 shadow-sm border-0">
@@ -857,21 +849,32 @@ const ProjectRegistrationKickoffSheet = ({
                 <tbody>
                   {filteredProcesses.length > 0 ? (
                     filteredProcesses.map((proc) => (
-                      <tr key={proc.id}>
-                        <td>
+                      <tr
+                        key={proc.id}
+                        style={{
+                          backgroundColor: proc.cancel
+                            ? "#ff5b5b"
+                            : proc.scope
+                            ? "#ffff6e"
+                            : "transparent",
+                        }}
+                      >
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.woNo}
                             onChange={(e) =>
                               updateProcess(proc.id, "woNo", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Select
                             value={proc.designer || ""}
                             onChange={(e) =>
                               updateProcess(proc.id, "designer", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                           >
                             <option value="">Select Designer</option>
                             {employeeList.map((emp) => (
@@ -884,12 +887,13 @@ const ProjectRegistrationKickoffSheet = ({
                             ))}
                           </Form.Select>
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Select
                             value={proc.opNo}
                             onChange={(e) =>
                               updateProcess(proc.id, "opNo", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                           >
                             <option value="">Select</option>
                             <option value="05">05</option>
@@ -911,7 +915,7 @@ const ProjectRegistrationKickoffSheet = ({
                             <option value="XX">XX</option>
                           </Form.Select>
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.processName}
                             onChange={(e) =>
@@ -921,41 +925,46 @@ const ProjectRegistrationKickoffSheet = ({
                                 e.target.value
                               )
                             }
+                            className="KickoffPrtProcessInpt"
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.length}
                             onChange={(e) =>
                               updateProcess(proc.id, "length", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.width}
                             onChange={(e) =>
                               updateProcess(proc.id, "width", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.height}
                             onChange={(e) =>
                               updateProcess(proc.id, "height", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.remarks}
                             onChange={(e) =>
                               updateProcess(proc.id, "remarks", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                           />
                         </td>
-                        <td className="text-center">
+                        <td className="text-center KickoffPrtProcessInpt-TD">
                           <Button
                             variant="link"
                             onClick={() => removeProcess(proc.id)}

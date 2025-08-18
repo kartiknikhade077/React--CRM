@@ -119,6 +119,9 @@ const CompanyUpdateKickoffSheet = () => {
           kickOffDate: kickoffInfo.kickOffDate || "",
           startDate: kickoffInfo.startDate || "",
           endDate: kickoffInfo.endDate || "",
+
+          cancel: kickoffInfo.cancel || "",
+          scope: kickoffInfo.scope || "",
         });
 
 

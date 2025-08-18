@@ -92,3 +92,12 @@ max-width: 95vw;
   width: 20%;
   white-space: nowrap;
 }
+
+.KickoffPrtProcessInpt-TD{
+
+  background: transparent !important;
+}
+.KickoffPrtProcessInpt{
+
+  background: transparent !important;
+}

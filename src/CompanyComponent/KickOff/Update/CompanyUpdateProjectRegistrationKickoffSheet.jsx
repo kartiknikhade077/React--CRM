@@ -202,6 +202,8 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         id: proc.partProcessId || Date.now() + index * 10 + idx,
         partProcessId: proc.partProcessId,
         woNo: proc.workOrderNo || "",
+        cancel: proc.cancel,
+        scope: proc.scope,
         itemNo,
         designer: proc.employeeId || "",
         designerName: proc.designerName || "",
@@ -213,6 +215,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         remarks: proc.remark || proc.remarks || "",
         isEditing: false,
       }));
+           console.log("process@@@@@@@@@@@ in Update", processes);
       newProcessesByPart[itemNo] = processes;
     });
 
@@ -1047,22 +1050,33 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 <tbody>
                   {sortedProcesses.length > 0 ? (
                     sortedProcesses.map((proc) => (
-                      <tr key={proc.id}>
-                        <td>
+                      <tr
+                        key={proc.id}
+                        style={{
+                          backgroundColor: proc.cancel
+                            ? "#ff5b5b"
+                            : proc.scope
+                            ? "#ffff6e"
+                            : "transparent",
+                        }}
+                      >
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.woNo}
                             onChange={(e) =>
                               updateProcess(proc.id, "woNo", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                             disabled={!proc.isEditing}
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Select
                             value={proc.designer || ""}
                             onChange={(e) =>
                               updateProcess(proc.id, "designer", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                             disabled={!proc.isEditing}
                           >
                             <option value="">Select Designer</option>
@@ -1076,12 +1090,13 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             ))}
                           </Form.Select>
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Select
                             value={proc.opNo}
                             onChange={(e) =>
                               updateProcess(proc.id, "opNo", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                             disabled={!proc.isEditing}
                           >
                             <option value="">Select</option>
@@ -1110,7 +1125,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             ))}
                           </Form.Select>
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.processName}
                             onChange={(e) =>
@@ -1120,42 +1135,47 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                                 e.target.value
                               )
                             }
+                            className="KickoffPrtProcessInpt"
                             disabled={!proc.isEditing}
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.length}
                             onChange={(e) =>
                               updateProcess(proc.id, "length", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                             disabled={!proc.isEditing}
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.width}
                             onChange={(e) =>
                               updateProcess(proc.id, "width", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                             disabled={!proc.isEditing}
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.height}
                             onChange={(e) =>
                               updateProcess(proc.id, "height", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                             disabled={!proc.isEditing}
                           />
                         </td>
-                        <td>
+                        <td className="KickoffPrtProcessInpt-TD">
                           <Form.Control
                             value={proc.remarks}
                             onChange={(e) =>
                               updateProcess(proc.id, "remarks", e.target.value)
                             }
+                            className="KickoffPrtProcessInpt"
                             disabled={!proc.isEditing}
                           />
                         </td>
@@ -1176,7 +1196,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           </Button>
                         </td> */}
 
-                        <td className="text-center">
+                        <td className="text-center KickoffPrtProcessInpt-TD">
                           <div className="d-flex justify-content-center">
                             {proc.isEditing ? (
                               <Button
