@@ -44,6 +44,7 @@ import BOMUpadatePage from "./CompanyComponent/BOM/BOMUpdatePage";
 import BomCategoryList from "./CompanyComponent/BomCategorieSettings/BomCategoryList";
 
 import MomList from "./CompanyComponent/Mom/MomList";
+import QuotationList from "./CompanyComponent/Quotation/QuotationList";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -302,6 +303,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <BomCategoryList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/QuotationList"
+          element={
+            <ProtectedRoute>
+              <QuotationList />
             </ProtectedRoute>
           }
         />

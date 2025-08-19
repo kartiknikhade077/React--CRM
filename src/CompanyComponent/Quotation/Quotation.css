@@ -1,0 +1,58 @@
+
+.custom-modal-width {
+  max-width: 85%; 
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.quotation-header,
+.quotation-body,
+.quotation-footer {
+  background-color: #ffffff;
+  color: #212529;
+  
+}
+
+.upload-box-qut {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  height: 120px; /* Mini version */
+  width: 120px; /* Mini version */
+  cursor: pointer;
+  background-color: #f8f9fa;
+  transition: all 0.2s ease-in-out;
+  display: flex; /* Added for centering */
+  flex-direction: column;
+  align-items: center; /* Added for centering */
+  justify-content: center; /* Added for centering */
+}
+
+.upload-box-qut:hover {
+  border-color: #007bff;
+  background-color: #e9ecef;
+}
+
+.plus_symbol { /* Renamed for clarity */
+  font-size: 2rem;
+  font-weight: 300;
+  color: #007bff;
+}
+
+.section-cart-header,
+.section-cart-body,
+.section-cart-footer {
+  background-color: #ffffff;
+  color: #212529;
+  
+}
+.section-card-shadow {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+.final-calc-card-shadow {
+  border: '2px solid black';
+  border-radius: '0.25rem';
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
