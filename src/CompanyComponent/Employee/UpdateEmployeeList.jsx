@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axiosInstance from "../BaseComponet/axiosInstance";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
 
-import CompanySidebar from "./CompanySidebar";
-import CompanyTopbar from "./CompanyTopbar";
+import CompanySidebar from "../CompanySidebar";
+import CompanyTopbar from "../CompanyTopbar";
 // /getLead/{leadId}
 const UpdateEmployeeList = () => {
   const [emailError, setEmailError] = useState("");
@@ -16,6 +16,16 @@ const UpdateEmployeeList = () => {
     leadAccess: false,
     template: false,
     email: false,
+    customerViewAll: false,
+    customerOwnView: false,
+    customerCreate: false,
+    customerDelete: false,
+    customerEdit: false,
+    projectViewAll: false,
+    projectOwnView: false,
+    projectCreate: false,
+    projectDelete: false,
+    projectEdit: false
   });
   const [isEditing, setIsEditing] = useState(false);
   const [initialemp, setInitialEmp] = useState(null);
@@ -23,33 +33,6 @@ const UpdateEmployeeList = () => {
   const [departments, setDepartments] = useState([]);
   const [roles, setRoles] = useState([]);
 
-  // Fetch data
-  // useEffect(() => {
-  //   axiosInstance.get(`/company/getEmployee/${id}`).then((res) => {
-  //     setEmp(res.data.employeeInfo);
-  //     setInitialEmp(res.data.employeeInfo);
-  //     setAccess({
-  //       leadAccess: res.data.moduleAccess.leadAccess,
-  //       template: res.data.moduleAccess.template,
-  //       email: res.data.moduleAccess.email,
-  //     });
-
-  //     // Set default department and fetch roles
-  //     const deptId = res.data.employeeInfo.departmentId;
-  //     if (deptId) {
-  //       axiosInstance
-  //         .get(`/company/getRolesByDepartmentId/${deptId}`)
-  //         .then((roleRes) => {
-  //           setRoles(roleRes.data);
-  //         });
-  //     }
-  //   });
-
-  //   // Fetch department list
-  //   axiosInstance.get("/company/getDepartments").then((res) => {
-  //     setDepartments(res.data);
-  //   });
-  // }, [id]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,6 +45,16 @@ const UpdateEmployeeList = () => {
           leadAccess: res.data.moduleAccess.leadAccess,
           template: res.data.moduleAccess.template,
           email: res.data.moduleAccess.email,
+          customerViewAll: res.data.moduleAccess.customerViewAll,
+          customerOwnView: res.data.moduleAccess.customerOwnView,
+          customerCreate: res.data.moduleAccess.customerCreate,
+          customerDelete: res.data.moduleAccess.customerDelete,
+          customerEdit: res.data.moduleAccess.customerEdit,
+          projectViewAll: res.data.moduleAccess.projectViewAll,
+          projectOwnView: res.data.moduleAccess.projectOwnView,
+          projectCreate: res.data.moduleAccess.projectCreate,
+          projectDelete: res.data.moduleAccess.projectDelete,
+          projectEdit: res.data.moduleAccess.projectEdit
         });
 
         // Fetch roles for the employee's current department
@@ -114,7 +107,7 @@ const UpdateEmployeeList = () => {
   };
 
   const handleRoleChange = async (e) => {
-    const roleId = parseInt(e.target.value);
+    const roleId = e.target.value;
     const selectedRole = roles.find((r) => r.roleId === roleId);
 
     setEmp((prev) => ({
@@ -133,6 +126,16 @@ const UpdateEmployeeList = () => {
         leadAccess: data.leadAccess,
         template: data.templateAccess,
         email: data.emailAccess,
+        customerViewAll: data.customerViewAll,
+        customerOwnView: data.customerOwnView,
+        customerCreate: data.customerCreate,
+        customerDelete: data.customerDelete,
+        customerEdit: data.customerEdit,
+        projectViewAll: data.projectViewAll,
+        projectOwnView: data.projectOwnView,
+        projectCreate: data.projectCreate,
+        projectDelete: data.projectDelete,
+        projectEdit: data.projectEdit
       });
     } catch (err) {
       toast.error("Failed to load role access");
@@ -225,12 +228,23 @@ const UpdateEmployeeList = () => {
 
   const handleSaveAccess = () => {
     const payload = {
-      employeeId: emp.employeeId,
-      name: emp.name,
-      email: emp.email,
-      description: emp.description,
-      departmentId: emp.departmentId,
-      roleId: emp.roleId,
+     employeeId: emp.employeeId,   // required for lookup
+    companyId: emp.companyId,     // if you store companyId in ModuleAccess
+    leadAccess: access.leadAccess,
+    template: access.template,
+    email: access.email,
+
+    customerViewAll: access.customerViewAll,
+    customerOwnView: access.customerOwnView,
+    customerCreate: access.customerCreate,
+    customerDelete: access.customerDelete,
+    customerEdit: access.customerEdit,
+
+    projectViewAll: access.projectViewAll,
+    projectOwnView: access.projectOwnView,
+    projectCreate: access.projectCreate,
+    projectDelete: access.projectDelete,
+    projectEdit: access.projectEdit,
     };
 
     axiosInstance
@@ -257,7 +271,7 @@ const UpdateEmployeeList = () => {
                   type="text"
                   name="name"
                   className="form-control"
-                  value={emp.name }
+                  value={emp.name}
                   onChange={handleChange}
                   disabled={!isEditing}
                 />
@@ -387,6 +401,141 @@ const UpdateEmployeeList = () => {
                 />
                 <label className="form-check-label" htmlFor="email">
                   Email Access
+                </label>
+              </div>
+
+              <hr></hr>
+              <h4>Customer</h4>
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="customerViewAll"
+                  id="customerViewAll"
+                  checked={access.customerViewAll}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="customerViewAll">
+                  View All
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="customerOwnView"
+                  id="customerOwnView"
+                  checked={access.customerOwnView}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="customerOwnView">
+                  View Own
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="customerCreate"
+                  id="customerCreate"
+                  checked={access.customerCreate}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="customerCreate">
+                  Create
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="customerDelete"
+                  id="customerDelete"
+                  checked={access.customerDelete}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="customerDelete">
+                  Delete
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="customerEdit"
+                  id="customerEdit"
+                  checked={access.customerEdit}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="customerEdit">
+                  Edit
+                </label>
+              </div>
+              <hr></hr>
+              <h4>Project</h4>
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="projectViewAll"
+                  id="projectViewAll"
+                  checked={access.projectViewAll}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="projectViewAll">
+                  View All
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="projectOwnView"
+                  id="projectOwnView"
+                  checked={access.projectOwnView}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="projectOwnView">
+                  View Own
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="projectCreate"
+                  id="projectCreate"
+                  checked={access.projectCreate}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="projectCreate">
+                  Create
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="projectDelete"
+                  id="projectDelete"
+                  checked={access.projectDelete}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="projectDelete">
+                  Delete
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="projectEdit"
+                  id="projectEdit"
+                  checked={access.projectEdit}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="projectEdit">
+                  Edit
                 </label>
               </div>
 

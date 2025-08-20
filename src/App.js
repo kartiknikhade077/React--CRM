@@ -13,8 +13,8 @@ import SuperDash from "./SuperAdminComponent/SuperDash";
 import CompDash from "./CompanyComponent/Company";
 import EmpDash from "./EmployeeComponent/EmpDash";
 import UpdateCompany from "./SuperAdminComponent/UpdateCompany";
-import EmployeeList from "./CompanyComponent/EmployeeList";
-import UpdateEmployeeList from "./CompanyComponent/UpdateEmployeeList";
+import EmployeeList from "./CompanyComponent/Employee/EmployeeList";
+import UpdateEmployeeList from "./CompanyComponent/Employee/UpdateEmployeeList";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

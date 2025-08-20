@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CompanyNavbar from "./CompanyNavbar";
-import axiosInstance from "../BaseComponet/axiosInstance";
+import CompanyNavbar from "../CompanyNavbar";
+import axiosInstance from "../../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
 // import "bootstrap/dist/css/bootstrap.min.css";
 // import "bootstrap/dist/js/bootstrap.bundle.min.js";
-import CompanySidebar from "./CompanySidebar";
-import CompanyTopbar from "./CompanyTopbar";
+import CompanySidebar from "../CompanySidebar";
+import CompanyTopbar from "../CompanyTopbar";
 
-import PaginationComponent from "../Pagination/PaginationComponent";
+import PaginationComponent from "../../Pagination/PaginationComponent";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 
@@ -36,11 +36,12 @@ const EmployeeList = () => {
 
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-   const handleToggle = () => {
-     setIsCollapsed(!isCollapsed);
-   };
+  const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
   const [showPassword, setShowPassword] = useState(false);
+
 
 
   const defaultFormData = {
@@ -55,7 +56,18 @@ const EmployeeList = () => {
     leadAccess: false,
     templateAccess: false,
     emailAccess: false,
+    customerViewAll: false,
+    customerOwnView: false,
+    customerCreate: false,
+    customerDelete: false,
+    customerEdit: false,
+    projectViewAll: false,
+    projectOwnView: false,
+    projectCreate: false,
+    projectDelete: false,
+    projectEdit: false
   };
+
   const [formData, setFormData] = useState(defaultFormData);
 
   useEffect(() => {
@@ -150,6 +162,16 @@ const EmployeeList = () => {
         leadAccess: data.leadAccess,
         templateAccess: data.templateAccess,
         emailAccess: data.emailAccess,
+        customerViewAll: data.customerViewAll,
+        customerOwnView: data.customerOwnView,
+        customerCreate: data.customerCreate,
+        customerDelete: data.customerDelete,
+        customerEdit: data.customerEdit,
+        projectViewAll: data.projectViewAll,
+        projectOwnView: data.projectOwnView,
+        projectCreate: data.projectCreate,
+        projectDelete: data.projectDelete,
+        projectEdit: data.projectEdit
       }));
     } catch (err) {
       toast.error("Failed to load role access");
@@ -309,7 +331,7 @@ const EmployeeList = () => {
             </div>
 
             {/* Modal */}
-           
+
 
             <div
               className="modal fade"
@@ -358,9 +380,8 @@ const EmployeeList = () => {
                           <input
                             type="email"
                             name="email"
-                            className={`form-control ${
-                              emailError ? "is-invalid" : ""
-                            }`}
+                            className={`form-control ${emailError ? "is-invalid" : ""
+                              }`}
                             value={formData.email}
                             onChange={handleInputChange}
                             required
@@ -370,17 +391,7 @@ const EmployeeList = () => {
                           )}
                         </div>
 
-                        {/* <div className="col-md-6">
-                          <label className="form-label">Password</label>
-                          <input
-                            type="password"
-                            name="password"
-                            className="form-control"
-                            value={formData.password}
-                            onChange={handleInputChange}
-                            required
-                          />
-                        </div> */}
+
 
                         <div className="col-md-6">
                           <label className="form-label">Password</label>
@@ -530,6 +541,173 @@ const EmployeeList = () => {
                             Email Access
                           </label>
                         </div>
+                        <hr></hr>
+                        <h4>Customer</h4>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="customerViewAll"
+                            checked={formData.customerViewAll}
+                            onChange={handleInputChange}
+                            id="customerViewAll"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="customerViewAll"
+                          >
+                            View All
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="customerOwnView"
+                            checked={formData.customerOwnView}
+                            onChange={handleInputChange}
+                            id="customerOwnView"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="customerOwnView"
+                          >
+                            View Own
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="customerCreate"
+                            checked={formData.customerCreate}
+                            onChange={handleInputChange}
+                            id="customerCreate"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="customerCreate"
+                          >
+                            Create
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="customerDelete"
+                            checked={formData.customerDelete}
+                            onChange={handleInputChange}
+                            id="customerDelete"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="customerDelete"
+                          >
+                            Delete
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="customerEdit"
+                            checked={formData.customerEdit}
+                            onChange={handleInputChange}
+                            id="customerEdit"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="customerEdit"
+                          >
+                            Edit
+                          </label>
+                        </div>
+
+                        <hr></hr>
+                        <h4>Project</h4>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="projectViewAll"
+                            checked={formData.projectViewAll}
+                            onChange={handleInputChange}
+                            id="projectViewAll"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="projectViewAll"
+                          >
+                            View All
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="projectOwnView"
+                            checked={formData.projectOwnView}
+                            onChange={handleInputChange}
+                            id="projectOwnView"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="projectOwnView"
+                          >
+                            View Own
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="projectCreate"
+                            checked={formData.projectCreate}
+                            onChange={handleInputChange}
+                            id="projectCreate"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="projectCreate"
+                          >
+                            Create
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="projectCreate"
+                            checked={formData.projectDelete}
+                            onChange={handleInputChange}
+                            id="projectDelete"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="projectDelete"
+                          >
+                            Delete
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="projectCreate"
+                            checked={formData.projectEdit}
+                            onChange={handleInputChange}
+                            id="projectEdit"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="projectEdit"
+                          >
+                            Edit
+                          </label>
+                        </div>
+
+
                       </div>
                     </div>
 
