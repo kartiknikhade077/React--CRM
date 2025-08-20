@@ -112,6 +112,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
             remarks: proc.remarks || "",
             isNewForWorkOrder: false,
             isEditing: false,
+            parentWorkOrderNo: proc.parentWorkOrderNo || "",
           });
         });
         setProcessesByPart(grouped);
@@ -144,7 +145,8 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       .get(`/work/getWorkOrderItemsByProjectId/${selectedProjectId}`)
       .then((res) => {
 
-          
+
+        console.log("**********selected project data--", res.data);
         if (res.data) {
 
           populatePartsAndProcesses(res.data);
@@ -215,8 +217,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         remarks: proc.remark || proc.remarks || "",
         isEditing: false,
       }));
-           console.log("process@@@@@@@@@@@ in Update", processes);
-      newProcessesByPart[itemNo] = processes;
+      console.log("process@@@@@@@@@@@ in Update", processes);
+      // newProcessesByPart[itemNo] = processes;
+      newProcessesByPart[itemNo] = reNumberProcesses(processes, itemNo);
+
     });
 
     setParts(newParts);
@@ -311,24 +315,47 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }));
   };
 
+  // const removeProcess = (id) => {
+  //   console.log("process id", id);
+  //   if (id) {
+  //     try {
+  //       axiosInstance.delete(`/kickoff/deleteItemProcess/${id}`);
+  //       toast.success("Process Deleted successfully");
+  //     } catch (error) {
+  //       toast.error("Error while deleting processes");
+  //       console.log("Error while deleting processes", error);
+  //     }
+  //   }
+  //   setProcessesByPart((prev) => ({
+  //     ...prev,
+  //     [activePartItemNo]: (prev[activePartItemNo] || []).filter(
+  //       (proc) => proc.id !== id
+  //     ),
+  //   }));
+  // };
+
   const removeProcess = (id) => {
-    console.log("process id", id);
     if (id) {
       try {
         axiosInstance.delete(`/kickoff/deleteItemProcess/${id}`);
         toast.success("Process Deleted successfully");
       } catch (error) {
-        toast.error("Error while deleting processes");
-        console.log("Error while deleting processes", error);
+        toast.error("Error while deleting process");
       }
     }
-    setProcessesByPart((prev) => ({
-      ...prev,
-      [activePartItemNo]: (prev[activePartItemNo] || []).filter(
+
+    setProcessesByPart((prev) => {
+      const filtered = (prev[activePartItemNo] || []).filter(
         (proc) => proc.id !== id
-      ),
-    }));
+      );
+      return {
+        ...prev,
+        [activePartItemNo]: reNumberProcesses(filtered, activePartItemNo),
+      };
+    });
   };
+
+
 
   const getSuffix = (woNo) => woNo?.replace(activePartItemNo, "") || "";
   const suffixOptions = ["UL", "CF", "LF", "TL"];
@@ -422,10 +449,19 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       isEditing: true,
     };
 
-    setProcessesByPart((prev) => ({
-      ...prev,
-      [activePartItemNo]: [...(prev[activePartItemNo] || []), newProc],
-    }));
+    // setProcessesByPart((prev) => ({
+    //   ...prev,
+    //   [activePartItemNo]: [...(prev[activePartItemNo] || []), newProc],
+    // }));
+
+    setProcessesByPart((prev) => {
+      const updated = [...(prev[activePartItemNo] || []), newProc];
+      return {
+        ...prev,
+        [activePartItemNo]: reNumberProcesses(updated, activePartItemNo),
+      };
+    });
+
   };
 
   // ✅ Convert only File/Blob to base64 string, pass strings as-is
@@ -454,6 +490,101 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       })
     ).then((results) => results.filter(Boolean));
 
+
+
+  // ======================================
+  // Utility: reassigns WO NOs for parents A,B,C... and their children A1,A2...
+ function reNumberProcesses(processes, activePartItemNo) {
+  if (!Array.isArray(processes)) return [];
+
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const parents = processes.filter((p) => !p.parentWorkOrderNo);
+  const special = processes.filter(
+    (p) =>
+      p.parentWorkOrderNo &&
+      !/^\d+$/.test(p.woNo.replace(p.parentWorkOrderNo, ""))
+  );
+
+  let renamed = [];
+
+  parents.forEach((parent, i) => {
+    const newParentWoNo = `${activePartItemNo}${letters[i]}`;
+    const newParent = { ...parent, woNo: newParentWoNo };
+
+    const children = processes
+      .filter((p) => p.parentWorkOrderNo === parent.woNo || p.parentWorkOrderNo === newParentWoNo)
+      .sort((a, b) => {
+        const anum = parseInt(a.woNo.replace(parent.woNo, ""), 10) || 0;
+        const bnum = parseInt(b.woNo.replace(parent.woNo, ""), 10) || 0;
+        return anum - bnum;
+      });
+
+    const newChildren = children.map((child, idx) => ({
+      ...child,
+      parentWorkOrderNo: newParentWoNo,
+      woNo: `${newParentWoNo}${idx + 1}`,
+    }));
+
+    renamed.push(newParent, ...newChildren);
+  });
+
+  return [...renamed, ...special];
+}
+
+
+
+
+const addChildProcess = (parentWoNo) => {
+  setProcessesByPart((prev) => {
+    const processes = prev[activePartItemNo] || [];
+
+    // figure out the children for this parent
+    const children = processes.filter((p) => p.parentWorkOrderNo === parentWoNo);
+    const numbers = children
+      .map((c) => c.woNo.replace(parentWoNo, ""))
+      .filter((s) => /^\d+$/.test(s))
+      .map(Number);
+
+    const nextChildNum = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+
+    const newProcess = {
+      id: Date.now(),
+      woNo: `${parentWoNo}${nextChildNum}`, // ex PT-91A1
+      itemNo: activePartItemNo,
+      parentWorkOrderNo: parentWoNo,
+      designer: "",
+      opNo: "",
+      processName: "",
+      length: "",
+      width: "",
+      height: "",
+      remarks: "",
+      isNewForWorkOrder: true,
+      isEditing: true,
+    };
+
+    // Only push child → no splice
+    const updated = [...processes, newProcess];
+
+    // 🔑 Important: Now renumber the WHOLE thing once
+    return {
+      ...prev,
+      [activePartItemNo]: reNumberProcesses(updated, activePartItemNo),
+    };
+  });
+};
+
+
+
+
+
+
+
+
+
+
+
+  // ================================================
   const handleSaveOrUpdatePart = async (partToSave) => {
     const imageListForKickoff = await filesToBase64(partToSave.images);
 
@@ -506,12 +637,12 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
           prevParts.map((p) =>
             p.id === partToSave.id
               ? {
-                  ...p,
-                  id: newPartId,
-                  woId: newPartId,
-                  itemId: newPartId,
-                  isNew: true,
-                }
+                ...p,
+                id: newPartId,
+                woId: newPartId,
+                itemId: newPartId,
+                isNew: true,
+              }
               : p
           )
         );
@@ -684,6 +815,12 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   useEffect(() => {
     fetchMaxItemNumber();
   }, []);
+
+
+
+
+
+
 
   return (
     <Card className="mb-3 shadow-sm border-0">
@@ -1019,11 +1156,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 ${
-                      activePartItemNo === part.itemNo
-                        ? "bg-primary text-white"
-                        : "bg-light"
-                    }`}
+                    className={`px-3 py-2 me-2 ${activePartItemNo === part.itemNo
+                      ? "bg-primary text-white"
+                      : "bg-light"
+                      }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >
@@ -1056,8 +1192,11 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           backgroundColor: proc.cancel
                             ? "#ff5b5b"
                             : proc.scope
-                            ? "#ffff6e"
-                            : "transparent",
+                              ? "#ffff6e"
+                              : proc.parentWorkOrderNo
+
+                                ? "#3bff6f"
+                                : "transparent",
                         }}
                       >
                         <td className="KickoffPrtProcessInpt-TD">
@@ -1179,24 +1318,8 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                             disabled={!proc.isEditing}
                           />
                         </td>
-                        {/* <td className="text-center">
-                          <Button
-                            variant="link"
-                            onClick={() => removeProcess(proc.id)}
-                            className="text-danger"
-                          >
-                            <FaTrash />
-                          </Button>
 
-                          <Button
-                            variant="success"
-                            onClick={handleUpdateProcesses}
-                          >
-                            Update{" "}
-                          </Button>
-                        </td> */}
-
-                        <td className="text-center KickoffPrtProcessInpt-TD">
+                        {/* <td className="text-center KickoffPrtProcessInpt-TD">
                           <div className="d-flex justify-content-center">
                             {proc.isEditing ? (
                               <Button
@@ -1246,7 +1369,65 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           >
                             delete
                           </Button>
+                        </td> */}
+
+
+                        <td className="text-center KickoffPrtProcessInpt-TD">
+                          <div className="d-flex flex-column align-items-center">
+                            {/* ➕ Show only for parent rows */}
+                            {!proc.parentWorkOrderNo && (
+                              <Button
+                                variant="link"
+                                className="text-success mb-2"
+                                onClick={() => addChildProcess(proc.woNo)}
+                              >
+                                <FaPlusCircle />
+                              </Button>
+                            )}
+
+                            {/* Toggle between Save/Edit */}
+                            {proc.isEditing ? (
+                              <Button
+                                variant="btn btn-outline-success btn-sm mb-2"
+                                onClick={() => {
+                                  handleUpdateProcesses(); // persist to backend
+                                  setProcessesByPart((prev) => ({
+                                    ...prev,
+                                    [activePartItemNo]: prev[activePartItemNo].map((p) =>
+                                      p.id === proc.id ? { ...p, isEditing: false } : p
+                                    ),
+                                  }));
+                                }}
+                              >
+                                Save
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="btn btn-outline-dark btn-sm mb-2"
+                                onClick={() =>
+                                  setProcessesByPart((prev) => ({
+                                    ...prev,
+                                    [activePartItemNo]: prev[activePartItemNo].map((p) =>
+                                      p.id === proc.id ? { ...p, isEditing: true } : p
+                                    ),
+                                  }))
+                                }
+                              >
+                                Edit
+                              </Button>
+                            )}
+
+                            {/* Delete always enabled unless editing */}
+                            <Button
+                              variant="btn btn-outline-danger btn-sm"
+                              onClick={() => removeProcess(proc.id)}
+                              disabled={proc.isEditing}
+                            >
+                              <FaTrash />
+                            </Button>
+                          </div>
                         </td>
+
                       </tr>
                     ))
                   ) : (

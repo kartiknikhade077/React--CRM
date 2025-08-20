@@ -155,10 +155,19 @@ const ProjectRegistrationKickoffSheet = ({
       ? deletedProc.woNo.replace(activePartItemNo, "")
       : null;
 
-    setProcessesByPart((prev) => ({
-      ...prev,
-      [activePartItemNo]: prev[activePartItemNo].filter((p) => p.id !== id),
-    }));
+    // setProcessesByPart((prev) => ({
+    //   ...prev,
+    //   [activePartItemNo]: prev[activePartItemNo].filter((p) => p.id !== id),
+    // }));
+
+    setProcessesByPart((prev) => {
+      const filtered = prev[activePartItemNo].filter((p) => p.id !== id);
+      return {
+        ...prev,
+        [activePartItemNo]: reNumberProcesses(filtered, activePartItemNo),
+      };
+    });
+
 
     if (suffix && suffixOptions.includes(suffix)) {
       setSelectedProcessesByPart((prev) => {
@@ -224,6 +233,102 @@ const ProjectRegistrationKickoffSheet = ({
       [activePartItemNo]: newSelected || [],
     }));
   };
+
+
+
+
+  // Child process
+
+  // Insert a new process below a given parent WO NO (like "PT-1A")
+  const addChildProcess = (parentWoNo) => {
+    const processes = processesByPart[activePartItemNo] || [];
+
+    // Get child rows for this parent (like PT-90B1, PT-90B2…)
+    const childSuffixes = processes
+      .filter((p) => p.parentWorkOrderNo === parentWoNo)
+      .map((p) => p.woNo.replace(parentWoNo, ""))
+      .filter((suf) => /^\d+$/.test(suf));
+
+    const nextChildNum = childSuffixes.length > 0
+      ? Math.max(...childSuffixes.map(Number)) + 1
+      : 1;
+
+    const newProcess = {
+      id: Date.now(),
+      woNo: `${parentWoNo}${nextChildNum}`, // PT-90B1, PT-90B2
+      itemNo: activePartItemNo,
+      parentWorkOrderNo: parentWoNo,          // ⭐ link to parent
+      designer: "",
+      opNo: "",
+      processName: "",
+      length: "",
+      width: "",
+      height: "",
+      remarks: "",
+    };
+
+    // Insert below parent
+    const parentIndex = processes.findIndex((p) => p.woNo === parentWoNo);
+    const updatedProcesses = [...processes];
+    updatedProcesses.splice(parentIndex + 1, 0, newProcess);
+
+  setProcessesByPart((prev) => {
+  const renamed = reNumberProcesses(updatedProcesses, activePartItemNo);
+  return {
+    ...prev,
+    [activePartItemNo]: renamed,
+  };
+});
+
+  };
+
+
+  /** Recursively renames parent and child processes with correct ascending letters/numbers */
+  function reNumberProcesses(processes, activePartItemNo) {
+    // Separate parent/child
+    const parents = processes.filter(p => !p.parentWorkOrderNo);
+    // Alphabet letters
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    let renamedProcesses = [];
+    parents.forEach((parent, i) => {
+      const newLetter = letters[i];
+      const newParentWoNo = `${activePartItemNo}${newLetter}`;
+      // Find children sorted by current child number
+      const children = processes
+        .filter(p => p.parentWorkOrderNo === parent.woNo)
+        .sort((a, b) => {
+          // compare numeric child suffix after parentWorkOrderNo
+          const anum = parseInt(a.woNo.replace(parent.woNo, ""), 10) || 0;
+          const bnum = parseInt(b.woNo.replace(parent.woNo, ""), 10) || 0;
+          return anum - bnum;
+        }
+        );
+      // Rename children with new parent WO NO + ascending number
+      let childProcesses = children.map((child, idx) => ({
+        ...child,
+        parentWorkOrderNo: newParentWoNo,
+        woNo: `${newParentWoNo}${idx + 1}`,
+      }));
+      // Push renamed parent & children
+      renamedProcesses.push({
+        ...parent,
+        woNo: newParentWoNo,
+      });
+      renamedProcesses = renamedProcesses.concat(childProcesses);
+    });
+    // If you support more types (e.g., suffixOptions), keep their order as is
+    // For now, above logic is for A,B,C… parents and direct children
+    return renamedProcesses;
+  }
+
+
+
+
+
+
+
+
 
   const processOptions = [
     { label: "UL", value: "UL" },
@@ -383,9 +488,12 @@ const ProjectRegistrationKickoffSheet = ({
         width: proc.width || "",
         height: proc.height || "",
         remarks: proc.remark || "",
+        parentWorkOrderNo: proc.parentWorkOrderNo || "",
       }));
       console.log("process@@@@@@@@@@@", processes);
-      newProcessesByPart[itemNo] = processes;
+      // newProcessesByPart[itemNo] = processes;
+    newProcessesByPart[itemNo] = reNumberProcesses(processes, itemNo);
+
     });
 
     setParts(newParts);
@@ -815,11 +923,10 @@ const ProjectRegistrationKickoffSheet = ({
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 cursor-pointer ${
-                      activePartItemNo === part.itemNo
-                        ? "bg-primary text-white"
-                        : "bg-light"
-                    }`}
+                    className={`px-3 py-2 me-2 cursor-pointer ${activePartItemNo === part.itemNo
+                      ? "bg-primary text-white"
+                      : "bg-light"
+                      }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >
@@ -855,8 +962,11 @@ const ProjectRegistrationKickoffSheet = ({
                           backgroundColor: proc.cancel
                             ? "#ff5b5b"
                             : proc.scope
-                            ? "#ffff6e"
-                            : "transparent",
+                              ? "#ffff6e"
+                              : proc.parentWorkOrderNo
+
+                                ? "#3bff6f"
+                                : "transparent",
                         }}
                       >
                         <td className="KickoffPrtProcessInpt-TD">
@@ -964,7 +1074,27 @@ const ProjectRegistrationKickoffSheet = ({
                             className="KickoffPrtProcessInpt"
                           />
                         </td>
+                        {/* <td className="text-center KickoffPrtProcessInpt-TD">
+                          <Button
+                            variant="link"
+                            onClick={() => removeProcess(proc.id)}
+                            className="text-danger"
+                          >
+                            <FaTrash />
+                          </Button>
+                        </td> */}
+
                         <td className="text-center KickoffPrtProcessInpt-TD">
+                          {/* Show + only for root/parent processes */}
+                          {!proc.parentWorkOrderNo && (
+                            <Button
+                              variant="link"
+                              onClick={() => addChildProcess(proc.woNo)}
+                              className="text-success me-2"
+                            >
+                              <FaPlusCircle />
+                            </Button>
+                          )}
                           <Button
                             variant="link"
                             onClick={() => removeProcess(proc.id)}
@@ -973,6 +1103,7 @@ const ProjectRegistrationKickoffSheet = ({
                             <FaTrash />
                           </Button>
                         </td>
+
                       </tr>
                     ))
                   ) : (
