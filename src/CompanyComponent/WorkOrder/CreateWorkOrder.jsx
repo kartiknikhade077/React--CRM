@@ -258,7 +258,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
     const processDetails = [];
     const visibleManualParents = processes.filter(p => p.type === 'manual' && !p.sub && !tableData[p.id]?.scope);
 
-    processes.forEach(p => {
+    processes.forEach((p, index) => {
         const rowData = tableData[p.id] || {};
         let woNo = "";
         let isScoped = rowData.scope || false;
@@ -266,16 +266,12 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
         let parentWorkOrderNoForPayload = null; 
 
         if (p.sub) {
-            const parentProcess = processes.find(parent => parent.id === p.parentId);
-            if (parentProcess && (tableData[parentProcess.id]?.scope || false)) {
-                return; 
-            }
-            const parentIndex = visibleManualParents.findIndex(parent => parent.id === p.parentId);
-            if (parentIndex >= 0) { 
-                const parentWoNo = `PT-${itemNo}${String.fromCharCode(65 + parentIndex)}`;
-                parentWorkOrderNoForPayload = parentWoNo; 
-            }
-        }
+          const parentIndex = visibleManualParents.findIndex(parent => parent.id === p.parentId);
+          if (parentIndex >= 0) { 
+                const parentWoNo = `PT-${itemNo}${String.fromCharCode(65 + parentIndex)}`;
+                parentWorkOrderNoForPayload = parentWoNo; 
+            }
+        }
 
         if (isScoped) {
             woNo = "XX";
@@ -303,6 +299,7 @@ const CreateWorkOrder = ({ show, onClose, onSave }) => {
         }
 
         processDetails.push({
+            sequence: index + 1,
             itemNo: itemNo,
             workOrderNo: woNo,
             cancel: rowData.cancel || false,
