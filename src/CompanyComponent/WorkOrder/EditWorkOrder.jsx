@@ -35,6 +35,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
     const [processesSuggestionsOptions, setProcessesSuggestionsOptions] = useState([]);
     const [processesSuggestionsLoading, setProcessesSuggestionsLoading] = useState();
     const [itemsToDelete, setItemsToDelete] = useState([]);
+    const [imagesToDelete, setImagesToDelete] = useState([]); 
 
     const [formData, setFormData] = useState({
         partName: '',
@@ -72,6 +73,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             setSelectedProcesses([]);
             setDisabledProcessValues([]);
             setItemsToDelete([]);
+            setImagesToDelete([]);
         };
     }, [workOrderId, show]);
 
@@ -234,6 +236,20 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
         else if (!isItemNoUnique) { toast.error("The entered Item Number is already in use by another work order."); hasError = true; }
         
         if (hasError) return;
+
+        if (imagesToDelete.length > 0) {
+        try {
+            for (const imageId of imagesToDelete) {
+                await axiosInstance.delete(`/work/deleteWorkOrderImage/${imageId}`);
+            }
+            console.log("Successfully deleted all staged images one by one.");
+            
+        } catch (error) {
+            console.error("❌ Failed to delete one of the images:", error);
+            toast.error("Could not complete image deletion. Please try again.");
+            return;
+        }
+    }
 
         if (itemsToDelete.length > 0) {
             try {
@@ -461,20 +477,14 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
       setImages(prev => [...prev, ...newImages]);
     };
 
-    const handleDeleteImage = async (idx, isExisting,imgId) => {
-      if (isExisting) {
-        const res = await axiosInstance.delete(`/work/deleteWorkOrderImage/${imgId}`);
-        if(res.data){
-          toast.success("Image deleted successfully!")
-        }else{
-          toast.error("Something wents wrong while deleting the image...")
-
-        }
-        setExistingImages(prev => prev.filter((_, i) => i !== idx));
-      } else {
-        setImages(prev => prev.filter((_, i) => i !== idx));
-      }
-    };
+    const handleDeleteImage = (idx, isExisting, imgId) => {
+        if (isExisting) {
+            setImagesToDelete(prev => [...prev, imgId]);
+            setExistingImages(prev => prev.filter((_, i) => i !== idx));
+        } else {
+            setImages(prev => prev.filter((_, i) => i !== idx));
+        }
+    };
 
     const handleTableInputChange = (id, field, value) => {
       setTableData(prevData => {
@@ -1095,7 +1105,10 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
                                             <Select
                                                 options={processesSuggestionsOptions}
                                                 isLoading={processesSuggestionsLoading}
-                                                value={processesSuggestionsOptions.find(option => option.value === data.process)}
+                                                value={
+                                                    processesSuggestionsOptions.find(option => option.value === data.process) ||
+                                                    (data.process ? { label: data.process, value: data.process } : null)
+                                                }
                                                 onChange={(selectedOption) => handleTableInputChange(p.id, "process", selectedOption ? selectedOption.value : "")}
                                                 placeholder="Select Process..."
                                                 menuPosition="fixed"
