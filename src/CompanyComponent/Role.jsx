@@ -18,11 +18,11 @@ const RoleModel = () => {
   const [editMode, setEditMode] = useState(false);
   const [size, setSize] = useState(5);
 
-   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-   const handleToggle = () => {
-     setIsCollapsed(!isCollapsed);
-   };
+  const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
 
   const [selectedRole, setSelectedRole] = useState({
@@ -32,6 +32,17 @@ const RoleModel = () => {
     templateAccess: false,
     emailAccess: false,
     leadAccess: false,
+    customerViewAll: false,
+    customerOwnView: false,
+    customerCreate: false,
+    customerDelete: false,
+    customerEdit: false,
+    projectViewAll: false,
+    projectOwnView: false,
+    projectCreate: false,
+    projectDelete: false,
+    projectEdit: false
+
   });
 
   useEffect(() => {
@@ -56,6 +67,16 @@ const RoleModel = () => {
         templateAccess: false,
         emailAccess: false,
         leadAccess: false,
+        customerViewAll: false,
+        customerOwnView: false,
+        customerCreate: false,
+        customerDelete: false,
+        customerEdit: false,
+        projectViewAll: false,
+        projectOwnView: false,
+        projectCreate: false,
+        projectDelete: false,
+        projectEdit: false
       });
     }
   };
@@ -69,43 +90,53 @@ const RoleModel = () => {
     }
   };
 
-const fetchRoles = async () => {
-  try {
-    const response = await axiosInstance.get(
-      `/company/getRoleByCompanyId/${page}/${size}`
-    );
+  const fetchRoles = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/company/getRoleByCompanyId/${page}/${size}`
+      );
 
-    const roleList = response.data.roles || response.data.content || [];
+      const roleList = response.data.roles || response.data.content || [];
 
-    setRoles(Array.isArray(roleList) ? roleList : []);
-    setTotalPages(response.data.totalPages || 1);
-  } catch (error) {
-    console.error("Failed to fetch roles:", error);
-  }
-};
+      setRoles(Array.isArray(roleList) ? roleList : []);
+      setTotalPages(response.data.totalPages || 1);
+    } catch (error) {
+      console.error("Failed to fetch roles:", error);
+    }
+  };
 
 
   const saveRole = async (e) => {
     e.preventDefault(); // Prevent form from refreshing the page
-   const formData = new FormData(e.target);
-   const rawData = Object.fromEntries(formData.entries());
+    const formData = new FormData(e.target);
+    const rawData = Object.fromEntries(formData.entries());
 
-   const data = {
-     ...rawData,
-     roleId: rawData.roleId ? rawData.roleId : null,
-     departmentId: rawData.departmentId,
-     roleName: rawData.roleName,
-     templateAccess: e.target.templateAccess.checked,
-     emailAccess: e.target.emailAccess.checked,
-     leadAccess: e.target.leadAccess.checked,
-   };
+    const data = {
+      ...rawData,
+      roleId: rawData.roleId ? rawData.roleId : null,
+      departmentId: rawData.departmentId,
+      roleName: rawData.roleName,
+      templateAccess: e.target.templateAccess.checked,
+      emailAccess: e.target.emailAccess.checked,
+      leadAccess: e.target.leadAccess.checked,
+      customerViewAll: e.target.customerViewAll.checked,
+      customerOwnView: e.target.customerOwnView.checked,
+      customerCreate: e.target.customerCreate.checked,
+      customerDelete: e.target.customerDelete.checked,
+      customerEdit: e.target.customerEdit.checked,
+      projectViewAll: e.target.projectViewAll.checked,
+      projectOwnView: e.target.projectOwnView.checked,
+      projectCreate: e.target.projectCreate.checked,
+      projectDelete: e.target.projectDelete.checked,
+      projectEdit: e.target.projectEdit.checked
+    };
 
 
 
     try {
       if (editMode) {
         // Ensure roleId is sent for update
-     
+
 
         await axiosInstance.put("/company/updateRole", data);
       } else {
@@ -120,7 +151,7 @@ const fetchRoles = async () => {
   };
 
   const fetchByRoleId = async (roleId) => {
- 
+
 
     try {
       const response = await axiosInstance.get(
@@ -134,6 +165,16 @@ const fetchRoles = async () => {
         templateAccess: role.templateAccess,
         emailAccess: role.emailAccess,
         leadAccess: role.leadAccess,
+        customerViewAll: role.customerViewAll,
+        customerOwnView: role.customerOwnView,
+        customerCreate: role.customerCreate,
+        customerDelete: role.customerDelete,
+        customerEdit: role.customerEdit,
+        projectViewAll: role.projectViewAll,
+        projectOwnView: role.projectOwnView,
+        projectCreate: role.projectCreate,
+        projectDelete: role.projectDelete,
+        projectEdit: role.projectEdit
       });
       handleShowRoleModel(true);
 
@@ -290,6 +331,126 @@ const fetchRoles = async () => {
                       defaultChecked={selectedRole.leadAccess}
                     />
                     <label className="form-check-label">Lead Access</label>
+                  </div>
+
+                  <div>
+                    <hr></hr>
+                    <h4>Customer </h4>
+                    <div>
+
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="customerViewAll"
+                          value="true"
+                          defaultChecked={selectedRole.customerViewAll}
+                        />
+                        <label className="form-check-label">View All Access</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="customerOwnView"
+                          value="true"
+                          defaultChecked={selectedRole.customerOwnView}
+                        />
+                        <label className="form-check-label">View Own Access</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="customerCreate"
+                          value="true"
+                          defaultChecked={selectedRole.customerCreate}
+                        />
+                        <label className="form-check-label">Create</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="customerDelete"
+                          value="true"
+                          defaultChecked={selectedRole.customerDelete}
+                        />
+                        <label className="form-check-label">Delete</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="customerEdit"
+                          value="true"
+                          defaultChecked={selectedRole.customerEdit}
+                        />
+                        <label className="form-check-label">Edit</label>
+                      </div>
+
+
+                    </div>
+
+                  </div>
+                  <div>
+                    <hr></hr>
+                    <h4>Project </h4>
+                    <div>
+
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="projectViewAll"
+                          value="true"
+                          defaultChecked={selectedRole.projectViewAll}
+                        />
+                        <label className="form-check-label">View All Access</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="projectOwnView"
+                          value="true"
+                          defaultChecked={selectedRole.projectOwnView}
+                        />
+                        <label className="form-check-label">View Own Access</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="projectCreate"
+                          value="true"
+                          defaultChecked={selectedRole.projectCreate}
+                        />
+                        <label className="form-check-label">Create</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="projectDelete"
+                          value="true"
+                          defaultChecked={selectedRole.projectDelete}
+                        />
+                        <label className="form-check-label">Delete</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="projectEdit"
+                          value="true"
+                          defaultChecked={selectedRole.projectEdit}
+                        />
+                        <label className="form-check-label">Edit</label>
+                      </div>
+
+                    </div>
+
                   </div>
                 </div>
 

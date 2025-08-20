@@ -35,6 +35,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
     const [processesSuggestionsOptions, setProcessesSuggestionsOptions] = useState([]);
     const [processesSuggestionsLoading, setProcessesSuggestionsLoading] = useState();
     const [itemsToDelete, setItemsToDelete] = useState([]);
+    const [imagesToDelete, setImagesToDelete] = useState([]); 
 
     const [formData, setFormData] = useState({
         partName: '',
@@ -72,6 +73,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             setSelectedProcesses([]);
             setDisabledProcessValues([]);
             setItemsToDelete([]);
+            setImagesToDelete([]);
         };
     }, [workOrderId, show]);
 
@@ -132,7 +134,7 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             const res = await axiosInstance.get(`/work/getWorkOrderById/${workOrderId}`);
             const data = res.data;
             const { workOrder, workImages, workOrderItems } = data;
-
+            workOrderItems.sort((a, b) => a.srNo - b.srNo);
             // Set form data for the top section
             setFormData({
                 partName: workOrder.partName,
@@ -235,6 +237,20 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
         
         if (hasError) return;
 
+        if (imagesToDelete.length > 0) {
+        try {
+            for (const imageId of imagesToDelete) {
+                await axiosInstance.delete(`/work/deleteWorkOrderImage/${imageId}`);
+            }
+            console.log("Successfully deleted all staged images one by one.");
+            
+        } catch (error) {
+            console.error("❌ Failed to delete one of the images:", error);
+            toast.error("Could not complete image deletion. Please try again.");
+            return;
+        }
+    }
+
         if (itemsToDelete.length > 0) {
             try {
                 await axiosInstance.delete("/work/deleteWorkOrderItems", { 
@@ -252,100 +268,104 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
         const processDetails = [];
         const visibleManualParents = processes.filter(p => p.type === 'manual' && !p.sub && !tableData[p.id]?.scope);
 
-        processes.forEach(p => {
-            const rowData = tableData[p.id] || {};
-            if (p.isOrphan) {
-              processDetails.push({
-                  workOrderNo: 'XX',
-                  parentWorkOrderNo: 'XX',
-                  itemNo: itemNo,
-                  cancel: rowData.cancel || false,
-                  scope: rowData.scope || false,
-                  operationNumber: rowData.opNo && rowData.opNo !== '' ? parseInt(rowData.opNo, 10) : -1,
-                  proceess: rowData.process || '',
-                  length: parseFloat(rowData.l || '0'),
-                  width: parseFloat(rowData.w || '0'),
-                  height: parseFloat(rowData.h || '0'),
-                  remark: rowData.remarks || '',
-                  itemId: rowData.itemId || null,
-              });
-              return; // Skip to the next process
-            }
+        processes.forEach((p, index) => {
+        const rowData = tableData[p.id] || {};
 
-            const parentExists = p.sub && processes.some(parent => parent.id === p.parentId);
-              if (p.sub && !parentExists) {
-                  processDetails.push({
-                      workOrderNo: 'XX',
-                      parentWorkOrderNo: 'XX',
-                      itemNo: itemNo,
-                      cancel: rowData.cancel || false,
-                      scope: rowData.scope || false,
-                      operationNumber: rowData.opNo && rowData.opNo !== '' ? parseInt(rowData.opNo, 10) : -1,
-                      proceess: rowData.process || '',
-                      length: parseFloat(rowData.l || '0'),
-                      width: parseFloat(rowData.w || '0'),
-                      height: parseFloat(rowData.h || '0'),
-                      remark: rowData.remarks || '',
-                      itemId: rowData.itemId || null,
-                  });
-                  return; 
-              }
-              
-            let woNo = "";
-            let isScoped = rowData.scope || false;
-            let parentWorkOrderNoForPayload = null;
-
-            if (p.sub) {
-                const parentProcess = processes.find(parent => parent.id === p.parentId);
-                if (parentProcess && (tableData[parentProcess.id]?.scope || false)) {
-                    return;
-                }
-                const parentIndex = visibleManualParents.findIndex(parent => parent.id === p.parentId);
-                if (parentIndex >= 0) {
-                    const parentWoNo = `PT-${itemNo}${String.fromCharCode(65 + parentIndex)}`;
-                    parentWorkOrderNoForPayload = parentWoNo;
-                }
-            }
-
-            if (isScoped) {
-                woNo = "XX";
-            } else if (p.type === "select") {
-                woNo = p.woNo;
-            } else if (p.sub) {
-                if (parentWorkOrderNoForPayload) {
-                    const visibleSiblings = processes.filter(s => s.parentId === p.parentId && !tableData[s.id]?.scope);
-                    const subIndex = visibleSiblings.findIndex(s => s.id === p.id);
-                    woNo = (subIndex >= 0) ? `${parentWorkOrderNoForPayload}${subIndex + 1}` : 'XX';
-                } else {
-                    woNo = "XX";
-                }
-            } else { // Manual Parent
-                const manualIndex = visibleManualParents.findIndex(proc => proc.id === p.id);
-                woNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
-            }
-            
-            let operationNumberValue;
-            if (p.type === 'select') {
-                operationNumberValue = 0;
-            } else {
-                operationNumberValue = rowData.opNo && rowData.opNo !== '' ? parseInt(rowData.opNo, 10) : -1;
-            }
-
+        
+        if (p.isOrphan) {
             processDetails.push({
+                sequence: index + 1,
+                workOrderNo: 'XX',
+                parentWorkOrderNo: 'XX',
                 itemNo: itemNo,
-                workOrderNo: woNo,
                 cancel: rowData.cancel || false,
                 scope: rowData.scope || false,
-                operationNumber: operationNumberValue,
+                operationNumber: rowData.opNo && rowData.opNo !== '' ? parseInt(rowData.opNo, 10) : -1,
                 proceess: rowData.process || '',
                 length: parseFloat(rowData.l || '0'),
                 width: parseFloat(rowData.w || '0'),
                 height: parseFloat(rowData.h || '0'),
                 remark: rowData.remarks || '',
-                parentWorkOrderNo: parentWorkOrderNoForPayload,
-                itemId: rowData.itemId || null, // Pass itemId for updates
+                itemId: rowData.itemId || null,
             });
+            return;
+        }
+        
+       
+        const parentExists = p.sub && processes.some(parent => parent.id === p.parentId);
+        if (p.sub && !parentExists) {
+            processDetails.push({
+                sequence: index + 1,
+                workOrderNo: 'XX',
+                parentWorkOrderNo: 'XX',
+                itemNo: itemNo,
+                cancel: rowData.cancel || false,
+                scope: rowData.scope || false,
+                operationNumber: rowData.opNo && rowData.opNo !== '' ? parseInt(rowData.opNo, 10) : -1,
+                proceess: rowData.process || '',
+                length: parseFloat(rowData.l || '0'),
+                width: parseFloat(rowData.w || '0'),
+                height: parseFloat(rowData.h || '0'),
+                remark: rowData.remarks || '',
+                itemId: rowData.itemId || null,
+            });
+            return; 
+        }
+        
+        let woNo = "";
+        let isScoped = rowData.scope || false;
+        let parentWorkOrderNoForPayload = null;
+
+        if (p.sub) {
+
+            const parentIndex = visibleManualParents.findIndex(parent => parent.id === p.parentId);
+            if (parentIndex >= 0) {
+                const parentWoNo = `PT-${itemNo}${String.fromCharCode(65 + parentIndex)}`;
+                parentWorkOrderNoForPayload = parentWoNo;
+            }
+        }
+
+        if (isScoped) {
+            woNo = "XX";
+        } else if (p.type === "select") {
+            woNo = p.woNo;
+        } else if (p.sub) {
+            if (parentWorkOrderNoForPayload) {
+                const visibleSiblings = processes.filter(s => s.parentId === p.parentId && !tableData[s.id]?.scope);
+                const subIndex = visibleSiblings.findIndex(s => s.id === p.id);
+                woNo = (subIndex >= 0) ? `${parentWorkOrderNoForPayload}${subIndex + 1}` : 'XX';
+            } else {
+                woNo = "XX";
+                parentWorkOrderNoForPayload = "XX"; 
+            }
+        } else {
+            const manualIndex = visibleManualParents.findIndex(proc => proc.id === p.id);
+            woNo = `PT-${itemNo}${String.fromCharCode(65 + manualIndex)}`;
+        }
+        
+        let operationNumberValue;
+        if (p.type === 'select') {
+            operationNumberValue = 0;
+        } else {
+            operationNumberValue = rowData.opNo && rowData.opNo !== '' ? parseInt(rowData.opNo, 10) : -1;
+        }
+
+        processDetails.push({
+            sequence: index + 1,
+            itemNo: itemNo,
+            workOrderNo: woNo,
+            cancel: rowData.cancel || false,
+            scope: rowData.scope || false,
+            operationNumber: operationNumberValue,
+            proceess: rowData.process || '',
+            length: parseFloat(rowData.l || '0'),
+            width: parseFloat(rowData.w || '0'),
+            height: parseFloat(rowData.h || '0'),
+            remark: rowData.remarks || '',
+            parentWorkOrderNo: parentWorkOrderNoForPayload,
+            itemId: rowData.itemId || null,
         });
+    });
 
         const payload = {
             partName: formData.partName,
@@ -368,7 +388,6 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
             newImagesForm.append("images", img.file);
         });
 
-        // Only call if there are new images to upload
         if (images.length > 0) {
             try {
                 await axiosInstance.post("/work/newWorkOrderImages", newImagesForm, {
@@ -458,20 +477,14 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
       setImages(prev => [...prev, ...newImages]);
     };
 
-    const handleDeleteImage = async (idx, isExisting,imgId) => {
-      if (isExisting) {
-        const res = await axiosInstance.delete(`/work/deleteWorkOrderImage/${imgId}`);
-        if(res.data){
-          toast.success("Image deleted successfully!")
-        }else{
-          toast.error("Something wents wrong while deleting the image...")
-
-        }
-        setExistingImages(prev => prev.filter((_, i) => i !== idx));
-      } else {
-        setImages(prev => prev.filter((_, i) => i !== idx));
-      }
-    };
+    const handleDeleteImage = (idx, isExisting, imgId) => {
+        if (isExisting) {
+            setImagesToDelete(prev => [...prev, imgId]);
+            setExistingImages(prev => prev.filter((_, i) => i !== idx));
+        } else {
+            setImages(prev => prev.filter((_, i) => i !== idx));
+        }
+    };
 
     const handleTableInputChange = (id, field, value) => {
       setTableData(prevData => {
@@ -1092,7 +1105,10 @@ const EditWorkOrder = ({ show, onClose, workOrderId, onUpdate }) => {
                                             <Select
                                                 options={processesSuggestionsOptions}
                                                 isLoading={processesSuggestionsLoading}
-                                                value={processesSuggestionsOptions.find(option => option.value === data.process)}
+                                                value={
+                                                    processesSuggestionsOptions.find(option => option.value === data.process) ||
+                                                    (data.process ? { label: data.process, value: data.process } : null)
+                                                }
                                                 onChange={(selectedOption) => handleTableInputChange(p.id, "process", selectedOption ? selectedOption.value : "")}
                                                 placeholder="Select Process..."
                                                 menuPosition="fixed"

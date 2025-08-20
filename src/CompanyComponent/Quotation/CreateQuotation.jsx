@@ -23,13 +23,6 @@ const currencyOptions = [
   { value: 'INR', label: 'INR - Indian Rupee' },
   { value: 'EUR', label: 'EUR - Euro' }
 ];
-const countryOptions = [
-  { value: 'AF', label: 'Afghanistan' },
-  { value: 'IN', label: 'India' },
-  { value: 'US', label: 'United States' }
-];
-const stateOptions = [{ value: 'Balkh', label: 'Balkh' }];
-const cityOptions = [{ value: 'Dowlatābād', label: 'Dowlatābād' }]
 
 const CreateQuotation = ({ onCancel, onSave }) => {
   // --- State for top-level form fields ---
@@ -38,7 +31,7 @@ const CreateQuotation = ({ onCancel, onSave }) => {
   const [contactPerson, setContactPerson] = useState("");
   const [quotationNo, setQuotationNo] = useState("");
   const [supplierCode, setSupplierCode] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [quotationDate, setQuotationDate] = useState(new Date().toISOString().split('T')[0]);
   const [openTill, setOpenTill] = useState("");
   const [currency, setCurrency] = useState(null);
   const [status, setStatus] = useState(null);
@@ -250,6 +243,102 @@ const CreateQuotation = ({ onCancel, onSave }) => {
   const sgst = grandSubtotal * 0.09;
   const total = grandSubtotal + cgst + sgst;
 
+  // --- Payload Generation and Save Handler ---
+
+  const fileToBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    // This check is important. If it's not a file/blob, it might be an already converted string.
+    if (!(file instanceof Blob)) {
+      resolve(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64String = reader.result.split(",")[1]; // Get only the base64 part
+      resolve(base64String);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+
+  const handleSave = async () => {
+    try {
+      const quotationInfo = {
+        companyName: companyName,
+        contactPersonName: contactPerson,
+        address: address,
+        refrence: reference,
+        quotationDate: quotationDate,
+        validDate: openTill,
+        quotationNumber: quotationNo,
+        supplierCode: supplierCode,
+        projectName: projectName,
+        currency: currency ? currency.value : null,
+        status: status ? status.value : null,
+        email: email,
+        phone: phone,
+        country: country,
+        state: state,
+        city: city,
+        zip: zip,
+      };
+
+      const quotationParts = await Promise.all(
+        partsData.map(async (part) => {
+          const cleanedProcesses = part.processes.map((proc) => ({
+            oprationNumber: proc.opNo,
+            description: proc.description,
+            length: parseFloat(proc.l) || 0,
+            width: parseFloat(proc.w) || 0,
+            height: parseFloat(proc.h) || 0,
+            factor: parseFloat(proc.factor) || 0,
+            rate: parseFloat(proc.rate) || 0,
+            totalCost: parseFloat(proc.toolCost) || 0,
+          }));
+
+          // --- THIS IS THE FIX ---
+          // Pass 'image.file' to the converter, not the whole 'image' object.
+          const partImagesArray = await Promise.all(
+            part.images.map((image) => fileToBase64(image.file))
+          );
+
+          return {
+            partName: part.partName ? part.partName.label : "",
+            partNo: part.partNumber,
+            material: part.material ? part.material.label : "",
+            thickness: part.thickness ? part.thickness.label : "",
+            partSize: part.partSize,
+            partWeight: part.partWeight,
+            partProcess: cleanedProcesses,
+            partImages: partImagesArray, 
+          };
+        })
+      );
+
+      const payload = {
+        quotationInfo,
+        quotationParts,
+        quotationConsiderations: [],
+      };
+
+      console.log("--- SENDING JSON PAYLOAD ---", JSON.stringify(payload, null, 2));
+
+      const response = await axiosInstance.post(
+        "/sales/createQuotation",
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      toast.success("Quotation saved successfully.");
+      console.log("Backend Response:", response.data);
+
+    } catch (error) {
+      console.error("Error saving quotation:", error.response ? error.response.data : error.message);
+      toast.error("Failed to save quotation. Please check the console for details.");
+    }
+  };
+
+
   return (
     <Card>
       <Card.Header className="quotation-header">
@@ -266,7 +355,7 @@ const CreateQuotation = ({ onCancel, onSave }) => {
           <Row className="mb-3">
             <Col md={3}><Form.Group><Form.Label>Quotation No <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={quotationNo} onChange={(e) => setQuotationNo(e.target.value)} /></Form.Group></Col>
             <Col md={3}><Form.Group><Form.Label>Supplier Code</Form.Label><Form.Control type="text" value={supplierCode} onChange={(e) => setSupplierCode(e.target.value)} /></Form.Group></Col>
-            <Col md={3}><Form.Group><Form.Label>Date <span className="text-danger">*</span></Form.Label><Form.Control type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Form.Group></Col>
+            <Col md={3}><Form.Group><Form.Label>Quotation Date <span className="text-danger">*</span></Form.Label><Form.Control type="date" value={quotationDate} onChange={(e) => setQuotationDate(e.target.value)} /></Form.Group></Col>
             <Col md={3}><Form.Group><Form.Label>Open Till</Form.Label><Form.Control type="date" value={openTill} onChange={(e) => setOpenTill(e.target.value)} /></Form.Group></Col>
           </Row>
           <Row className="mb-3">
@@ -280,9 +369,9 @@ const CreateQuotation = ({ onCancel, onSave }) => {
             <Col md={3}><Form.Group><Form.Label>Phone <span className="text-danger">*</span></Form.Label><Form.Control type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></Form.Group></Col>
           </Row>
           <Row className="mb-3">
-            <Col md={3}><Form.Group><Form.Label>Country <span className="text-danger">*</span></Form.Label><Select options={countryOptions} value={country} onChange={setCountry} placeholder="Select Country" /></Form.Group></Col>
-            <Col md={3}><Form.Group><Form.Label>State <span className="text-danger">*</span></Form.Label><Select options={stateOptions} value={state} onChange={setState} placeholder="Select State" /></Form.Group></Col>
-            <Col md={3}><Form.Group><Form.Label>City <span className="text-danger">*</span></Form.Label><Select options={cityOptions} value={city} onChange={setCity} placeholder="Select City" /></Form.Group></Col>
+            <Col md={3}><Form.Group><Form.Label>Country <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={city} onChange={(e) => setCity(e.target.value)} /></Form.Group></Col>
+            <Col md={3}><Form.Group><Form.Label>State <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={state} onChange={(e) => setState(e.target.value)} /></Form.Group></Col>
+            <Col md={3}><Form.Group><Form.Label>City <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={country} onChange={(e) => setCountry(e.target.value)} /></Form.Group></Col>
             <Col md={3}><Form.Group><Form.Label>Zip <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={zip} onChange={(e) => setZip(e.target.value)} /></Form.Group></Col>
           </Row>
           <Row className="mb-3">
@@ -436,7 +525,7 @@ const CreateQuotation = ({ onCancel, onSave }) => {
       </Card.Body>
       <Card.Footer className="text-end quotation-footer">
         <Button variant="outline-secondary" onClick={onCancel} className="me-2">Cancel</Button>
-        <Button variant="primary" onClick={onSave}>Save Quotation</Button>
+        <Button variant="primary" onClick={handleSave}>Save Quotation</Button>
       </Card.Footer>
     </Card>
   );
