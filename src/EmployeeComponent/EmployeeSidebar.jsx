@@ -24,9 +24,9 @@ const EmployeeSidebar = ({ isCollapsed }) => {
             location.pathname === "/empHome" ? "active" : ""
           }`}
         >
-          <Link to="/empHome">
+          <Link to="/employee/cutomerList">
             <FaHome />
-            {!isCollapsed && <span>Home</span>}
+            {!isCollapsed && <span>Customer</span>}
           </Link>
         </li>
         <li
