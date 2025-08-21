@@ -12,6 +12,7 @@ import {
 import { FaTrash, FaPlusCircle } from "react-icons/fa";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
 import { toast } from "react-toastify";
+import CreatableSelect from "react-select/creatable";
 
 const CompanyUpdateProjectRegistrationKickoffSheet = ({
   eventKey,
@@ -46,6 +47,24 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
   const [latestItemNumber, setLatestItemNumber] = useState(0);
   const [employeeList, setEmployeeList] = useState([]);
   const [selectedProcessesByPart, setSelectedProcessesByPart] = useState({});
+
+  const [partOptions, setPartOptions] = useState([]); // List of dropdown options
+  const [loadingPart, setLoadingPart] = useState(false); // Loader for dropdown actions
+
+  const [materialOptions, setMaterialOptions] = useState([]);
+  const [loadingMaterial, setLoadingMaterial] = useState(false);
+
+  const [thicknessOptions, setThicknessOptions] = useState([]);
+  const [loadingThickness, setLoadingThickness] = useState(false);
+
+  const [processLoading, setProcessLoading] = useState(false);
+  const [processOptions, setProcessOptions] = useState([]);
+
+  const [processesSuggestionsOptions, setProcessesSuggestionsOptions] =
+    useState([]);
+  const [processesSuggestionsLoading, setProcessesSuggestionsLoading] =
+    useState(false);
+  const [suffixOptions, setSuffixOptions] = useState([]);
 
   const flattenProcessesByPart = (pbp) => Object.values(pbp).flat();
 
@@ -144,11 +163,8 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     axiosInstance
       .get(`/work/getWorkOrderItemsByProjectId/${selectedProjectId}`)
       .then((res) => {
-
-
         console.log("**********selected project data--", res.data);
         if (res.data) {
-
           populatePartsAndProcesses(res.data);
         }
       })
@@ -172,6 +188,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
     const newParts = [];
     const newProcessesByPart = {};
+    const newSelectedByPart = {};
 
     partDetails.forEach((partDetail, index) => {
       const itemNo = `PT-${partDetail.itemNo}`;
@@ -209,35 +226,232 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         itemNo,
         designer: proc.employeeId || "",
         designerName: proc.designerName || "",
-        opNo: proc.opNo || "",
+        opNo: proc.operationNumber?.toString() || "",
         processName: proc.proceess || proc.process || "",
         length: proc.length || "",
         width: proc.width || "",
         height: proc.height || "",
         remarks: proc.remark || proc.remarks || "",
         isEditing: false,
+        parentWorkOrderNo: proc.parentWorkOrderNo || "",
+        isFromPartProcess: proc.operationNumber === 0,
       }));
       console.log("process@@@@@@@@@@@ in Update", processes);
       // newProcessesByPart[itemNo] = processes;
-      newProcessesByPart[itemNo] = reNumberProcesses(processes, itemNo);
+      // newProcessesByPart[itemNo] = reNumberProcesses(processes, itemNo);
 
+      const selectedForPart = processes
+        .filter((p) => p.opNo === "0")
+        .map((p) => {
+          // Extract suffix from woNo
+          const suffix = p.woNo.replace(itemNo, "");
+
+          // Find if dropdown options has this suffix
+          const matchedOption = processOptions.find(
+            (opt) => opt.value === suffix
+          );
+
+          // Return actual dropdown option if found, else fallback to archived
+          return matchedOption
+            ? matchedOption
+            : { value: suffix, label: suffix || "Archived" };
+        });
+
+      newSelectedByPart[itemNo] = selectedForPart;
+      newProcessesByPart[itemNo] = processes;
     });
+
+    // For dropdown, select process with opNo '0' and map to existing options or mark as archived
 
     setParts(newParts);
     setProcessesByPart(newProcessesByPart);
+    setSelectedProcessesByPart(newSelectedByPart);
+
     if (newParts.length > 0) {
       setActivePartItemNo(newParts[0].itemNo);
     }
 
     // Set latest item number
-    const numbers = newParts.map((p) => {
-      const match = `${p.itemNo}`.match(/PT-(\d+)/);
-      return match ? parseInt(match[1], 10) : 0;
-    });
-    setLatestItemNumber(numbers.length ? Math.max(...numbers) : 0);
+    // const numbers = newParts.map((p) => {
+    //   const match = `${p.itemNo}`.match(/PT-(\d+)/);
+    //   return match ? parseInt(match[1], 10) : 0;
+    // });
+    // setLatestItemNumber(numbers.length ? Math.max(...numbers) : 0);
   };
 
+  // =============Dropdown ============
+  const handlePartsCreateOption = async (inputValue, partId) => {
+    setLoadingPart(true);
+    try {
+      const res = await axiosInstance.post(`/work/addPart/${inputValue}`);
+      const newOption = {
+        label: res.data.partName,
+        value: res.data.partId,
+      };
+      setPartOptions((prev) => [...prev, newOption]);
+      // Immediately update the partName of the relevant part so dropdown shows selected
+      updatePart(partId, "partName", newOption.label);
+      toast.success(`Added "${newOption.label}"`);
+    } catch (err) {
+      toast.error("Failed to add part");
+    } finally {
+      setLoadingPart(false);
+    }
+  };
+
+  const fetchParts = async () => {
+    try {
+      setLoadingPart(true);
+
+      const res = await axiosInstance.get("/work/getAllParts");
+      const options = res.data.map((p) => ({
+        label: p.partName,
+        value: p.partId,
+      }));
+      setPartOptions(options);
+    } catch (err) {
+      toast.error("Failed to load parts");
+    } finally {
+      setLoadingPart(false);
+    }
+  };
+
+  const handlePartsSelect = (selectedOption, actionMeta, partId) => {
+    if (selectedOption) {
+      // If an option is selected, set both id and display label
+      updatePart(partId, "partName", selectedOption.label);
+      // Optionally, store the partId (backend id) in your part object as well, if needed:
+      // updatePart(partId, "partMasterId", selectedOption.value);
+    } else {
+      // Cleared selection
+      updatePart(partId, "partName", "");
+      // updatePart(partId, "partMasterId", null);
+    }
+  };
+
+  // helpers
+  function ensureValueInOptions(options, value) {
+    if (!value) return options;
+    const exists = options.some(
+      (option) => option.label === value || option.value === value
+    );
+    return exists ? options : [...options, { label: value, value }];
+  }
+
+  const fetchMaterial = async () => {
+    try {
+      setLoadingMaterial(true);
+      const res = await axiosInstance.get("/work/getAllMaterials");
+      const options = res.data.map((p) => ({
+        label: p.materialName,
+        value: p.materialId,
+      }));
+      setMaterialOptions(options);
+    } catch (err) {
+      toast.error("Failed to load materials");
+    } finally {
+      setLoadingMaterial(false);
+    }
+  };
+
+  const handleMaterialCreateOption = async (inputValue, partId) => {
+    setLoadingMaterial(true);
+    try {
+      const res = await axiosInstance.post(`/work/addMaterial/${inputValue}`);
+      const newOption = {
+        label: res.data.materialName,
+        value: res.data.materialId,
+      };
+      setMaterialOptions((prev) => [...prev, newOption]);
+      updatePart(partId, "material", newOption.label); // Select the newly created option immediately
+      toast.success(`Added "${newOption.label}"`);
+    } catch (err) {
+      toast.error("Failed to add material");
+    } finally {
+      setLoadingMaterial(false);
+    }
+  };
+
+  const handleMaterialSelect = (selectedOption, actionMeta, partId) => {
+    if (selectedOption) {
+      updatePart(partId, "material", selectedOption.label);
+    } else {
+      updatePart(partId, "material", "");
+    }
+  };
+
+  function ensureValueInOptions(options, value) {
+    if (!value) return options;
+    const exists = options.some(
+      (option) => option.label === value || option.value === value
+    );
+    return exists ? options : [...options, { label: value, value }];
+  }
+
+  const fetchThickness = async () => {
+    try {
+      setLoadingThickness(true);
+      const res = await axiosInstance.get("/work/getAllThicknesses");
+      const options = res.data.map((p) => ({
+        label: p.thicknessName,
+        value: p.thicknessId,
+      }));
+      setThicknessOptions(options);
+    } catch (err) {
+      toast.error("Failed to load thicknesses");
+    } finally {
+      setLoadingThickness(false);
+    }
+  };
+
+  const handleThicknessCreateOption = async (inputValue, partId) => {
+    setLoadingThickness(true);
+    try {
+      const res = await axiosInstance.post(`/work/addThickness/${inputValue}`);
+      const newOption = {
+        label: res.data.thicknessName,
+        value: res.data.thicknessId,
+      };
+      setThicknessOptions((prev) => [...prev, newOption]);
+      updatePart(partId, "thickness", newOption.label); // Select new thickness immediately
+      toast.success(`Added "${newOption.label}"`);
+    } catch (err) {
+      toast.error("Failed to add thickness");
+    } finally {
+      setLoadingThickness(false);
+    }
+  };
+
+  const handleThicknessSelect = (selectedOption, actionMeta, partId) => {
+    if (selectedOption) {
+      updatePart(partId, "thickness", selectedOption.label);
+    } else {
+      updatePart(partId, "thickness", "");
+    }
+  };
+
+  const fetchProcessesSuggestions = async () => {
+    setProcessesSuggestionsLoading(true);
+    try {
+      const res = await axiosInstance.get("/work/getAllProcesses");
+      const data = res.data;
+      const options = data.map((process) => ({
+        value: process.processName,
+        label: process.processName,
+      }));
+      setProcessesSuggestionsOptions(options);
+    } catch (error) {
+      toast.error("Failed to load processes");
+      console.error(error);
+    } finally {
+      setProcessesSuggestionsLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchProcessesSuggestions();
+  }, []);
   // =========================
+
   // Set active part if null
   // =========================
   useEffect(() => {
@@ -315,25 +529,6 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }));
   };
 
-  // const removeProcess = (id) => {
-  //   console.log("process id", id);
-  //   if (id) {
-  //     try {
-  //       axiosInstance.delete(`/kickoff/deleteItemProcess/${id}`);
-  //       toast.success("Process Deleted successfully");
-  //     } catch (error) {
-  //       toast.error("Error while deleting processes");
-  //       console.log("Error while deleting processes", error);
-  //     }
-  //   }
-  //   setProcessesByPart((prev) => ({
-  //     ...prev,
-  //     [activePartItemNo]: (prev[activePartItemNo] || []).filter(
-  //       (proc) => proc.id !== id
-  //     ),
-  //   }));
-  // };
-
   const removeProcess = (id) => {
     if (id) {
       try {
@@ -348,6 +543,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       const filtered = (prev[activePartItemNo] || []).filter(
         (proc) => proc.id !== id
       );
+      // Always use the enhanced renumber logic:
       return {
         ...prev,
         [activePartItemNo]: reNumberProcesses(filtered, activePartItemNo),
@@ -355,22 +551,26 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     });
   };
 
-
-
   const getSuffix = (woNo) => woNo?.replace(activePartItemNo, "") || "";
-  const suffixOptions = ["UL", "CF", "LF", "TL"];
+  // const suffixOptions = ["UL", "CF", "LF", "TL"];
   const isManualProcess = (suffix) =>
     /^[A-Z]$/.test(suffix) && !suffixOptions.includes(suffix);
 
   const partProcesses = processesByPart[activePartItemNo] || [];
-  const manualProcesses = partProcesses
-    .filter((p) => isManualProcess(getSuffix(p.woNo)))
-    .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
-  const workorderProcesses = partProcesses
-    .filter((p) => !isManualProcess(getSuffix(p.woNo)))
-    .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
+  // const manualProcesses = partProcesses
+  //   .filter((p) => isManualProcess(getSuffix(p.woNo)))
+  //   .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
+  // const workorderProcesses = partProcesses
+  //   .filter((p) => !isManualProcess(getSuffix(p.woNo)))
+  //   .sort((a, b) => getSuffix(a.woNo).localeCompare(getSuffix(b.woNo)));
 
-  const sortedProcesses = [...manualProcesses, ...workorderProcesses];
+  // const sortedProcesses = [...manualProcesses, ...workorderProcesses];
+
+  // Instead of applying multiple filters/sorts → just use the processes in the given order
+
+  const sortedProcesses = partProcesses || [];
+
+  console.log("Sorted PRocess ***********", sortedProcesses);
 
   const handleCustomProcessChange = (newSelected) => {
     if (!activePartItemNo) return;
@@ -387,13 +587,14 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       woNo: `${activePartItemNo}${suffix}`,
       itemNo: activePartItemNo,
       designer: "",
-      opNo: "",
+      opNo: "0",
       processName: "",
       length: "",
       width: "",
       height: "",
       remarks: "",
-      isNewForWorkOrder: activePart.isNew,
+
+      isFromPartProcess: true,
     }));
 
     setProcessesByPart((prev) => {
@@ -412,22 +613,26 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }));
   };
 
-  const processOptions = [
-    { label: "UL", value: "UL" },
-    { label: "CF", value: "CF" },
-    { label: "LF", value: "LF" },
-    { label: "TL", value: "TL" },
-  ];
+  // const processOptions = [
+  //   { label: "UL", value: "UL" },
+  //   { label: "CF", value: "CF" },
+  //   { label: "LF", value: "LF" },
+  //   { label: "TL", value: "TL" },
+  // ];
 
   const addProcess = () => {
     const activePart = parts.find((p) => p.itemNo === activePartItemNo);
     if (!activePart) return;
 
     const existingProcesses = processesByPart[activePartItemNo] || [];
-    const manualSuffixes = existingProcesses
-      .map((p) => getSuffix(p.woNo))
-      .filter(isManualProcess);
-
+    const manualParents = existingProcesses.filter(
+      (p) =>
+        isManualProcess(getSuffix(p.woNo)) &&
+        !p.parentWorkOrderNo &&
+        !p.isFromPartProcess &&
+        p.woNo !== "XX"
+    );
+    const manualSuffixes = manualParents.map((p) => getSuffix(p.woNo));
     const allLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
     const usedSet = new Set(manualSuffixes);
     const nextSuffix = allLetters.find((letter) => !usedSet.has(letter)) || "Z";
@@ -445,23 +650,39 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       width: "",
       height: "",
       remarks: "",
-      isNewForWorkOrder: activePart.isNew,
+      // isNewForWorkOrder: activePart.isNew,
       isEditing: true,
     };
 
-    // setProcessesByPart((prev) => ({
-    //   ...prev,
-    //   [activePartItemNo]: [...(prev[activePartItemNo] || []), newProc],
-    // }));
+    // Find index of last manual parent process
+    let insertIdx = -1;
+    if (manualParents.length > 0) {
+      const lastManualParent = manualParents[manualParents.length - 1];
+      insertIdx = existingProcesses.findIndex(
+        (p) => p.id === lastManualParent.id
+      );
+    }
 
-    setProcessesByPart((prev) => {
-      const updated = [...(prev[activePartItemNo] || []), newProc];
-      return {
-        ...prev,
-        [activePartItemNo]: reNumberProcesses(updated, activePartItemNo),
-      };
-    });
+    // Insert after last manual parent (or at start if none)
+    const updatedProcesses = [...existingProcesses];
+    if (insertIdx === -1) {
+      updatedProcesses.unshift(newProc);
+    } else {
+      updatedProcesses.splice(insertIdx + 1, 0, newProc);
+    }
 
+    // setProcessesByPart((prev) => {
+    //   const updated = [...(prev[activePartItemNo] || []), newProc];
+    //   return {
+    //     ...prev,
+    //     [activePartItemNo]: reNumberProcesses(updated, activePartItemNo),
+    //   };
+    // });
+
+    setProcessesByPart((prev) => ({
+      ...prev,
+      [activePartItemNo]: updatedProcesses,
+    }));
   };
 
   // ✅ Convert only File/Blob to base64 string, pass strings as-is
@@ -490,99 +711,126 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       })
     ).then((results) => results.filter(Boolean));
 
-
-
   // ======================================
   // Utility: reassigns WO NOs for parents A,B,C... and their children A1,A2...
- function reNumberProcesses(processes, activePartItemNo) {
-  if (!Array.isArray(processes)) return [];
+  function reNumberProcesses(processes, activePartItemNo) {
+    if (!Array.isArray(processes)) return [];
 
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  const parents = processes.filter((p) => !p.parentWorkOrderNo);
-  const special = processes.filter(
-    (p) =>
-      p.parentWorkOrderNo &&
-      !/^\d+$/.test(p.woNo.replace(p.parentWorkOrderNo, ""))
-  );
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    // 1. Orphan children (woNo === "XX" and parentWorkOrderNo is empty)
+    const orphanChildren = processes.filter(
+      (p) => p.woNo === "XX" && !p.parentWorkOrderNo
+    );
+    // 2. Manual processes: not from dropdown, not orphan children
+    const manualProcesses = processes.filter(
+      (p) => !p.isFromPartProcess && !(p.woNo === "XX" && !p.parentWorkOrderNo)
+    );
+    // 3. Dropdown-based processes (no need to renumber)
+    const dropdownProcesses = processes.filter((p) => p.isFromPartProcess);
 
-  let renamed = [];
+    let renamedProcesses = [];
+    // 4. Manual parents: those without a parentWorkOrderNo (manual only)
+    const manualParents = manualProcesses.filter((p) => !p.parentWorkOrderNo);
 
-  parents.forEach((parent, i) => {
-    const newParentWoNo = `${activePartItemNo}${letters[i]}`;
-    const newParent = { ...parent, woNo: newParentWoNo };
+    manualParents.forEach((parent, i) => {
+      const letter = letters[i];
+      const newParentWoNo = `${activePartItemNo}${letter}`;
 
-    const children = processes
-      .filter((p) => p.parentWorkOrderNo === parent.woNo || p.parentWorkOrderNo === newParentWoNo)
-      .sort((a, b) => {
-        const anum = parseInt(a.woNo.replace(parent.woNo, ""), 10) || 0;
-        const bnum = parseInt(b.woNo.replace(parent.woNo, ""), 10) || 0;
-        return anum - bnum;
+      // Find children of this parent
+      const children = manualProcesses
+        .filter((c) => c.parentWorkOrderNo === parent.woNo)
+        .sort((a, b) => {
+          const anum = parseInt(a.woNo.replace(parent.woNo, ""), 10) || 0;
+          const bnum = parseInt(b.woNo.replace(parent.woNo, ""), 10) || 0;
+          return anum - bnum;
+        });
+
+      // Renumber children (A1, A2, ...)
+      const renamedChildren = children.map((child, idx) => ({
+        ...child,
+        parentWorkOrderNo: newParentWoNo,
+        woNo: `${newParentWoNo}${idx + 1}`,
+      }));
+
+      // Push parent and children in order
+      renamedProcesses.push({
+        ...parent,
+        woNo: newParentWoNo,
       });
+      renamedProcesses = renamedProcesses.concat(renamedChildren);
+    });
 
-    const newChildren = children.map((child, idx) => ({
-      ...child,
-      parentWorkOrderNo: newParentWoNo,
-      woNo: `${newParentWoNo}${idx + 1}`,
-    }));
+    // Final merged list: main renamed, orphans, dropdowns at end (order matches your original business logic)
+    return [...renamedProcesses, ...orphanChildren, ...dropdownProcesses];
+  }
 
-    renamed.push(newParent, ...newChildren);
-  });
+  const fetchProcesses = async () => {
+    setProcessLoading(true);
+    try {
+      const res = await axiosInstance.get("/work/getAllWorkOrderProcesses");
+      const data = res.data;
 
-  return [...renamed, ...special];
-}
+      // build process name options as before
+      const option = data.map((process) => ({
+        value: process.processName,
+        label: process.processName,
+      }));
+      setProcessOptions(option);
 
+      // build suffix options from processSuffix (or whatever key your API provides)
+      const dynamicSuffixes = Array.from(
+        new Set(data.map((proc) => proc.suffix).filter(Boolean))
+      );
+      setSuffixOptions(dynamicSuffixes);
+    } catch (error) {
+      toast.error("Failed to load processes");
+      console.error(error);
+    } finally {
+      setProcessLoading(false);
+    }
+  };
 
+  const addChildProcess = (parentWoNo) => {
+    setProcessesByPart((prev) => {
+      const processes = prev[activePartItemNo] || [];
 
+      // figure out the children for this parent
+      const children = processes.filter(
+        (p) => p.parentWorkOrderNo === parentWoNo
+      );
+      const numbers = children
+        .map((c) => c.woNo.replace(parentWoNo, ""))
+        .filter((s) => /^\d+$/.test(s))
+        .map(Number);
 
-const addChildProcess = (parentWoNo) => {
-  setProcessesByPart((prev) => {
-    const processes = prev[activePartItemNo] || [];
+      const nextChildNum = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
 
-    // figure out the children for this parent
-    const children = processes.filter((p) => p.parentWorkOrderNo === parentWoNo);
-    const numbers = children
-      .map((c) => c.woNo.replace(parentWoNo, ""))
-      .filter((s) => /^\d+$/.test(s))
-      .map(Number);
+      const newProcess = {
+        id: Date.now(),
+        woNo: `${parentWoNo}${nextChildNum}`, // ex PT-91A1
+        itemNo: activePartItemNo,
+        parentWorkOrderNo: parentWoNo,
+        designer: "",
+        opNo: "",
+        processName: "",
+        length: "",
+        width: "",
+        height: "",
+        remarks: "",
+        isNewForWorkOrder: true,
+        isEditing: true,
+      };
 
-    const nextChildNum = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+      // Only push child → no splice
+      const updated = [...processes, newProcess];
 
-    const newProcess = {
-      id: Date.now(),
-      woNo: `${parentWoNo}${nextChildNum}`, // ex PT-91A1
-      itemNo: activePartItemNo,
-      parentWorkOrderNo: parentWoNo,
-      designer: "",
-      opNo: "",
-      processName: "",
-      length: "",
-      width: "",
-      height: "",
-      remarks: "",
-      isNewForWorkOrder: true,
-      isEditing: true,
-    };
-
-    // Only push child → no splice
-    const updated = [...processes, newProcess];
-
-    // 🔑 Important: Now renumber the WHOLE thing once
-    return {
-      ...prev,
-      [activePartItemNo]: reNumberProcesses(updated, activePartItemNo),
-    };
-  });
-};
-
-
-
-
-
-
-
-
-
-
+      // 🔑 Important: Now renumber the WHOLE thing once
+      return {
+        ...prev,
+        [activePartItemNo]: reNumberProcesses(updated, activePartItemNo),
+      };
+    });
+  };
 
   // ================================================
   const handleSaveOrUpdatePart = async (partToSave) => {
@@ -637,12 +885,12 @@ const addChildProcess = (parentWoNo) => {
           prevParts.map((p) =>
             p.id === partToSave.id
               ? {
-                ...p,
-                id: newPartId,
-                woId: newPartId,
-                itemId: newPartId,
-                isNew: true,
-              }
+                  ...p,
+                  id: newPartId,
+                  woId: newPartId,
+                  itemId: newPartId,
+                  isNew: true,
+                }
               : p
           )
         );
@@ -816,12 +1064,6 @@ const addChildProcess = (parentWoNo) => {
     fetchMaxItemNumber();
   }, []);
 
-
-
-
-
-
-
   return (
     <Card className="mb-3 shadow-sm border-0">
       <CustomToggle
@@ -870,35 +1112,112 @@ const addChildProcess = (parentWoNo) => {
                       <strong>{part.itemNo}</strong>
                     </td>
                     <td>
-                      <Form.Control
-                        type="text"
-                        placeholder="Enter Part Name"
-                        value={part.partName}
-                        onChange={(e) =>
-                          updatePart(part.id, "partName", e.target.value)
+                      <CreatableSelect
+                        styles={{
+                          container: (base) => ({ ...base, width: "100%" }),
+                        }}
+                        menuPosition="fixed"
+                        isClearable
+                        onMenuOpen={fetchParts}
+                        onChange={(selectedOption, actionMeta) =>
+                          handlePartsSelect(selectedOption, actionMeta, part.id)
                         }
-                        disabled={!part.isEditing}
+                        onCreateOption={(inputValue) =>
+                          handlePartsCreateOption(inputValue, part.id)
+                        }
+                        options={ensureValueInOptions(
+                          partOptions,
+                          part.partName
+                        )}
+                        isLoading={loadingPart}
+                        placeholder="Search or create part..."
+                        value={
+                          part.partName
+                            ? partOptions.find(
+                                (option) =>
+                                  option.label === part.partName ||
+                                  option.value === part.partName
+                              ) || {
+                                label: part.partName,
+                                value: part.partName,
+                              }
+                            : null
+                        }
+                        isDisabled={!part.isEditing}
                       />
                     </td>
                     <td>
-                      <Form.Control
-                        type="text"
-                        placeholder="Enter Material"
-                        value={part.material}
-                        onChange={(e) =>
-                          updatePart(part.id, "material", e.target.value)
+                      <CreatableSelect
+                        styles={{
+                          container: (base) => ({ ...base, width: "100%" }),
+                        }}
+                        menuPosition="fixed"
+                        isClearable
+                        onMenuOpen={fetchMaterial}
+                        onChange={(selectedOption, actionMeta) =>
+                          handleMaterialSelect(
+                            selectedOption,
+                            actionMeta,
+                            part.id
+                          )
                         }
-                        disabled={!part.isEditing}
+                        onCreateOption={(inputValue) =>
+                          handleMaterialCreateOption(inputValue, part.id)
+                        }
+                        options={ensureValueInOptions(
+                          materialOptions,
+                          part.material
+                        )}
+                        isLoading={loadingMaterial}
+                        placeholder="Search or create material..."
+                        value={
+                          part.material
+                            ? materialOptions.find(
+                                (option) => option.label === part.material
+                              ) || {
+                                label: part.material,
+                                value: part.material,
+                              }
+                            : null
+                        }
+                        isDisabled={!part.isEditing}
                       />
                     </td>
                     <td>
-                      <Form.Control
-                        placeholder="Select thickness..."
-                        value={part.thickness}
-                        onChange={(e) =>
-                          updatePart(part.id, "thickness", e.target.value)
+                      <CreatableSelect
+                        styles={{
+                          container: (base) => ({ ...base, width: "100%" }),
+                        }}
+                        menuPosition="fixed"
+                        isClearable
+                        onMenuOpen={fetchThickness}
+                        onChange={(selectedOption, actionMeta) =>
+                          handleThicknessSelect(
+                            selectedOption,
+                            actionMeta,
+                            part.id
+                          )
                         }
-                        disabled={!part.isEditing}
+                        onCreateOption={(inputValue) =>
+                          handleThicknessCreateOption(inputValue, part.id)
+                        }
+                        options={ensureValueInOptions(
+                          thicknessOptions,
+                          part.thickness
+                        )}
+                        isLoading={loadingThickness}
+                        placeholder="Search or create thickness..."
+                        value={
+                          part.thickness
+                            ? thicknessOptions.find(
+                                (option) => option.label === part.thickness
+                              ) || {
+                                label: part.thickness,
+                                value: part.thickness,
+                              }
+                            : null
+                        }
+                        isDisabled={!part.isEditing}
                       />
                     </td>
                     <td>
@@ -1156,10 +1475,11 @@ const addChildProcess = (parentWoNo) => {
                 {parts.map((part) => (
                   <div
                     key={part.itemNo}
-                    className={`px-3 py-2 me-2 ${activePartItemNo === part.itemNo
-                      ? "bg-primary text-white"
-                      : "bg-light"
-                      }`}
+                    className={`px-3 py-2 me-2 ${
+                      activePartItemNo === part.itemNo
+                        ? "bg-primary text-white"
+                        : "bg-light"
+                    }`}
                     style={{ borderRadius: "4px", cursor: "pointer" }}
                     onClick={() => setActivePartItemNo(part.itemNo)}
                   >
@@ -1192,11 +1512,10 @@ const addChildProcess = (parentWoNo) => {
                           backgroundColor: proc.cancel
                             ? "#ff5b5b"
                             : proc.scope
-                              ? "#ffff6e"
-                              : proc.parentWorkOrderNo
-
-                                ? "#3bff6f"
-                                : "transparent",
+                            ? "#ffff6e"
+                            : proc.parentWorkOrderNo
+                            ? "#3bff6f"
+                            : "transparent",
                         }}
                       >
                         <td className="KickoffPrtProcessInpt-TD">
@@ -1231,12 +1550,18 @@ const addChildProcess = (parentWoNo) => {
                         </td>
                         <td className="KickoffPrtProcessInpt-TD">
                           <Form.Select
-                            value={proc.opNo}
+                            value={
+                              proc.opNo === "0"
+                                ? "XX"
+                                : proc.opNo === "-1"
+                                ? ""
+                                : proc.opNo
+                            }
                             onChange={(e) =>
                               updateProcess(proc.id, "opNo", e.target.value)
                             }
                             className="KickoffPrtProcessInpt"
-                            disabled={!proc.isEditing}
+                            disabled={!proc.isEditing || proc.opNo === "0"}
                           >
                             <option value="">Select</option>
                             {[
@@ -1319,13 +1644,27 @@ const addChildProcess = (parentWoNo) => {
                           />
                         </td>
 
-                        {/* <td className="text-center KickoffPrtProcessInpt-TD">
-                          <div className="d-flex justify-content-center">
+                        <td className="text-center KickoffPrtProcessInpt-TD">
+                          <div className="d-flex flex-column align-items-center">
+                            {/* ➕ Show only for parent rows */}
+                            {!proc.parentWorkOrderNo &&
+                              !proc.isFromPartProcess &&
+                              proc.woNo !== "XX" && (
+                                <Button
+                                  variant="link"
+                                  onClick={() => addChildProcess(proc.woNo)}
+                                  className="text-success me-2"
+                                >
+                                  <FaPlusCircle />
+                                </Button>
+                              )}
+
+                            {/* Toggle between Save/Edit */}
                             {proc.isEditing ? (
                               <Button
-                                variant="btn btn-outline-success btn-sm "
+                                variant="btn btn-outline-success btn-sm mb-2"
                                 onClick={() => {
-                                  handleUpdateProcesses(); // or row-specific save
+                                  handleUpdateProcesses(); // persist to backend
                                   setProcessesByPart((prev) => ({
                                     ...prev,
                                     [activePartItemNo]: prev[
@@ -1342,8 +1681,7 @@ const addChildProcess = (parentWoNo) => {
                               </Button>
                             ) : (
                               <Button
-                                variant="d-block btn btn-outline-dark btn-sm "
-                                className="d-block"
+                                variant="btn btn-outline-dark btn-sm mb-2"
                                 onClick={() =>
                                   setProcessesByPart((prev) => ({
                                     ...prev,
@@ -1353,62 +1691,6 @@ const addChildProcess = (parentWoNo) => {
                                       p.id === proc.id
                                         ? { ...p, isEditing: true }
                                         : p
-                                    ),
-                                  }))
-                                }
-                              >
-                                Edit
-                              </Button>
-                            )}
-                          </div>
-                          <Button
-                            variant="btn btn-outline-danger btn-sm mt-2"
-                            onClick={() => removeProcess(proc.id)}
-                            className=""
-                            disabled={proc.isEditing} // Don’t allow delete while editing
-                          >
-                            delete
-                          </Button>
-                        </td> */}
-
-
-                        <td className="text-center KickoffPrtProcessInpt-TD">
-                          <div className="d-flex flex-column align-items-center">
-                            {/* ➕ Show only for parent rows */}
-                            {!proc.parentWorkOrderNo && (
-                              <Button
-                                variant="link"
-                                className="text-success mb-2"
-                                onClick={() => addChildProcess(proc.woNo)}
-                              >
-                                <FaPlusCircle />
-                              </Button>
-                            )}
-
-                            {/* Toggle between Save/Edit */}
-                            {proc.isEditing ? (
-                              <Button
-                                variant="btn btn-outline-success btn-sm mb-2"
-                                onClick={() => {
-                                  handleUpdateProcesses(); // persist to backend
-                                  setProcessesByPart((prev) => ({
-                                    ...prev,
-                                    [activePartItemNo]: prev[activePartItemNo].map((p) =>
-                                      p.id === proc.id ? { ...p, isEditing: false } : p
-                                    ),
-                                  }));
-                                }}
-                              >
-                                Save
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="btn btn-outline-dark btn-sm mb-2"
-                                onClick={() =>
-                                  setProcessesByPart((prev) => ({
-                                    ...prev,
-                                    [activePartItemNo]: prev[activePartItemNo].map((p) =>
-                                      p.id === proc.id ? { ...p, isEditing: true } : p
                                     ),
                                   }))
                                 }
@@ -1427,7 +1709,6 @@ const addChildProcess = (parentWoNo) => {
                             </Button>
                           </div>
                         </td>
-
                       </tr>
                     ))
                   ) : (
@@ -1447,9 +1728,12 @@ const addChildProcess = (parentWoNo) => {
                   <Select
                     isMulti
                     isClearable
+                    onMenuOpen={fetchProcesses}
                     options={processOptions}
                     value={selectedProcessesByPart[activePartItemNo] || []}
-                    onChange={handleCustomProcessChange}
+                    onChange={(newSelected) =>
+                      handleCustomProcessChange(newSelected)
+                    }
                     placeholder="Select from list..."
                     className="flex-grow-1"
                     styles={{

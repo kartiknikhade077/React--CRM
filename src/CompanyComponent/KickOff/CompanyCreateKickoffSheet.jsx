@@ -220,7 +220,7 @@ const CompanyCreateKickoffSheet = () => {
  
       //3RD
  
-      const processesPayload = processesData.map((proc) => {
+      const processesPayload = processesData.map((proc,idx) => {
         const emp = employeeList.find((e) => e.employeeId === proc.designer);
         const itemNoInt =
           typeof proc.itemNo === "string"
@@ -231,6 +231,7 @@ const CompanyCreateKickoffSheet = () => {
           kickOffId,
           itemNo: itemNoInt, // should be like "PT-xxxx" string
           workOrderNumber: proc.woNo || proc.workOrderNumber || "", // Adjust key if needed
+          parentWorkOrderNo: proc.parentWorkOrderNo || "",
           designerName: emp ? emp.name : "",
           employeeId: proc.employeeId || proc.designer || "",
 
@@ -242,7 +243,8 @@ const CompanyCreateKickoffSheet = () => {
           remarks: proc.remarks || "",
           // Force boolean values
           cancel: proc.cancel,
-          scope: proc.scope ,
+          scope: proc.scope,
+          sequence: idx + 1,
         };
       });
       console.log("processesData ==", processesPayload);
