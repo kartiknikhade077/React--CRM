@@ -1,16 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaHome, FaLink, FaListAlt, FaSignOutAlt } from "react-icons/fa";
 import "./EmployeeSidebar.css";
-
-const EmployeeSidebar = ({ isCollapsed }) => {
+import axiosInstance from "../BaseComponet/axiosInstance";
+const EmployeeSidebar = ({ isCollapsed, onAccessFetched  }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
+  const [accessPermission, setAccessPermission] = useState({});
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
   };
+
+ useEffect(() => {
+  fetchAccess();
+}, []);
+
+const fetchAccess = async () => {
+  try {
+    const response = await axiosInstance.get(`/company/getModuleAccessInfo`);
+    setAccessPermission(response.data);
+     if (onAccessFetched) {   // ✅ Only call if passed
+      onAccessFetched(response.data);
+    }
+  } catch (err) {
+    console.error("Failed to fetch access:", err);
+  }
+};
 
   return (
     <div className={`sidebar-employee ${isCollapsed ? "collapsed" : ""}`}>
@@ -19,20 +35,42 @@ const EmployeeSidebar = ({ isCollapsed }) => {
       </div>
 
       <ul className="sidebar-employee__nav-links">
+      {accessPermission?.customerOwnView &&   (
         <li
-          className={`sidebar-employee__nav-item ${
-            location.pathname === "/empHome" ? "active" : ""
-          }`}
+          className={`sidebar-employee__nav-item ${location.pathname === "/employee/cutomerList" ? "active" : ""
+            }`}
         >
-          <Link to="/empHome">
+          <Link to="/employee/cutomerList">
             <FaHome />
-            {!isCollapsed && <span>Home</span>}
+            {!isCollapsed && <span>Customer</span>}
           </Link>
         </li>
+      )}
+      {accessPermission?.projectOwnView &&   (
         <li
-          className={`sidebar-employee__nav-item ${
-            location.pathname === "/empLink" ? "active" : ""
-          }`}
+          className={`sidebar-employee__nav-item ${location.pathname === "/employee/cutomerList" ? "active" : ""
+            }`}
+        >
+          <Link to="/employee/projectList">
+            <FaHome />
+            {!isCollapsed && <span>Projects</span>}
+          </Link>
+        </li>
+      )}
+       {accessPermission?.timeSheetAccess &&   (
+        <li
+          className={`sidebar-employee__nav-item ${location.pathname === "/employee/timeSheet" ? "active" : ""
+            }`}
+        >
+          <Link to="/employee/timeSheet">
+            <FaHome />
+            {!isCollapsed && <span>TimeSheet</span>}
+          </Link>
+        </li>
+      )}
+        <li
+          className={`sidebar-employee__nav-item ${location.pathname === "/empLink" ? "active" : ""
+            }`}
         >
           <Link to="/empLink">
             <FaLink />
@@ -40,9 +78,8 @@ const EmployeeSidebar = ({ isCollapsed }) => {
           </Link>
         </li>
         <li
-          className={`sidebar-employee__nav-item ${
-            location.pathname === "/empDropdown" ? "active" : ""
-          }`}
+          className={`sidebar-employee__nav-item ${location.pathname === "/empDropdown" ? "active" : ""
+            }`}
         >
           <Link to="/empDropdown">
             <FaListAlt />

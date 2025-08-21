@@ -25,7 +25,12 @@ const UpdateEmployeeList = () => {
     projectOwnView: false,
     projectCreate: false,
     projectDelete: false,
-    projectEdit: false
+    projectEdit: false,
+    timeSheetAccess: false,
+    timeSheetViewAll: false,
+    timeSheetCreate: false,
+    timeSheetDelete: false,
+    timeSheetEdit: false,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [initialemp, setInitialEmp] = useState(null);
@@ -54,7 +59,13 @@ const UpdateEmployeeList = () => {
           projectOwnView: res.data.moduleAccess.projectOwnView,
           projectCreate: res.data.moduleAccess.projectCreate,
           projectDelete: res.data.moduleAccess.projectDelete,
-          projectEdit: res.data.moduleAccess.projectEdit
+          projectEdit: res.data.moduleAccess.projectEdit,
+          timeSheetAccess: res.data.moduleAccess.timeSheetAccess,
+          timeSheetViewAll: res.data.moduleAccess.timeSheetViewAll,
+          timeSheetCreate: res.data.moduleAccess.timeSheetCreate,
+          timeSheetDelete: res.data.moduleAccess.timeSheetDelete,
+          timeSheetEdit: res.data.moduleAccess.timeSheetEdit
+
         });
 
         // Fetch roles for the employee's current department
@@ -135,7 +146,12 @@ const UpdateEmployeeList = () => {
         projectOwnView: data.projectOwnView,
         projectCreate: data.projectCreate,
         projectDelete: data.projectDelete,
-        projectEdit: data.projectEdit
+        projectEdit: data.projectEdit,
+        timeSheetAccess: data.timeSheetAccess,
+        timeSheetViewAll: data.timeSheetViewAll,
+        timeSheetCreate: data.timeSheetCreate,
+        timeSheetDelete: data.timeSheetDelete,
+        timeSheetEdit: data.timeSheetEdit
       });
     } catch (err) {
       toast.error("Failed to load role access");
@@ -245,6 +261,13 @@ const UpdateEmployeeList = () => {
     projectCreate: access.projectCreate,
     projectDelete: access.projectDelete,
     projectEdit: access.projectEdit,
+
+    timeSheetAccess: access.timeSheetAccess,
+    timeSheetViewAll: access.timeSheetViewAll,
+    timeSheetCreate: access.timeSheetCreate,
+    timeSheetDelete: access.timeSheetDelete,
+    timeSheetEdit: access.timeSheetEdit,
+
     };
 
     axiosInstance
@@ -538,6 +561,74 @@ const UpdateEmployeeList = () => {
                   Edit
                 </label>
               </div>
+              <hr></hr>
+              <h4>TimeSheet</h4>
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="timeSheetAccess"
+                  id="timeSheetAccess"
+                  checked={access.timeSheetAccess}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="timeSheetAccess">
+                  Module Access
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="timeSheetViewAll"
+                  id="timeSheetViewAll"
+                  checked={access.timeSheetViewAll}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="timeSheetViewAll">
+                  View All
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="timeSheetCreate"
+                  id="timeSheetCreate"
+                  checked={access.timeSheetCreate}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="timeSheetCreate">
+                  Create
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="timeSheetDelete"
+                  id="timeSheetDelete"
+                  checked={access.timeSheetDelete}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="timeSheetDelete">
+                  Delete
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="timeSheetEdit"
+                  id="timeSheetEdit"
+                  checked={access.timeSheetEdit}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="timeSheetEdit">
+                  Edit
+                </label>
+              </div>
+
 
               <div className="d-flex justify-content-end">
                 <button className="btn btn-dark" onClick={handleSaveAccess}>

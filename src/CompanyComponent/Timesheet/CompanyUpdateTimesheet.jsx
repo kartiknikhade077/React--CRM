@@ -18,7 +18,7 @@ const CompanyUpdateTimesheet = ({
   const [selectedItem, setSelectedItem] = useState(0)
   const [workOrderNumberList, setWorkOrderNumberList] = useState([])
   const [selectedWorkorder, setSelectedWorkOrde] = useState("")
-
+  const [access,setAccess]=useState({})
 
   const fetchItems = async () => {
       setSelectedWorkOrde("");
@@ -115,16 +115,9 @@ const CompanyUpdateTimesheet = ({
             toTime: data.endTime?.slice(0, 5) || "",
             remarks: data.remarks || "",
           });
-          console.log("FormData after setting:", {
-            date: data.createDate || "",
-            itemNumber: data.itemNumber || "",
-            workOrder: data.workOrderNo || "",
-            designer: data.designerName || "",
-            designerId: data.employeeId || "",
-            fromTime: data.startTime?.slice(0, 5) || "",
-            toTime: data.endTime?.slice(0, 5) || "",
-            remarks: data.remarks || "",
-          });
+
+          setSelectedItem(data.itemNumber);
+     
         })
         .catch(() => toast.error("Failed to fetch timesheet."));
     }
@@ -137,6 +130,9 @@ const CompanyUpdateTimesheet = ({
         .then((res) => setEmployeeList(res.data.employeeList || []))
         .catch(() => setEmployeeList([]));
     }
+
+    const access = JSON.parse(localStorage.getItem("access"));
+    setAccess(access)
   }, [show]);
 
   const handleChange = (e) => {
@@ -217,6 +213,7 @@ const CompanyUpdateTimesheet = ({
 
         <Modal.Body className="px-4 pt-3 pb-0">
           <Form>
+            <fieldset disabled={!access?.timeSheetEdit}>
             <Row className="gy-3">
               <Col md={4}>
                 <Form.Group>
@@ -395,16 +392,19 @@ const CompanyUpdateTimesheet = ({
                 </Col>
               </Row>
             )}
+            </fieldset>
           </Form>
         </Modal.Body>
 
         <Modal.Footer className="bg-light border-top-0 px-4 pb-4 pt-3">
+           <fieldset disabled={!access?.timeSheetEdit}>
           <Button variant="outline-secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSubmit}>
             Update
           </Button>
+          </fieldset>
         </Modal.Footer>
       </Modal>
     </>

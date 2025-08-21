@@ -13,7 +13,7 @@ const CompanyEditProject = ({ show, onClose, projectId, onProjectUpdated }) => {
 
     const [currentPage] = useState(0);
     const [pageSize] = useState(100);
-
+    const [access,setAccess]=useState({})
   const [formData, setFormData] = useState({
       id: "",   
     projectName: "",
@@ -32,7 +32,8 @@ const CompanyEditProject = ({ show, onClose, projectId, onProjectUpdated }) => {
     if (show && projectId) {
       fetchProjectData();
       fetchEmployees();
- 
+      const access = JSON.parse(localStorage.getItem("access"));
+      setAccess(access)
     }
   }, [show, projectId]);
 
@@ -177,6 +178,7 @@ const selectedCustomer = customerList.find(
       </Modal.Header>
       <Modal.Body>
         <Form onSubmit={handleUpdateSubmit}>
+          <fieldset disabled={!access?.projectEdit}>
           <Row>
             <Col md={6}>
               <Form.Group className="mb-2">
@@ -386,6 +388,7 @@ const selectedCustomer = customerList.find(
               Update Project
             </Button>
           </Modal.Footer>
+          </fieldset>
         </Form>
       </Modal.Body>
     </Modal>

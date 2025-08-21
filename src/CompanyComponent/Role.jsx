@@ -41,7 +41,13 @@ const RoleModel = () => {
     projectOwnView: false,
     projectCreate: false,
     projectDelete: false,
-    projectEdit: false
+    projectEdit: false,
+    timeSheetAccess: false,
+    timeSheetViewAll: false,
+    timeSheetCreate: false,
+    timeSheetDelete: false,
+    timeSheetEdit: false,
+
 
   });
 
@@ -76,7 +82,12 @@ const RoleModel = () => {
         projectOwnView: false,
         projectCreate: false,
         projectDelete: false,
-        projectEdit: false
+        projectEdit: false,
+        timeSheetAccess: false,
+        timeSheetViewAll: false,
+        timeSheetCreate: false,
+        timeSheetDelete: false,
+        timeSheetEdit: false,
       });
     }
   };
@@ -128,7 +139,12 @@ const RoleModel = () => {
       projectOwnView: e.target.projectOwnView.checked,
       projectCreate: e.target.projectCreate.checked,
       projectDelete: e.target.projectDelete.checked,
-      projectEdit: e.target.projectEdit.checked
+      projectEdit: e.target.projectEdit.checked,
+      timeSheetAccess: e.target.timeSheetAccess.checked,
+      timeSheetViewAll: e.target.timeSheetViewAll.checked,
+      timeSheetCreate: e.target.timeSheetCreate.checked,
+      timeSheetDelete: e.target.timeSheetDelete.checked,
+      timeSheetEdit: e.target.timeSheetEdit.checked
     };
 
 
@@ -174,7 +190,12 @@ const RoleModel = () => {
         projectOwnView: role.projectOwnView,
         projectCreate: role.projectCreate,
         projectDelete: role.projectDelete,
-        projectEdit: role.projectEdit
+        projectEdit: role.projectEdit,
+        timeSheetAccess: role.timeSheetAccess,
+        timeSheetViewAll: role.timeSheetViewAll,
+        timeSheetCreate: role.timeSheetCreate,
+        timeSheetDelete: role.timeSheetDelete,
+        timeSheetEdit: role.timeSheetEdit
       });
       handleShowRoleModel(true);
 
@@ -448,6 +469,67 @@ const RoleModel = () => {
                         />
                         <label className="form-check-label">Edit</label>
                       </div>
+                      
+
+                    </div>
+
+                  </div>
+                  <div>
+                    <hr></hr>
+                    <h4>TimeSheet </h4>
+                    <div>
+                     <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="timeSheetAccess"
+                          value="true"
+                          defaultChecked={selectedRole.timeSheetAccess}
+                        />
+                        <label className="form-check-label">TimeSheet Access</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="timeSheetViewAll"
+                          value="true"
+                          defaultChecked={selectedRole.timeSheetViewAll}
+                        />
+                        <label className="form-check-label">View All</label>
+                      </div>
+                      
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="timeSheetCreate"
+                          value="true"
+                          defaultChecked={selectedRole.timeSheetCreate}
+                        />
+                        <label className="form-check-label">Create</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="timeSheetDelete"
+                          value="true"
+                          defaultChecked={selectedRole.timeSheetDelete}
+                        />
+                        <label className="form-check-label">Delete</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="timeSheetEdit"
+                          value="true"
+                          defaultChecked={selectedRole.timeSheetEdit}
+                        />
+                        <label className="form-check-label">Edit</label>
+                      </div>
+                      
 
                     </div>
 

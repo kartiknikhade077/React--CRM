@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-import { Button, Container, Row, Col, Form, Card } from "react-bootstrap";
+import React, { useRef, useState, useEffect } from "react";
+import { Button, Container, Row, Col, Form, Card, Spinner } from "react-bootstrap";
 import { FaPlusCircle, FaTrash } from "react-icons/fa";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
@@ -24,7 +24,11 @@ const currencyOptions = [
   { value: 'EUR', label: 'EUR - Euro' }
 ];
 
-const CreateQuotation = ({ onCancel, onSave }) => {
+const EditQuotation = ({ quotationId, onCancel, onSave }) => {
+  // --- State for Loading ---
+  const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   // --- State for top-level form fields ---
   const [companyName, setCompanyName] = useState("");
   const [projectName, setProjectName] = useState("");
@@ -54,28 +58,102 @@ const CreateQuotation = ({ onCancel, onSave }) => {
   const [loadingThickness, setLoadingThickness] = useState(false);
 
   // --- State for multiple parts and their processes ---
-  const [partsData, setPartsData] = useState([
-    {
-      id: 1,
-      partName: null,
-      partNumber: '',
-      material: null,
-      thickness: null,
-      partSize: '',
-      partWeight: '',
-      images: [],
-      fileInputRef: React.createRef(),
-      processes: [{ id: 1,toolConstruction: '', opNo: '', description: '', l: '', w: '', h: '', factor: '', rate: '', toolCost: '' }]
-    }
-  ]);
+  const [partsData, setPartsData] = useState([]);
+  const [considerations, setConsiderations] = useState([]);
 
-   const [considerations, setConsiderations] = useState([
-    { 
-      id: 1, 
-      title: '', 
-      description: '' 
-    }
-  ]);
+  const [deletedPartIds, setDeletedPartIds] = useState([]);
+  const [deletedProcessIds, setDeletedProcessIds] = useState([]);
+  const [deletedImageIds, setDeletedImageIds] = useState([]);
+  const [deletedConsiderationIds, setDeletedConsiderationIds] = useState([]);
+
+  // --- Fetch existing quotation data ---
+  useEffect(() => {
+    const fetchQuotationData = async () => {
+      if (!quotationId) {
+        toast.error("No Quotation ID provided.");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get(`/sales/getQuoatation/${quotationId}`);
+        const data = response.data;
+
+        // --- Populate top-level form fields ---
+        const info = data.quotationInfo;
+        setCompanyName(info.companyName || "");
+        setProjectName(info.projectName || "");
+        setContactPerson(info.contactPersonName || "");
+        setQuotationNo(info.quotationNumber || "");
+        setSupplierCode(info.supplierCode || "");
+        setQuotationDate(info.quotationDate ? info.quotationDate.split('T')[0] : "");
+        setOpenTill(info.validDate ? info.validDate.split('T')[0] : "");
+        setAddress(info.address || "");
+        setReference(info.refrence || "");
+        setEmail(info.email || "");
+        setPhone(info.phone || "");
+        setCountry(info.country || "");
+        setState(info.state || "");
+        setCity(info.city || "");
+        setZip(info.zip || "");
+        setStatus(statusOptions.find(opt => opt.value === info.status) || null);
+        setCurrency(currencyOptions.find(opt => opt.value === info.currency) || null);
+        setAssigned(assignedOptions.find(opt => opt.value === info.assigned) || null);
+
+
+        // --- Transform and populate parts data ---
+        const transformedParts = data.partsAndProcess.map(apiPart => ({
+          id: apiPart.quotationPartId,
+          quotationPartId: apiPart.quotationPartId,
+          quotationId: apiPart.quotationId,
+          partName: { label: apiPart.partName, value: apiPart.partName },
+          partNumber: apiPart.partNo,
+          material: { label: apiPart.material, value: apiPart.material },
+          thickness: { label: apiPart.thickness, value: apiPart.thickness },
+          partSize: apiPart.partSize,
+          partWeight: apiPart.partWeight || '',
+          images: apiPart.partImagesWithId.map(img => ({
+            id: img.id,
+            url: `data:image/jpeg;base64,${img.base64Image}`,
+            file: null // This is an existing image, no file object
+          })),
+          fileInputRef: React.createRef(),
+          processes: apiPart.partProcess.map(apiProcess => ({
+            id: apiProcess.partProcessId,
+            partProcessId: apiProcess.partProcessId,
+            quotationPartId: apiProcess.quotationPartId,
+            toolConstruction: apiProcess.toolConstruction,
+            opNo: apiProcess.oprationNumber,
+            description: apiProcess.description,
+            l: apiProcess.length,
+            w: apiProcess.width,
+            h: apiProcess.height,
+            factor: apiProcess.factor,
+            rate: apiProcess.rate,
+            toolCost: apiProcess.totalCost
+          }))
+        }));
+        setPartsData(transformedParts);
+
+        // --- Transform and populate considerations data ---
+        const transformedConsiderations = data.consideration.map(apiConsideration => ({
+          id: apiConsideration.id,
+          title: apiConsideration.titel,
+          description: apiConsideration.description,
+          quotationId: apiConsideration.quotationId,
+        }));
+        setConsiderations(transformedConsiderations);
+
+      } catch (error) {
+        console.error("Failed to fetch quotation data:", error);
+        toast.error("Failed to load quotation data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuotationData();
+  }, [quotationId]);
 
   // --- Handlers for Parts (Sections) and Processes (Entries) ---
   const handlePartDataChange = (partIndex, field, value) => {
@@ -96,13 +174,18 @@ const CreateQuotation = ({ onCancel, onSave }) => {
 
   const handleFileChange = (partIndex, e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map((file) => ({ file, url: URL.createObjectURL(file) }));
+    // New images have a file object and a local URL for preview
+    const newImages = files.map((file) => ({ id: null, file, url: URL.createObjectURL(file) }));
     const updatedPartsData = [...partsData];
     updatedPartsData[partIndex].images = [...updatedPartsData[partIndex].images, ...newImages];
     setPartsData(updatedPartsData);
   };
 
   const handleDeleteImage = (partIndex, imageIndex) => {
+    const imageToDelete = partsData[partIndex].images[imageIndex];
+      if (imageToDelete.id) {
+          setDeletedImageIds(prev => [...prev, imageToDelete.id]);
+      }
     const updatedPartsData = [...partsData];
     updatedPartsData[partIndex].images = updatedPartsData[partIndex].images.filter((_, idx) => idx !== imageIndex);
     setPartsData(updatedPartsData);
@@ -117,25 +200,30 @@ const CreateQuotation = ({ onCancel, onSave }) => {
 
   const addProcess = (partIndex) => {
     const updatedPartsData = [...partsData];
-    const newProcessId = updatedPartsData[partIndex].processes.length > 0 ? Math.max(...updatedPartsData[partIndex].processes.map(p => p.id)) + 1 : 1;
-    updatedPartsData[partIndex].processes.push({ id: newProcessId, toolConstruction: '', opNo: '', description: '', l: '', w: '', h: '', factor: '', rate: '', toolCost: '' });
+    const newProcessId = Date.now(); // Temporary unique ID for React key
+    updatedPartsData[partIndex].processes.push({ id: newProcessId, partProcessId: null, toolConstruction: '', opNo: '', description: '', l: '', w: '', h: '', factor: '', rate: '', toolCost: '', quotationPartId: null });
     setPartsData(updatedPartsData);
   };
 
   const removeProcess = (partIndex, processIndex) => {
-    const updatedPartsData = [...partsData];
-    if (updatedPartsData[partIndex].processes.length > 1) {
-      updatedPartsData[partIndex].processes = updatedPartsData[partIndex].processes.filter((_, idx) => idx !== processIndex);
+      if (partsData[partIndex].processes.length <= 1) return;
+      const processToDelete = partsData[partIndex].processes[processIndex];
+      if (processToDelete.partProcessId) {
+          setDeletedProcessIds(prev => [...prev, processToDelete.partProcessId]);
+      }
+      const updatedPartsData = [...partsData];
+      updatedPartsData[partIndex].processes.splice(processIndex, 1);
       setPartsData(updatedPartsData);
-    }
   };
 
   const addPart = () => {
-    const newPartId = partsData.length > 0 ? Math.max(...partsData.map(p => p.id)) + 1 : 1;
+    const newPartId = Date.now(); // Temporary unique ID for React key
     setPartsData([
       ...partsData,
       {
         id: newPartId,
+        quotationPartId: null,
+        quotationId: null,
         partName: null,
         partNumber: '',
         material: null,
@@ -144,36 +232,42 @@ const CreateQuotation = ({ onCancel, onSave }) => {
         partWeight: '',
         images: [],
         fileInputRef: React.createRef(),
-        processes: [{ id: 1,toolConstruction: '', opNo: '', description: '', l: '', w: '', h: '', factor: '', rate: '', toolCost: '' }]
+        processes: [{ id: Date.now(), partProcessId: null, toolConstruction: '', opNo: '', description: '', l: '', w: '', h: '', factor: '', rate: '', toolCost: '', quotationPartId: null }]
       }
     ]);
   };
 
   const removePart = (partIndex) => {
-    if (partsData.length > 1) {
+      if (partsData.length <= 1) return;
+      const partToDelete = partsData[partIndex];
+      if (partToDelete.quotationPartId) {
+          setDeletedPartIds(prev => [...prev, partToDelete.quotationPartId]);
+      }
       setPartsData(partsData.filter((_, idx) => idx !== partIndex));
-    }
   };
 
   const handleConsiderationChange = (index, e) => {
-      const { name, value } = e.target;
-      const newConsiderations = [...considerations];
-      newConsiderations[index][name] = value;
-      setConsiderations(newConsiderations);
+    const { name, value } = e.target;
+    const newConsiderations = [...considerations];
+    newConsiderations[index][name] = value;
+    setConsiderations(newConsiderations);
   };
 
   const addConsideration = () => {
-      setConsiderations([...considerations, { id: Date.now(), name: '', description: '' }]);
+    setConsiderations([...considerations, { id: null, title: '', description: '', quotationId: null }]);
   };
 
   const removeConsideration = (index) => {
-      if (considerations.length > 1) {
-          setConsiderations(considerations.filter((_, i) => i !== index));
+      if (considerations.length <= 1) return;
+      const considerationToDelete = considerations[index];
+      if (considerationToDelete.id) {
+          setDeletedConsiderationIds(prev => [...prev, considerationToDelete.id]);
       }
+      setConsiderations(considerations.filter((_, i) => i !== index));
   };
 
 
-  // --- API Handlers for Creatable Selects ---
+  // --- API Handlers for Creatable Selects (Identical to Create form) ---
   const fetchParts = async () => {
     setLoadingPartName(true);
     try {
@@ -268,122 +362,147 @@ const CreateQuotation = ({ onCancel, onSave }) => {
   const sgst = grandSubtotal * 0.09;
   const total = grandSubtotal + cgst + sgst;
 
-  // --- Payload Generation and Save Handler ---
-
+  // --- Payload Generation and Update Handler ---
   const fileToBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    // This check is important. If it's not a file/blob, it might be an already converted string.
-    if (!(file instanceof Blob)) {
-      resolve(file);
-      return;
-    }
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64String = reader.result.split(",")[1]; // Get only the base64 part
-      resolve(base64String);
-    };
-    reader.onerror = (error) => reject(error);
-  });
+    new Promise((resolve, reject) => {
+      // If it's a new file, read it.
+      if (file instanceof Blob) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const base64String = reader.result.split(",")[1];
+          resolve(base64String);
+        };
+        reader.onerror = (error) => reject(error);
+      } else {
+        // If it's an existing image URL (data:image/...), extract the base64 part.
+        if (typeof file === 'string' && file.startsWith('data:')) {
+          resolve(file.split(",")[1]);
+        } else {
+          resolve(null); // Or handle as an error
+        }
+      }
+    });
 
-  const handleSave = async () => {
-    try {
-      const quotationInfo = {
-        companyName: companyName,
-        contactPersonName: contactPerson,
-        address: address,
-        refrence: reference,
-        quotationDate: quotationDate,
-        validDate: openTill,
-        quotationNumber: quotationNo,
-        supplierCode: supplierCode,
-        projectName: projectName,
-        currency: currency ? currency.value : null,
-        status: status ? status.value : null,
-        assigned: assigned ? assigned.value : null,
-        email: email,
-        phone: phone,
-        country: country,
-        state: state,
-        city: city,
-        zip: zip,
-      };
-
-      const quotationParts = await Promise.all(
-        partsData.map(async (part) => {
-          const cleanedProcesses = part.processes.map((proc) => ({
-            toolConstruction: proc.toolConstruction,
-            oprationNumber: proc.opNo,
-            description: proc.description,
-            length: parseFloat(proc.l) || 0,
-            width: parseFloat(proc.w) || 0,
-            height: parseFloat(proc.h) || 0,
-            factor: parseFloat(proc.factor) || 0,
-            rate: parseFloat(proc.rate) || 0,
-            totalCost: parseFloat(proc.toolCost) || 0,
-          }));
-
-          const partImagesWithIdArray = await Promise.all(
-            part.images.map(async (image) => {
-              const base64 = await fileToBase64(image.file);
-              return {
-                id: null,
-                base64Image: base64
-              };
-            })
-          );
-
-          return {
-            partName: part.partName ? part.partName.label : "",
-            partNo: part.partNumber,
-            material: part.material ? part.material.label : "",
-            thickness: part.thickness ? part.thickness.label : "",
-            partSize: part.partSize,
-            partWeight: part.partWeight,
-            partProcess: cleanedProcesses,
-            partImagesWithId: partImagesWithIdArray, 
+  const handleUpdate = async () => {
+      setIsUpdating(true);
+      try {
+          if (deletedPartIds.length > 0) {
+              await axiosInstance.delete(`/sales/deleteQuotationPart`, { data: deletedPartIds });
+          }
+          if (deletedProcessIds.length > 0) {
+              await axiosInstance.delete(`/sales/deleteQuotationPartProcess`, { data: deletedProcessIds });
+          }
+          if (deletedImageIds.length > 0) {
+              await axiosInstance.delete(`/sales/deleteQuotationPartImages`, { data: deletedImageIds });
+          }
+          if (deletedConsiderationIds.length > 0) {
+              await axiosInstance.delete(`/sales/deleteQuotationConsideration`, { data: deletedConsiderationIds });
+          }
+          // 1. Update Quotation Info
+          const quotationInfoPayload = {
+              quotationId,
+              companyName, 
+              contactPersonName: contactPerson, 
+              address, 
+              refrence: reference, 
+              quotationDate,
+              validDate: openTill, 
+              quotationNumber: quotationNo, 
+              supplierCode, 
+              projectName, 
+              email, 
+              phone, 
+              country, 
+              state, 
+              city, 
+              zip,
+              currency: currency ? currency.value : null, 
+              status: status ? status.value : null, 
+              assigned: assigned ? assigned.value : null,
           };
-        })
-      );
+          await axiosInstance.put(`/sales/updateQuotationInfo`, quotationInfoPayload);
 
-      const cleanedConsiderations = considerations.map(consideration => ({
-        titel: consideration.title,
-        description: consideration.description
-      }))
+          // 2. Update Considerations
+          const considerationsPayload = considerations.map(c => ({
+              id: c.id, 
+              titel: c.title, 
+              description: c.description, 
+              quotationId: c.quotationId || quotationId
+          }));
+          await axiosInstance.put(`/sales/updateQuotationConsideration`, considerationsPayload);
 
-      const payload = {
-        quotationInfo,
-        quotationParts,
-        quotationConsiderations: cleanedConsiderations,
-      };
+          // 3. Update Parts (including images)
+          const partsPayload = await Promise.all(partsData.map(async (part) => ({
+              quotationPartId: part.quotationPartId,
+              quotationId: part.quotationId || quotationId,
+              partName: part.partName ? part.partName.label : "",
+              partNo: part.partNumber,
+              material: part.material ? part.material.label : "",
+              thickness: part.thickness ? part.thickness.label : "",
+              partSize: part.partSize,
+              partWeight: part.partWeight,
+              partImagesWithId: await Promise.all(part.images.map(async (image) => ({
+                  id: image.id,
+                  base64Image: image.file ? await fileToBase64(image.file) : null
+              })))
+          })));
+          const partsUpdateResponse = await axiosInstance.put(`/sales/updateQuotationParts`, partsPayload);
+          const updatedPartsFromServer = partsUpdateResponse.data; 
 
-      console.log("--- SENDING JSON PAYLOAD ---", JSON.stringify(payload, null, 2));
+          const partsDataWithNewIds = partsData.map((localPart, index) => {
+              const serverPart = updatedPartsFromServer[index];
+              if (serverPart && localPart.quotationPartId === null) {
+                  return { ...localPart, quotationPartId: serverPart.quotationPartId };
+              }
+              return localPart;
+          });
 
-      const response = await axiosInstance.post(
-        "/sales/createQuotation",
-        payload,
-        { headers: { "Content-Type": "application/json" } }
-      );
+          // 4. Update Processes USING the new IDs
+          const processesPayload = partsDataWithNewIds.flatMap((part) =>
+              part.processes.map((proc) => ({
+                  partProcessId: proc.partProcessId,
+                  quotationPartId: proc.quotationPartId || part.quotationPartId, // This will now have the correct ID for new parts
+                  toolConstruction: proc.toolConstruction, oprationNumber: proc.opNo, description: proc.description,
+                  length: parseFloat(proc.l) || 0, width: parseFloat(proc.w) || 0, height: parseFloat(proc.h) || 0,
+                  factor: parseFloat(proc.factor) || 0, rate: parseFloat(proc.rate) || 0, totalCost: parseFloat(proc.toolCost) || 0,
+              }))
+          ).filter(p => p.quotationPartId);
+          
+          if (processesPayload.length > 0) {
+              await axiosInstance.put(`/sales/updateQuotationPartProcess`, processesPayload);
+          }
 
-      toast.success("Quotation saved successfully.");
-      console.log("Backend Response:", response.data);
-      if(onSave) onSave();
+          toast.success("Quotation updated successfully.");
+          if (onSave) onSave();
 
-    } catch (error) {
-      console.error("Error saving quotation:", error.response ? error.response.data : error.message);
-      toast.error("Failed to save quotation. Please check the console for details.");
-    }
+      } catch (error) {
+          console.error("Error updating quotation:", error.response ? error.response.data : error.message);
+          toast.error("Failed to update quotation. See console for details.");
+      } finally {
+          setIsUpdating(false);
+      }
   };
 
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </Spinner>
+        <h4 className="ms-3">Loading Quotation...</h4>
+      </div>
+    );
+  }
 
   return (
     <Card>
       <Card.Header className="quotation-header">
-        <Card.Title>Add Quotation</Card.Title>
+        <Card.Title>Edit Quotation</Card.Title>
       </Card.Header>
       <Card.Body className="quotation-body">
         <Container fluid>
-          {/* --- Top Level Form Details --- */}
+          {/* Top Level Form Details */}
           <Row className="mb-3">
             <Col md={4}><Form.Group><Form.Label>Company Name <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} /></Form.Group></Col>
             <Col md={4}><Form.Group><Form.Label>Project Name <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={projectName} onChange={(e) => setProjectName(e.target.value)} /></Form.Group></Col>
@@ -406,9 +525,9 @@ const CreateQuotation = ({ onCancel, onSave }) => {
             <Col md={3}><Form.Group><Form.Label>Phone <span className="text-danger">*</span></Form.Label><Form.Control type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></Form.Group></Col>
           </Row>
           <Row className="mb-3">
-            <Col md={3}><Form.Group><Form.Label>Country <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={city} onChange={(e) => setCity(e.target.value)} /></Form.Group></Col>
+            <Col md={3}><Form.Group><Form.Label>Country <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={country} onChange={(e) => setCountry(e.target.value)} /></Form.Group></Col>
             <Col md={3}><Form.Group><Form.Label>State <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={state} onChange={(e) => setState(e.target.value)} /></Form.Group></Col>
-            <Col md={3}><Form.Group><Form.Label>City <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={country} onChange={(e) => setCountry(e.target.value)} /></Form.Group></Col>
+            <Col md={3}><Form.Group><Form.Label>City <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={city} onChange={(e) => setCity(e.target.value)} /></Form.Group></Col>
             <Col md={3}><Form.Group><Form.Label>Zip <span className="text-danger">*</span></Form.Label><Form.Control type="text" value={zip} onChange={(e) => setZip(e.target.value)} /></Form.Group></Col>
           </Row>
           <Row className="mb-3">
@@ -417,7 +536,6 @@ const CreateQuotation = ({ onCancel, onSave }) => {
         </Container>
         <hr />
 
-        {/* --- Multi-Part Section Start --- */}
         {partsData.map((part, partIndex) => (
           <Card key={part.id} className="mb-4 section-card-shadow">
             <Card.Header className="d-flex justify-content-between align-items-center section-cart-header">
@@ -448,7 +566,7 @@ const CreateQuotation = ({ onCancel, onSave }) => {
                           <p>Click to upload</p>
                         </div>
                         {part.images.map((img, imgIndex) => (
-                          <div key={imgIndex} style={{ height: "120px", width: "120px", border: "1px solid #ccc", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
+                          <div key={img.id || imgIndex} style={{ height: "120px", width: "120px", border: "1px solid #ccc", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
                             <img src={img.url} alt={`Preview ${imgIndex}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             <Button variant="danger" size="sm" onClick={() => handleDeleteImage(partIndex, imgIndex)} style={{ position: 'absolute', top: '5px', right: '5px', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
                               &times;
@@ -527,7 +645,6 @@ const CreateQuotation = ({ onCancel, onSave }) => {
           </Card>
         ))}
 
-
         <Container fluid className="text-end">
           <Button variant="success" size="sm" onClick={addPart}>
             <FaPlusCircle /> Add Part
@@ -561,67 +678,69 @@ const CreateQuotation = ({ onCancel, onSave }) => {
         </Container>
 
         <Container fluid className="mt-4">
-            <Card>
-                <Card.Header>
-                    <Card.Title as="h5">Quotation Considerations</Card.Title>
-                </Card.Header>
-                <Card.Body>
-                    {considerations.map((item, index) => (
-                        <Row key={item.id} className="mb-3 align-items-center">
-                            <Col xs="auto" className="fw-bold">{index + 1}.</Col>
-                            <Col md={4}>
-                                <Form.Group>
-                                    <Form.Label className="d-md-none">Title</Form.Label>
-                                    <Form.Control 
-                                        type="text"
-                                        placeholder="Consideration title"
-                                        name="title"
-                                        value={item.title}
-                                        onChange={(e) => handleConsiderationChange(index, e)}
-                                    />
-                                </Form.Group>
-                            </Col>
-                            <Col>
-                                <Form.Group>
-                                    <Form.Label className="d-md-none">Description</Form.Label>
-                                    <Form.Control 
-                                        as="textarea"
-                                        rows={1}
-                                        placeholder="Description"
-                                        name="description"
-                                        value={item.description}
-                                        onChange={(e) => handleConsiderationChange(index, e)}
-                                    />
-                                </Form.Group>
-                            </Col>
-                            <Col xs="auto">
-                                <Button 
-                                    variant="outline-danger" 
-                                    size="sm" 
-                                    onClick={() => removeConsideration(index)}
-                                    disabled={considerations.length <= 1}
-                                >
-                                    <FaTrash />
-                                </Button>
-                            </Col>
-                        </Row>
-                    ))}
-                    <div className="d-flex justify-content-end">
-                        <Button variant="success" size="sm" onClick={addConsideration}>
-                            <FaPlusCircle className="me-2"/> Add More
-                        </Button>
-                    </div>
-                </Card.Body>
-            </Card>
+          <Card>
+            <Card.Header>
+              <Card.Title as="h5">Quotation Considerations</Card.Title>
+            </Card.Header>
+            <Card.Body>
+              {considerations.map((item, index) => (
+                <Row key={item.id} className="mb-3 align-items-center">
+                  <Col xs="auto" className="fw-bold">{index + 1}.</Col>
+                  <Col md={4}>
+                    <Form.Group>
+                      <Form.Label className="d-md-none">Title</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="Consideration title"
+                        name="title"
+                        value={item.title}
+                        onChange={(e) => handleConsiderationChange(index, e)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col>
+                    <Form.Group>
+                      <Form.Label className="d-md-none">Description</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={1}
+                        placeholder="Description"
+                        name="description"
+                        value={item.description}
+                        onChange={(e) => handleConsiderationChange(index, e)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col xs="auto">
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => removeConsideration(index)}
+                      disabled={considerations.length <= 1}
+                    >
+                      <FaTrash />
+                    </Button>
+                  </Col>
+                </Row>
+              ))}
+              <div className="d-flex justify-content-end">
+                <Button variant="success" size="sm" onClick={addConsideration}>
+                  <FaPlusCircle className="me-2" /> Add More
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
         </Container>
 
       </Card.Body>
       <Card.Footer className="text-end quotation-footer">
         <Button variant="outline-secondary" onClick={onCancel} className="me-2">Cancel</Button>
-        <Button variant="primary" onClick={handleSave}>Save Quotation</Button>
+        <Button variant="primary" onClick={handleUpdate} disabled={isUpdating}>
+            {isUpdating ? <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> Updating...</> : 'Update Quotation'}
+        </Button>
       </Card.Footer>
     </Card>
   );
 };
 
-export default CreateQuotation;
+export default EditQuotation;

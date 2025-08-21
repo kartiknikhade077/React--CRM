@@ -45,6 +45,11 @@ import BomCategoryList from "./CompanyComponent/BomCategorieSettings/BomCategory
 
 import MomList from "./CompanyComponent/Mom/MomList";
 import QuotationList from "./CompanyComponent/Quotation/QuotationList";
+
+// Employee Module Url
+import CustomerListEmp from "./EmployeeComponent/Customer/CustomerListEmp";
+import ProjectListEmp from "./EmployeeComponent/Project/ProjectListEmp";
+import TimeSheetEmp from "./EmployeeComponent/TimeSheet/TimeSheetEmp";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -312,6 +317,33 @@ const App = () => {
           element={
             <ProtectedRoute>
               <QuotationList />
+            </ProtectedRoute>
+          }
+        />
+
+         <Route
+          path="/employee/cutomerList"
+          element={
+            <ProtectedRoute>
+              <CustomerListEmp />
+            </ProtectedRoute>
+          }
+        />
+
+          <Route
+          path="/employee/projectList"
+          element={
+            <ProtectedRoute>
+              <ProjectListEmp />
+            </ProtectedRoute>
+          }
+        />
+
+         <Route
+          path="/employee/timeSheet"
+          element={
+            <ProtectedRoute>
+              <TimeSheetEmp />
             </ProtectedRoute>
           }
         />

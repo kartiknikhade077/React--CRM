@@ -217,6 +217,7 @@ const CompanyCreateTimesheet = ({
     };
 
     fetchEmployees();
+    
   }, []);
 
   useEffect(() => {
