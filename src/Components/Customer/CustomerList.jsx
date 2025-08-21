@@ -18,10 +18,13 @@ const CustomerList = () => {
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showModal, setShowModal] = useState(false);
-
+    const [access,setAccess]=useState({})
 
     useEffect(() => {
+       
         fetchCustomers(page, size);
+        const access = JSON.parse(localStorage.getItem("access"));
+        setAccess(access)
     }, [page, size]);
 
 
@@ -30,7 +33,7 @@ const CustomerList = () => {
             const response = await axiosInstance.get(`/customer/getAllCustomer/${page}/${size}`);
             setCustomer(response.data.customerList);
             setTotalPages(response.data.totalPages)
-
+           console.log(access)
 
         } catch (error) {
             console.error("Failed to fetch Leads:", error);
@@ -124,12 +127,13 @@ const handleToggleStatus = async (customerId, newStatus) => {
                   </div>
                 </div>
                 <div className="col-md-6 d-flex justify-content-end">
-                  <button
+                 {access?.customerCreate && ( <button
                     className="btn btn-dark"
                     onClick={() => setShowModal(true)}
                   >
                     + Customer
                   </button>
+                 )}
                 </div>
               </div>
 
