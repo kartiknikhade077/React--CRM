@@ -48,7 +48,7 @@ import QuotationList from "./CompanyComponent/Quotation/QuotationList";
 
 // Employee Module Url
 import CustomerListEmp from "./EmployeeComponent/Customer/CustomerListEmp";
-
+import ProjectListEmp from "./EmployeeComponent/Project/ProjectListEmp";
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
@@ -325,6 +325,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <CustomerListEmp />
+            </ProtectedRoute>
+          }
+        />
+
+          <Route
+          path="/employee/projectList"
+          element={
+            <ProtectedRoute>
+              <ProjectListEmp />
             </ProtectedRoute>
           }
         />
