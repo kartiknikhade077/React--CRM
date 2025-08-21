@@ -65,7 +65,12 @@ const EmployeeList = () => {
     projectOwnView: false,
     projectCreate: false,
     projectDelete: false,
-    projectEdit: false
+    projectEdit: false,
+    timeSheetAccess: false,
+    timeSheetViewAll: false,
+    timeSheetCreate: false,
+    timeSheetDelete: false,
+    timeSheetEdit: false,
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -171,7 +176,12 @@ const EmployeeList = () => {
         projectOwnView: data.projectOwnView,
         projectCreate: data.projectCreate,
         projectDelete: data.projectDelete,
-        projectEdit: data.projectEdit
+        projectEdit: data.projectEdit,
+        timeSheetAccess: data.timeSheetAccess,
+        timeSheetCreate: data.timeSheetCreate,
+        timeSheetViewAll: data.timeSheetViewAll,
+        timeSheetDelete: data.timeSheetDelete,
+        timeSheetEdit: data.timeSheetEdit
       }));
     } catch (err) {
       toast.error("Failed to load role access");
@@ -706,6 +716,90 @@ const EmployeeList = () => {
                             Edit
                           </label>
                         </div>
+
+                        <hr></hr>
+                        <h4>TimeSheet</h4>
+                           <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="timeSheetAccess"
+                            checked={formData.timeSheetAccess}
+                            onChange={handleInputChange}
+                            id="timeSheetAccess"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="timeSheetAccess"
+                          >
+                            Module Access
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="timeSheetViewAll"
+                            checked={formData.timeSheetViewAll}
+                            onChange={handleInputChange}
+                            id="timeSheetViewAll"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="timeSheetViewAll"
+                          >
+                            View All
+                          </label>
+                        </div>
+                     
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="timeSheetCreate"
+                            checked={formData.timeSheetCreate}
+                            onChange={handleInputChange}
+                            id="timeSheetCreate"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="timeSheetCreate"
+                          >
+                            Create
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="timeSheetDelete"
+                            checked={formData.timeSheetDelete}
+                            onChange={handleInputChange}
+                            id="timeSheetDelete"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="timeSheetDelete"
+                          >
+                            Delete
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="projectCreate"
+                            checked={formData.timeSheetEdit}
+                            onChange={handleInputChange}
+                            id="timeSheetEdit"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="timeSheetEdit"
+                          >
+                            Edit
+                          </label>
+                          </div>
 
 
                       </div>
