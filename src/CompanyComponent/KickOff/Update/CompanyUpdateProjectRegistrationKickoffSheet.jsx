@@ -41,6 +41,8 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     endDate: "",
   });
 
+  const [isEditingGlobally, setIsEditingGlobally] = useState(false);
+
   const [parts, setParts] = useState([]);
   const [processesByPart, setProcessesByPart] = useState({});
   const [activePartItemNo, setActivePartItemNo] = useState(null);
@@ -859,8 +861,13 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
 
   // =====================SAVE DATA CODE===========================
   const handleSaveOrUpdatePart = async (partToSave) => {
-    const imageListForKickoff = await filesToBase64(partToSave.images);
+    // Filter only new images (File objects) before base64 encoding
+    const newImageFiles = partToSave.images.filter(
+      (img) => img instanceof File
+    );
 
+    // Convert only new images to base64 (or whatever filesToBase64 does)
+    const imageListForKickoff = await filesToBase64(newImageFiles);
     if (partToSave.isNew || !partToSave.itemId) {
       try {
         const workOrderPayload = {
@@ -877,11 +884,9 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         const formData = new FormData();
         formData.append("workOrder", JSON.stringify(workOrderPayload));
 
-        const imageFiles = partToSave.images.filter(
-          (img) => img instanceof File
-        );
-        if (imageFiles.length > 0) {
-          imageFiles.forEach((file) => {
+        // Append only new image files from File objects
+        if (newImageFiles.length > 0) {
+          newImageFiles.forEach((file) => {
             formData.append("images", file);
           });
         }
@@ -944,10 +949,10 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
         );
         await axiosInstance.put("/kickoff/updateItem", kickoffUpdatePayload);
 
-        alert("Part updated successfully!");
+         toast.success("Part updated successfully!");
       } catch (error) {
         console.error("Failed to update part:", error.response || error);
-        alert("Failed to update part.");
+          toast.success("Failed to update part.");
       }
     }
   };
@@ -1064,6 +1069,39 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
     }
   };
 
+
+const handleSaveAll = async () => {
+  try {
+    // First save/update all parts
+    for (const part of parts) {
+      await handleSaveOrUpdatePart(part);
+    }
+
+    // Then save/update their processes
+    await handleUpdateProcesses();
+
+    toast.success("All Parts & Processes saved successfully!");
+     setIsEditingGlobally(false); 
+  } catch (error) {
+    console.error("Save all failed:", error);
+    toast.error("Failed to save parts or processes. Check console.");
+  }
+
+
+  setProcessesByPart((prev) => {
+    const newState = {};
+    for (const [itemNo, processList] of Object.entries(prev)) {
+      newState[itemNo] = processList.map((p) => ({
+        ...p,
+        isEditing: false,
+      }));
+    }
+    return newState;
+  });
+
+};
+
+
   const fetchMaxItemNumber = async () => {
     try {
       console.log("Fetching max item number...");
@@ -1102,6 +1140,22 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
           {/* Part Details */}
+
+          <div className="d-flex justify-content-end mb-3">
+            <Button
+              variant={isEditingGlobally ? "btn btn-success" : "btn btn-dark"}
+              onClick={() => {
+                if (isEditingGlobally) {
+                  handleSaveAll();
+                } else {
+                  setIsEditingGlobally(true);
+                }
+              }}
+            >
+              {isEditingGlobally ? "Update Part & Process" : "Edit"}
+            </Button>
+          </div>
+
           <h5
             className="mb-3"
             style={{ borderLeft: "4px solid #1a3c8c", paddingLeft: "12px" }}
@@ -1168,7 +1222,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               }
                             : null
                         }
-                        isDisabled={!part.isEditing}
+                        isDisabled={!isEditingGlobally}
                       />
                     </td>
                     <td>
@@ -1205,7 +1259,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               }
                             : null
                         }
-                        isDisabled={!part.isEditing}
+                        isDisabled={!isEditingGlobally}
                       />
                     </td>
                     <td>
@@ -1242,14 +1296,14 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               }
                             : null
                         }
-                        isDisabled={!part.isEditing}
+                        isDisabled={!isEditingGlobally}
                       />
                     </td>
                     <td>
                       <div
                         style={{
-                          pointerEvents: part.isEditing ? "auto" : "none",
-                          opacity: part.isEditing ? 1 : 0.5,
+                          pointerEvents: isEditingGlobally ? "auto" : "none",
+                          opacity: isEditingGlobally ? 1 : 0.5,
                         }}
                       >
                         <div
@@ -1420,13 +1474,13 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                         </div>
                       </div>
                     </td>
-                 
+
                     <td className="text-center ">
                       {/* Delete always allowed */}
 
                       {/* Toggle between Edit and Save */}
                       <div className="d-flex justify-content-center">
-                        {part.isEditing ? (
+                        {/* {part.isEditing ? (
                           <Button
                             variant="d-block btn btn-outline-success btn-sm"
                             className="d-block"
@@ -1447,12 +1501,12 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                           >
                             Edit
                           </Button>
-                        )}
+                        )} */}
                       </div>
                       <Button
                         onClick={() => removePart(part.id)}
                         variant="btn btn-outline-danger btn-sm mt-2"
-                        disabled={part.isEditing} // Prevent delete while editing
+                        isDisabled={!isEditingGlobally}
                       >
                         delete
                       </Button>
@@ -1533,7 +1587,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               updateProcess(proc.id, "woNo", e.target.value)
                             }
                             className="KickoffPrtProcessInpt"
-                            disabled={!proc.isEditing}
+                            isDisabled={!isEditingGlobally}
                           />
                         </td>
                         <td className="KickoffPrtProcessInpt-TD">
@@ -1543,7 +1597,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               updateProcess(proc.id, "designer", e.target.value)
                             }
                             className="KickoffPrtProcessInpt"
-                            disabled={!proc.isEditing}
+                            isDisabled={!isEditingGlobally}
                           >
                             <option value="">Select Designer</option>
                             {employeeList.map((emp) => (
@@ -1626,7 +1680,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               placeholder="Select Process..."
                               isClearable={true}
                               menuPosition="fixed"
-                              isDisabled={!proc.isEditing}
+                              isDisabled={!isEditingGlobally}
                               styles={{
                                 control: (base) => ({
                                   ...base,
@@ -1658,7 +1712,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                                 )
                               }
                               className="KickoffPrtProcessInpt"
-                              disabled={!proc.isEditing}
+                              isDisabled={!isEditingGlobally}
                             />
                           )}
                         </td>
@@ -1670,7 +1724,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               updateProcess(proc.id, "length", e.target.value)
                             }
                             className="KickoffPrtProcessInpt"
-                            disabled={!proc.isEditing}
+                            isDisabled={!isEditingGlobally}
                           />
                         </td>
                         <td className="KickoffPrtProcessInpt-TD">
@@ -1680,7 +1734,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               updateProcess(proc.id, "width", e.target.value)
                             }
                             className="KickoffPrtProcessInpt"
-                            disabled={!proc.isEditing}
+                            isDisabled={!isEditingGlobally}
                           />
                         </td>
                         <td className="KickoffPrtProcessInpt-TD">
@@ -1690,7 +1744,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               updateProcess(proc.id, "height", e.target.value)
                             }
                             className="KickoffPrtProcessInpt"
-                            disabled={!proc.isEditing}
+                            isDisabled={!isEditingGlobally}
                           />
                         </td>
                         <td className="KickoffPrtProcessInpt-TD">
@@ -1700,7 +1754,7 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               updateProcess(proc.id, "remarks", e.target.value)
                             }
                             className="KickoffPrtProcessInpt"
-                            disabled={!proc.isEditing}
+                            isDisabled={!isEditingGlobally}
                           />
                         </td>
 
@@ -1720,50 +1774,12 @@ const CompanyUpdateProjectRegistrationKickoffSheet = ({
                               )}
 
                             {/* Toggle between Save/Edit */}
-                            {proc.isEditing ? (
-                              <Button
-                                variant="btn btn-outline-success btn-sm mb-2"
-                                onClick={() => {
-                                  handleUpdateProcesses(); // persist to backend
-                                  setProcessesByPart((prev) => ({
-                                    ...prev,
-                                    [activePartItemNo]: prev[
-                                      activePartItemNo
-                                    ].map((p) =>
-                                      p.id === proc.id
-                                        ? { ...p, isEditing: false }
-                                        : p
-                                    ),
-                                  }));
-                                }}
-                              >
-                                Save
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="btn btn-outline-dark btn-sm mb-2"
-                                onClick={() =>
-                                  setProcessesByPart((prev) => ({
-                                    ...prev,
-                                    [activePartItemNo]: prev[
-                                      activePartItemNo
-                                    ].map((p) =>
-                                      p.id === proc.id
-                                        ? { ...p, isEditing: true }
-                                        : p
-                                    ),
-                                  }))
-                                }
-                              >
-                                Edit
-                              </Button>
-                            )}
 
                             {/* Delete always enabled unless editing */}
                             <Button
                               variant="btn btn-outline-danger btn-sm"
                               onClick={() => removeProcess(proc.id)}
-                              disabled={proc.isEditing}
+                              isDisabled={!isEditingGlobally}
                             >
                               <FaTrash />
                             </Button>
