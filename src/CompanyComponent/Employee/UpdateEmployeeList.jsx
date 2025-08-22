@@ -31,6 +31,11 @@ const UpdateEmployeeList = () => {
     timeSheetCreate: false,
     timeSheetDelete: false,
     timeSheetEdit: false,
+    leadModuleAccess: false,
+    leadViewAll: false,
+    leadCreate: false,
+    leadDelete: false,
+    leadEdit: false
   });
   const [isEditing, setIsEditing] = useState(false);
   const [initialemp, setInitialEmp] = useState(null);
@@ -64,7 +69,12 @@ const UpdateEmployeeList = () => {
           timeSheetViewAll: res.data.moduleAccess.timeSheetViewAll,
           timeSheetCreate: res.data.moduleAccess.timeSheetCreate,
           timeSheetDelete: res.data.moduleAccess.timeSheetDelete,
-          timeSheetEdit: res.data.moduleAccess.timeSheetEdit
+          timeSheetEdit: res.data.moduleAccess.timeSheetEdit,
+          leadModuleAccess: res.data.moduleAccess.leadModuleAccess,
+          leadViewAll: res.data.moduleAccess.leadViewAll,
+          leadCreate: res.data.moduleAccess.leadCreate,
+          leadDelete: res.data.moduleAccess.leadDelete,
+          leadEdit: res.data.moduleAccess.leadEdit
 
         });
 
@@ -151,7 +161,12 @@ const UpdateEmployeeList = () => {
         timeSheetViewAll: data.timeSheetViewAll,
         timeSheetCreate: data.timeSheetCreate,
         timeSheetDelete: data.timeSheetDelete,
-        timeSheetEdit: data.timeSheetEdit
+        timeSheetEdit: data.timeSheetEdit,
+        leadModuleAccess: data.leadModuleAccess,
+        leadViewAll: data.leadViewAll,
+        leadCreate: data.leadCreate,
+        leadDelete: data.leadDelete,
+        leadEdit: data.leadEdit
       });
     } catch (err) {
       toast.error("Failed to load role access");
@@ -267,6 +282,12 @@ const UpdateEmployeeList = () => {
     timeSheetCreate: access.timeSheetCreate,
     timeSheetDelete: access.timeSheetDelete,
     timeSheetEdit: access.timeSheetEdit,
+
+    leadModuleAccess: access.leadModuleAccess,
+    leadViewAll: access.leadViewAll,
+    leadCreate: access.leadCreate,
+    leadDelete: access.leadDelete,
+    leadEdit: access.leadEdit,
 
     };
 
@@ -625,6 +646,73 @@ const UpdateEmployeeList = () => {
                   onChange={handleAccessChange}
                 />
                 <label className="form-check-label" htmlFor="timeSheetEdit">
+                  Edit
+                </label>
+              </div>
+               <hr></hr>
+              <h4>Lead</h4>
+              <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="leadModuleAccess"
+                  id="leadModuleAccess"
+                  checked={access.leadModuleAccess}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="leadModuleAccess">
+                  Module Access
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="leadViewAll"
+                  id="leadViewAll"
+                  checked={access.leadViewAll}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="leadViewAll">
+                  View All
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="leadCreate"
+                  id="leadCreate"
+                  checked={access.leadCreate}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="leadCreate">
+                  Create
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="leadDelete"
+                  id="leadDelete"
+                  checked={access.leadDelete}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="leadDelete">
+                  Delete
+                </label>
+              </div>
+               <div className="form-check form-switch mb-3">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  name="leadEdit"
+                  id="leadEdit"
+                  checked={access.leadEdit}
+                  onChange={handleAccessChange}
+                />
+                <label className="form-check-label" htmlFor="leadEdit">
                   Edit
                 </label>
               </div>

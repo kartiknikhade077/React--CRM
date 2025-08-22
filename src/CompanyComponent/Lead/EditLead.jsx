@@ -14,7 +14,8 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
   const [originalColumnNames, setOriginalColumnNames] = useState({});
 
   const [showConvertModal, setShowConvertModal] = useState(false);
-
+  const [access, setAccess] = useState({})
+  const [role,setRole]=useState("");
   const fixedColumnNames = [
     "RFQ Date",
     "Customer Name",
@@ -35,6 +36,9 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
     if (show && leadData) {
       setShowCustomization(false); // Reset view
       getLeadInfo(leadData);
+      const access = JSON.parse(localStorage.getItem("access"));
+      setAccess(access)
+      setRole(localStorage.getItem("role"))
     }
   }, [show, leadData]);
 
@@ -164,6 +168,7 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
   return (
     <>
       <Modal show={show} onHide={onClose} size="lg" centered>
+        <fieldset disabled={!access?.leadEdit && role==="ROLE_EMP"}>
         <Modal.Header className="align-items-start flex-column">
           <div className="d-flex w-100 justify-content-between align-items-center">
             <div className=" align-items-center">
@@ -224,27 +229,27 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
               {columnList.map((col, index) => (
                 <div className="col-md-6 mb-3" key={index}>
                   <label className="form-label fw-semibold">{col.name}</label>
-                    {col.name === "RFQ Date" ? (
-                  <input
-                    type="date"
-                    className="form-control"
-                    placeholder={`Enter ${col.name}`}
-                    value={lead[col.name] || new Date().toISOString().split("T")[0]} // default today
-                    onChange={(e) =>
-                      handleFieldChange(col.name, e.target.value)
-                    }
-                  />
-                  ): (
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder={`Enter ${col.name}`}
-                    value={lead[col.name] || ""}
-                    onChange={(e) => handleFieldChange(col.name, e.target.value)}
-                  />
-                    )}
+                  {col.name === "RFQ Date" ? (
+                    <input
+                      type="date"
+                      className="form-control"
+                      placeholder={`Enter ${col.name}`}
+                      value={lead[col.name] || new Date().toISOString().split("T")[0]} // default today
+                      onChange={(e) =>
+                        handleFieldChange(col.name, e.target.value)
+                      }
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder={`Enter ${col.name}`}
+                      value={lead[col.name] || ""}
+                      onChange={(e) => handleFieldChange(col.name, e.target.value)}
+                    />
+                  )}
                 </div>
-                
+
               ))}
             </div>
           ) : (
@@ -330,6 +335,7 @@ const EditLead = ({ show, onClose, onSave, leadData, setShow }) => {
             Update Lead
           </Button>
         </Modal.Footer>
+        </fieldset>
       </Modal>
 
       <ConvertToCustomerLead
