@@ -68,24 +68,19 @@ const fetchAccess = async () => {
           </Link>
         </li>
       )}
+      {accessPermission?.leadModuleAccess &&   (
         <li
-          className={`sidebar-employee__nav-item ${location.pathname === "/empLink" ? "active" : ""
+          className={`sidebar-employee__nav-item ${location.pathname === "/employee/Lead" ? "active" : ""
             }`}
         >
-          <Link to="/empLink">
-            <FaLink />
-            {!isCollapsed && <span>Link</span>}
+          <Link to="/employee/lead">
+            <FaHome />
+            {!isCollapsed && <span>Leads</span>}
           </Link>
         </li>
-        <li
-          className={`sidebar-employee__nav-item ${location.pathname === "/empDropdown" ? "active" : ""
-            }`}
-        >
-          <Link to="/empDropdown">
-            <FaListAlt />
-            {!isCollapsed && <span>Dropdown</span>}
-          </Link>
-        </li>
+      )}
+     
+      
       </ul>
       <div className="sidebar-employee__logout">
         <button onClick={handleLogout}>

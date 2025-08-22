@@ -47,6 +47,12 @@ const RoleModel = () => {
     timeSheetCreate: false,
     timeSheetDelete: false,
     timeSheetEdit: false,
+    leadModuleAccess: false,
+    leadViewAll: false,
+    leadCreate: false,
+    leadDelete: false,
+    leadEdit: false
+
 
 
   });
@@ -88,6 +94,11 @@ const RoleModel = () => {
         timeSheetCreate: false,
         timeSheetDelete: false,
         timeSheetEdit: false,
+        leadModuleAccess: false,
+        leadViewAll: false,
+        leadCreate: false,
+        leadDelete: false,
+        leadEdit: false
       });
     }
   };
@@ -144,7 +155,13 @@ const RoleModel = () => {
       timeSheetViewAll: e.target.timeSheetViewAll.checked,
       timeSheetCreate: e.target.timeSheetCreate.checked,
       timeSheetDelete: e.target.timeSheetDelete.checked,
-      timeSheetEdit: e.target.timeSheetEdit.checked
+      timeSheetEdit: e.target.timeSheetEdit.checked,
+      leadModuleAccess: e.target.leadModuleAccess.checked,
+      leadViewAll: e.target.leadViewAll.checked,
+      leadCreate: e.target.leadCreate.checked,
+      leadDelete: e.target.leadDelete.checked,
+      leadEdit: e.target.leadEdit.checked
+
     };
 
 
@@ -195,7 +212,12 @@ const RoleModel = () => {
         timeSheetViewAll: role.timeSheetViewAll,
         timeSheetCreate: role.timeSheetCreate,
         timeSheetDelete: role.timeSheetDelete,
-        timeSheetEdit: role.timeSheetEdit
+        timeSheetEdit: role.timeSheetEdit,
+        leadModuleAccess: role.leadModuleAccess,
+        leadViewAll: role.leadViewAll,
+        leadCreate: role.leadCreate,
+        leadDelete: role.leadDelete,
+        leadEdit: role.leadEdit
       });
       handleShowRoleModel(true);
 
@@ -469,7 +491,7 @@ const RoleModel = () => {
                         />
                         <label className="form-check-label">Edit</label>
                       </div>
-                      
+
 
                     </div>
 
@@ -478,7 +500,7 @@ const RoleModel = () => {
                     <hr></hr>
                     <h4>TimeSheet </h4>
                     <div>
-                     <div className="form-check">
+                      <div className="form-check">
                         <input
                           className="form-check-input"
                           type="checkbox"
@@ -498,7 +520,7 @@ const RoleModel = () => {
                         />
                         <label className="form-check-label">View All</label>
                       </div>
-                      
+
                       <div className="form-check">
                         <input
                           className="form-check-input"
@@ -529,7 +551,67 @@ const RoleModel = () => {
                         />
                         <label className="form-check-label">Edit</label>
                       </div>
-                      
+
+
+                    </div>
+
+                  </div>
+                    <div>
+                    <hr></hr>
+                    <h4>Lead</h4>
+                    <div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="leadModuleAccess"
+                          value="true"
+                          defaultChecked={selectedRole.leadModuleAccess}
+                        />
+                        <label className="form-check-label">Lead Access</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="leadViewAll"
+                          value="true"
+                          defaultChecked={selectedRole.leadViewAll}
+                        />
+                        <label className="form-check-label">Lead All</label>
+                      </div>
+
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="leadCreate"
+                          value="true"
+                          defaultChecked={selectedRole.leadCreate}
+                        />
+                        <label className="form-check-label">Create</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="leadDelete"
+                          value="true"
+                          defaultChecked={selectedRole.leadDelete}
+                        />
+                        <label className="form-check-label">Delete</label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="leadEdit"
+                          value="true"
+                          defaultChecked={selectedRole.leadEdit}
+                        />
+                        <label className="form-check-label">Edit</label>
+                      </div>
+
 
                     </div>
 

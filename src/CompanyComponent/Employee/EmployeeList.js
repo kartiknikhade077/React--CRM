@@ -71,6 +71,11 @@ const EmployeeList = () => {
     timeSheetCreate: false,
     timeSheetDelete: false,
     timeSheetEdit: false,
+    leadModuleAccess: false,
+    leadViewAll: false,
+    leadCreate: false,
+    leadDelete: false,
+    leadEdit: false
   };
 
   const [formData, setFormData] = useState(defaultFormData);
@@ -181,7 +186,13 @@ const EmployeeList = () => {
         timeSheetCreate: data.timeSheetCreate,
         timeSheetViewAll: data.timeSheetViewAll,
         timeSheetDelete: data.timeSheetDelete,
-        timeSheetEdit: data.timeSheetEdit
+        timeSheetEdit: data.timeSheetEdit,
+        leadModuleAccess: data.leadModuleAccess,
+        leadViewAll: data.leadViewAll,
+        leadCreate: data.leadCreate,
+        leadDelete: data.leadDelete,
+        leadEdit: data.leadEdit,
+     
       }));
     } catch (err) {
       toast.error("Failed to load role access");
@@ -719,7 +730,7 @@ const EmployeeList = () => {
 
                         <hr></hr>
                         <h4>TimeSheet</h4>
-                           <div className="col-md-4 form-check ms-2 mb-3">
+                        <div className="col-md-4 form-check ms-2 mb-3">
                           <input
                             className="form-check-input"
                             type="checkbox"
@@ -751,7 +762,7 @@ const EmployeeList = () => {
                             View All
                           </label>
                         </div>
-                     
+
                         <div className="col-md-4 form-check ms-2 mb-3">
                           <input
                             className="form-check-input"
@@ -799,7 +810,92 @@ const EmployeeList = () => {
                           >
                             Edit
                           </label>
-                          </div>
+                        </div>
+
+                         <hr></hr>
+                        <h4>Lead</h4>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="leadModuleAccess"
+                            checked={formData.leadModuleAccess}
+                            onChange={handleInputChange}
+                            id="leadModuleAccess"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="leadModuleAccess"
+                          >
+                            Module Access
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="leadViewAll"
+                            checked={formData.leadViewAll}
+                            onChange={handleInputChange}
+                            id="leadViewAll"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="leadViewAll"
+                          >
+                            View All
+                          </label>
+                        </div>
+
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="leadCreate"
+                            checked={formData.leadCreate}
+                            onChange={handleInputChange}
+                            id="leadCreate"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="leadCreate"
+                          >
+                            Create
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="leadDelete"
+                            checked={formData.leadDelete}
+                            onChange={handleInputChange}
+                            id="leadDelete"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="leadDelete"
+                          >
+                            Delete
+                          </label>
+                        </div>
+                        <div className="col-md-4 form-check ms-2 mb-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            name="leadEdit"
+                            checked={formData.leadEdit}
+                            onChange={handleInputChange}
+                            id="leadEdit"
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor="leadEdit"
+                          >
+                            Edit
+                          </label>
+                        </div>
+
 
 
                       </div>
