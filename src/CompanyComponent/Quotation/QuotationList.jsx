@@ -7,6 +7,7 @@ import CreateQuotation from "./CreateQuotation";
 import axiosInstance from "../../BaseComponet/axiosInstance"; // Assuming this is your configured axios
 import { toast } from "react-toastify";
 import EditQuotation from "./EditQuotation";
+import QuotationPDFModel from "./QuotationPDFModel";
 
 const QuotationList = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -21,6 +22,10 @@ const QuotationList = () => {
     const [searchTerm, setSearchTerm] = useState("");
 
     const [selectedQuotationId, setSelectedQuotationId] = useState(null);
+
+    const [showPdfModal, setShowPdfModal] = useState(false);
+    const [selectedQuotationIdForPdf, setSelectedQuotationIdForPdf] = useState(null);
+
 
     // Function to fetch quotations from the API
     const fetchQuotations = async () => {
@@ -81,6 +86,11 @@ const QuotationList = () => {
         setView('list');
         setSelectedQuotationId(null);
     }
+
+    const handlePreviewClick = (quotationId) => {
+        setSelectedQuotationIdForPdf(quotationId);
+        setShowPdfModal(true);
+    };
     
     // Helper function to format dates
     const formatDate = (dateString) => {
@@ -186,6 +196,12 @@ const QuotationList = () => {
                                                         >
                                                             <i className="bi bi-pencil-square me-1"></i>
                                                         </button>
+                                                        <button 
+                                                            className="btn btn-sm btn-outline-primary ms-2"
+                                                            onClick={() => handlePreviewClick(q.quotationId)}
+                                                        >
+                                                            <i className="bi bi-eye"></i>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))
@@ -222,6 +238,14 @@ const QuotationList = () => {
                 <CompanySidebar isCollapsed={isCollapsed} />
                 <div className="slidebar-main-div-right-section">
                     {renderView()}
+                    
+                    {showPdfModal && (
+                        <QuotationPDFModel
+                            show={showPdfModal}
+                            onClose={() => setShowPdfModal(false)}
+                            quotationId={selectedQuotationIdForPdf}
+                        />
+                    )}
                 </div>
             </div>
         </div>
