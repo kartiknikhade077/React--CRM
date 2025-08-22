@@ -50,7 +50,7 @@ import QuotationList from "./CompanyComponent/Quotation/QuotationList";
 import CustomerListEmp from "./EmployeeComponent/Customer/CustomerListEmp";
 import ProjectListEmp from "./EmployeeComponent/Project/ProjectListEmp";
 import TimeSheetEmp from "./EmployeeComponent/TimeSheet/TimeSheetEmp";
-import LeadListEmp from "./EmployeeComponent/Lead/LeadListEmp";
+import LeadListEmp from "./EmployeeComponent/Lead/LeadListEmp"; 
 const App = () => {
   const role = localStorage.getItem("role"); // ✅ Get user role from localStorage
 
