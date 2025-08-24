@@ -1,29 +1,24 @@
-# Step 1: Build React app
+# Stage 1: Build React app
 FROM node:18 AS build
-WORKDIR /app
 
-# Install dependencies
+WORKDIR /app
 COPY package*.json ./
 RUN npm install
-
-# Copy source and build
 COPY . .
 RUN npm run build
 
-# Step 2: Serve with Nginx
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
 
-# Remove default nginx static assets
+WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
 
-# Copy React build output
+# Copy React build files to Nginx html directory
 COPY --from=build /app/build .
 
-# Copy custom Nginx config (for React Router support)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# ❌ Remove this line (you don’t have nginx.conf)
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port
-EXPOSE 3000
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
