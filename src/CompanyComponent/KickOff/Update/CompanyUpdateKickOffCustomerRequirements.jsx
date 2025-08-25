@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Accordion, Card, Form, Row, Col, Button } from "react-bootstrap";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
 
-// ✅ Placeholder structure
+// Table structure with correct order and placeholder values
 const tableStructure = [
   { title: "Inserts (Main/CAM)", values: ["SDK11", "HCHCR", "D2 IMP", "HMD5"] },
   {
@@ -51,6 +51,13 @@ const tableStructure = [
   { title: "Remarks", values: ["Enter remarks here", "", "", ""] },
 ];
 
+const requirementFields = [
+  "requirementOne",
+  "requirementTwo",
+  "requirementThree",
+  "requirementFour",
+];
+
 const CompanyUpdateKickOffCustomerRequirements = ({
   eventKey,
   activeKey,
@@ -66,34 +73,47 @@ const CompanyUpdateKickOffCustomerRequirements = ({
   const [isEditable, setIsEditable] = useState(false);
   const [activeCell, setActiveCell] = useState(null);
 
+  // Ensure internal state matches external initialRequirements
   useEffect(() => {
     setRequirements(initialRequirements);
   }, [initialRequirements]);
 
+  // Map requirements by requirementType (trimmed, case sensitive)
+  const reqMap = requirements.reduce((acc, req) => {
+    acc[req.requirementType?.trim()] = req;
+    return acc;
+  }, {});
+
+  // Get the index of a type in requirements array; fallback to -1 if not found
+  const findReqIndex = (title) =>
+    requirements.findIndex(
+      (req) =>
+        req.requirementType && req.requirementType.trim() === title.trim()
+    );
+
+  // Unified change handler
   const handleChange = (index, field, value) => {
+    if (index === -1) return; // If not found
     const newReqs = [...requirements];
     newReqs[index] = { ...newReqs[index], [field]: value };
     setRequirements(newReqs);
-    onCustomerRequirementsChange(newReqs);
+    onCustomerRequirementsChange?.(newReqs);
   };
 
-  const handleFocus = (rowIdx, field, placeholderValue) => {
-    if (!isEditable) return; // Only work in edit mode
-
-    const currentValue = requirements[rowIdx][field];
-
-    if (!currentValue) {
-      // Empty → set placeholder into input
-      handleChange(rowIdx, field, placeholderValue);
-    } else if (currentValue === placeholderValue) {
-      // Already has placeholder → clear it
-      handleChange(rowIdx, field, "");
-    } else {
-      // Has custom text → clear it
-      handleChange(rowIdx, field, "");
-    }
+  // Focus handler for placeholder logic and cell coloring
+  const handleFocus = (title, field, placeholderValue) => {
+    if (!isEditable) return;
+    setActiveCell(`${title}-${field}`);
+    const idx = findReqIndex(title);
+    const currValue = requirements[idx]?.[field] || "";
+    if (!currValue) {
+      handleChange(idx, field, placeholderValue);
+    } else if (currValue === placeholderValue) {
+      handleChange(idx, field, "");
+    } // else: has custom value, leave as is unless user clears
   };
 
+  // Save to backend
   const handleUpdateRequirements = async () => {
     try {
       const payload = requirements.map((req) => ({
@@ -102,9 +122,7 @@ const CompanyUpdateKickOffCustomerRequirements = ({
         companyId,
         employeeId,
       }));
-
       await axiosInstance.put("/kickoff/updateCustomerRequirements", payload);
-
       alert("Customer Requirements updated successfully!");
       setIsEditable(false);
     } catch (error) {
@@ -120,10 +138,10 @@ const CompanyUpdateKickOffCustomerRequirements = ({
       <CustomToggle
         eventKey={eventKey}
         activeKey={activeKey}
-        handleAccordionClick={() => handleAccordionClick(eventKey)}
+        onClick={() => handleAccordionClick(eventKey)}
       >
         <div className="d-flex justify-content-between">
-          <h5> Customer Requirements</h5>
+          <h5>Customer Requirements</h5>
         </div>
       </CustomToggle>
 
@@ -160,51 +178,87 @@ const CompanyUpdateKickOffCustomerRequirements = ({
 
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
-          {requirements.map((req, rowIdx) => (
-            <Row key={req.requirementId || rowIdx} className="mb-3">
-              <Col md={4}>
-                <Form.Control
-                  type="text"
-                  className="rounded-0 fw-bold"
-                  value={req.requirementType || ""}
-                  disabled
-                />
-              </Col>
-              {[
-                "requirementOne",
-                "requirementTwo",
-                "requirementThree",
-                "requirementFour",
-              ].map((field, colIdx) => (
-                <Col md={2} key={field}>
+          {tableStructure.map((row, rowIdx) => {
+            const req = reqMap[row.title];
+            const isRemarksRow = row.title === "Remarks";
+            if (isRemarksRow) {
+              // Single full-width remarks row, matching the create UI
+              return (
+                <Row key={row.title} className="mb-3">
+                  <Col md={4}>
+                    <Form.Control
+                      type="text"
+                      className="rounded-0 fw-bold"
+                      value={row.title}
+                      disabled
+                    />
+                  </Col>
+                  <Col md={8}>
+                    <Form.Control
+                      type="text"
+                      placeholder={row.values[0] || "Enter remarks here"}
+                      value={req?.requirementOne || ""}
+                      readOnly={!isEditable}
+                      onChange={(e) =>
+                        handleChange(
+                          findReqIndex(row.title),
+                          "requirementOne",
+                          e.target.value
+                        )
+                      }
+                      style={{
+                        backgroundColor:
+                          (req?.requirementOne || "").trim() !== ""
+                            ? "#f7ff5c"
+                            : "white",
+                      }}
+                    />
+                  </Col>
+                </Row>
+              );
+            }
+            // Default 4-column requirement row
+            return (
+              <Row key={row.title} className="mb-3">
+                <Col md={4}>
                   <Form.Control
                     type="text"
-                    placeholder={tableStructure[rowIdx]?.values[colIdx] || ""}
-                    value={req[field] || ""}
-                    readOnly={!isEditable}
-                    onClick={() =>
-                      handleFocus(
-                        rowIdx,
-                        field,
-                        tableStructure[rowIdx]?.values[colIdx] || ""
-                      )
-                    }
-                    onChange={(e) =>
-                      handleChange(rowIdx, field, e.target.value)
-                    }
-                    style={{
-                      backgroundColor:
-                        (req[field] || "").trim() !== ""
-                          ? "#f7ff5c" // light green when data present
-                          : activeCell === `${rowIdx}-${field}`
-                          ? "#ffeeba" // light yellow when active
-                          : "white", // default
-                    }}
+                    className="rounded-0 fw-bold"
+                    value={row.title}
+                    disabled
                   />
                 </Col>
-              ))}
-            </Row>
-          ))}
+                {requirementFields.map((field, colIdx) => (
+                  <Col md={2} key={field}>
+                    <Form.Control
+                      type="text"
+                      placeholder={row.values[colIdx] || ""}
+                      value={req ? req[field] || "" : ""}
+                      readOnly={!isEditable}
+                      onClick={() =>
+                        handleFocus(row.title, field, row.values[colIdx] || "")
+                      }
+                      onChange={(e) =>
+                        handleChange(
+                          findReqIndex(row.title),
+                          field,
+                          e.target.value
+                        )
+                      }
+                      style={{
+                        backgroundColor:
+                          (req?.[field] || "").trim() !== ""
+                            ? "#f7ff5c"
+                            : activeCell === `${row.title}-${field}`
+                            ? "#ffeeba"
+                            : "white",
+                      }}
+                    />
+                  </Col>
+                ))}
+              </Row>
+            );
+          })}
         </Card.Body>
       </Accordion.Collapse>
     </Card>
