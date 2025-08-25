@@ -353,6 +353,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffff6e",
   },
 
+  tableCellGreenBGcolor: {
+    backgroundColor: "#3bff6f",
+  },
+
   alignItmCnter: {
     alignItems: "center",
   },
@@ -444,8 +448,17 @@ const KickOffPDF = ({ data }) => {
                 T0: {kickOffInfo.startDate} ,T1 {kickOffInfo.endDate}
               </Text>{" "}
             </View>
+            {/* <View style={[styles.ShipAddRowcol, { flex: 2.0 }]}>
+              <Text>{kickOffInfo.billingAddress || "To be confirmed"} </Text>
+            </View> */}
+
             <View style={[styles.ShipAddRowcol, { flex: 2.0 }]}>
-              <Text>{kickOffInfo.billingAddress} </Text>
+              <Text>
+                {kickOffInfo.billingAddress &&
+                kickOffInfo.billingAddress.trim() !== ""
+                  ? kickOffInfo.billingAddress
+                  : "To be confirmed"}
+              </Text>
             </View>
           </View>
         </View>
@@ -474,7 +487,12 @@ const KickOffPDF = ({ data }) => {
               <Text>{kickOffInfo.mobileNumber}</Text>{" "}
             </View>
             <View style={[styles.FstRow, { flex: 2.0 }]}>
-              <Text>{kickOffInfo.shippingAddress}</Text>
+              <Text>
+                {kickOffInfo.shippingAddress &&
+                kickOffInfo.shippingAddress.trim() !== ""
+                  ? kickOffInfo.shippingAddress
+                  : "To be confirmed"}
+              </Text>
             </View>
           </View>
         </View>
@@ -525,138 +543,141 @@ const KickOffPDF = ({ data }) => {
               const processes = itemProcessList.filter(
                 (proc) => proc.itemNo === item.itemNo
               );
+              console.log("processes.length", processes);
 
-              return (
-                <View key={item.itemId}>
-                  <View style={[styles.tableRow, { alignItems: "stretch" }]}>
-                    {/* Parent → Part Details */}
-                    <Text style={[styles.tableCellFirstcol, { flex: 1.05 }]}>
-                      {item.partName}
-                      {"\n"}Matl = {item.material}
-                      {"\n"}Thk = {item.thickness}
-                    </Text>
-                    <View style={[styles.tableCellFirstcol, { flex: 0.7 }]}>
-                      {item.imageList?.map((imgBase64, imgIdx) => (
-                        <Image
-                          key={imgIdx}
-                          src={`data:image/png;base64,${imgBase64}`}
-                          style={{ width: 32, height: 32, marginBottom: 2 }}
-                        />
-                      ))}
-                    </View>
-
-                    {/* Child rows container → all processes */}
-                    <View style={{ flex: 7, flexDirection: "column" }}>
-                      {processes.length > 0 ? (
-                        processes.map((proc, idx) => (
-                          <View
-                            style={[styles.tableRow, { flex: 1 }]}
-                            key={`${item.itemId}-${idx}`}
-                          >
-                            <View
-                              style={[
-                                styles.tableCell,
-                                proc.cancel ? styles.tableCellRedBGcolor : null,
-                                proc.scope
-                                  ? styles.tableCellYellowBGcolor
-                                  : null,
-                              ]}
-                            >
-                              <Text>{proc.workOrderNumber}</Text>
-                            </View>
-
-                            <View
-                              style={[
-                                styles.tableCell,
-                                proc.cancel ? styles.tableCellRedBGcolor : null,
-                                proc.scope
-                                  ? styles.tableCellYellowBGcolor
-                                  : null,
-                              ]}
-                            >
-                              <Text>{proc.operationNumber || ""}</Text>
-                            </View>
-
-                            <View
-                              style={[
-                                styles.tableCell,
-                                { flex: 2.5 },
-                                proc.cancel ? styles.tableCellRedBGcolor : null,
-                                proc.scope
-                                  ? styles.tableCellYellowBGcolor
-                                  : null,
-                              ]}
-                            >
-                              <Text>{proc.process}</Text>
-                            </View>
-
-                            <View
-                              style={[
-                                styles.tableCell,
-                                styles.txteCenter,
-                                proc.cancel ? styles.tableCellRedBGcolor : null,
-                                proc.scope
-                                  ? styles.tableCellYellowBGcolor
-                                  : null,
-                              ]}
-                            >
-                              <Text>{proc.length}</Text>
-                            </View>
-
-                            <View
-                              style={[
-                                styles.tableCell,
-                                styles.txteCenter,
-                                proc.cancel ? styles.tableCellRedBGcolor : null,
-                                proc.scope
-                                  ? styles.tableCellYellowBGcolor
-                                  : null,
-                              ]}
-                            >
-                              <Text>{proc.width}</Text>{" "}
-                            </View>
-
-                            <View
-                              style={[
-                                styles.tableCell,
-                                styles.txteCenter,
-                                proc.cancel ? styles.tableCellRedBGcolor : null,
-                                proc.scope
-                                  ? styles.tableCellYellowBGcolor
-                                  : null,
-                              ]}
-                            >
-                              <Text>{proc.height}</Text>{" "}
-                            </View>
-
-                            <View
-                              style={[
-                                styles.tableCell,
-                                styles.txteCenter,
-                                proc.cancel ? styles.tableCellRedBGcolor : null,
-                                proc.scope
-                                  ? styles.tableCellYellowBGcolor
-                                  : null,
-                              ]}
-                            >
-                              <Text>{proc.remarks}</Text>{" "}
-                            </View>
-                          </View>
-                        ))
-                      ) : (
-                        // Empty row if no process
-                        <View style={styles.tableRow}>
-                          {Array(7)
-                            .fill("")
-                            .map((_, i) => (
-                              <Text style={styles.tableCell} key={i}></Text>
+              if (processes.length > 0) {
+                return processes.map((proc, idx) => (
+                  <View style={styles.tableRow} key={`${item.itemId}-${idx}`}>
+                    {/* Merge first two columns (only in the first row) */}
+                    {idx === 0 ? (
+                      <>
+                        <Text style={[styles.tableCell2, { flex: 1.5 }]}>
+                          <Text>
+                            {item.partName}
+                            {"\n"}
+                            Matl = {item.material}
+                            {"\n"}
+                            Thk = {item.thickness}
+                          </Text>
+                        </Text>
+                        <View style={styles.tableCell1}>
+                          {item.imageList &&
+                            item.imageList.length > 0 &&
+                            item.imageList.map((imgBase64, imgIdx) => (
+                              <Image
+                                key={imgIdx}
+                                src={`data:image/png;base64,${imgBase64}`}
+                                style={{
+                                  width: 32,
+                                  height: 32,
+                                  marginBottom: 2,
+                                }}
+                              />
                             ))}
                         </View>
-                      )}
-                    </View>
+                      </>
+                    ) : (
+                      <>
+                        {/* Blank cells for alignment (merged visually) */}
+                        <Text
+                          style={[styles.tableCellBlank, { flex: 1.5 }]}
+                        ></Text>
+                        <View style={[styles.tableCellBlank]}></View>
+                      </>
+                    )}
+                    {/* Process columns */}
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        proc.cancel ? styles.tableCellRedBGcolor : null,
+                        proc.scope ? styles.tableCellYellowBGcolor : null,
+                        proc.parentWorkOrderNo
+                          ? styles.tableCellGreenBGcolor
+                          : null,
+                      ]}
+                    >
+                      {proc.workOrderNumber}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        proc.cancel ? styles.tableCellRedBGcolor : null,
+                        proc.scope ? styles.tableCellYellowBGcolor : null,
+                        proc.parentWorkOrderNo
+                          ? styles.tableCellGreenBGcolor
+                          : null,
+                      ]}
+                    >
+                      {proc.operationNumber || ""}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        { flex: 2.5 },
+                        proc.cancel ? styles.tableCellRedBGcolor : null,
+                        proc.scope ? styles.tableCellYellowBGcolor : null,
+                        proc.parentWorkOrderNo
+                          ? styles.tableCellGreenBGcolor
+                          : null,
+                      ]}
+                    >
+                      {proc.process}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        styles.txteCenter,
+                        proc.cancel ? styles.tableCellRedBGcolor : null,
+                        proc.scope ? styles.tableCellYellowBGcolor : null,
+                        proc.parentWorkOrderNo
+                          ? styles.tableCellGreenBGcolor
+                          : null,
+                      ]}
+                    >
+                      {proc.length}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        styles.txteCenter,
+                        proc.cancel ? styles.tableCellRedBGcolor : null,
+                        proc.scope ? styles.tableCellYellowBGcolor : null,
+                        proc.parentWorkOrderNo
+                          ? styles.tableCellGreenBGcolor
+                          : null,
+                      ]}
+                    >
+                      {proc.width}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        styles.txteCenter,
+                        proc.cancel ? styles.tableCellRedBGcolor : null,
+                        proc.scope ? styles.tableCellYellowBGcolor : null,
+                        proc.parentWorkOrderNo
+                          ? styles.tableCellGreenBGcolor
+                          : null,
+                      ]}
+                    >
+                      {proc.height}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        proc.cancel ? styles.tableCellRedBGcolor : null,
+                        proc.scope ? styles.tableCellYellowBGcolor : null,
+                        proc.parentWorkOrderNo
+                          ? styles.tableCellGreenBGcolor
+                          : null,
+                      ]}
+                    >
+                      {proc.remarks}
+                    </Text>
                   </View>
-                </View>
-              );
+                ));
+              } else {
+              }
             })}
           </View>
         </View>
