@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Accordion, Card, Form, Row, Col, Button } from "react-bootstrap";
 import axiosInstance from "../../../BaseComponet/axiosInstance";
-import { FaTrash, FaPlusCircle } from "react-icons/fa";
+import Select from "react-select";
+
 const CompanyUpdateKickOffSignature = ({
   eventKey,
   activeKey,
@@ -9,11 +10,34 @@ const CompanyUpdateKickOffSignature = ({
   handleAccordionClick,
   onSignatureChange,
   initialSignatureData = [],
-  id, // ✅ Pass KickOffId from parent
+  id,
 }) => {
   const [signatures, setSignatures] = useState(initialSignatureData);
   const [isEditable, setIsEditable] = useState(false);
-  // Sync state from props
+  const [employees, setEmployees] = useState([]);
+
+  // 🔹 Fetch employees
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const response = await axiosInstance.get(
+          "/company/getEmployeeList/0/100"
+        );
+        setEmployees(response.data.employeeList);
+      } catch (error) {
+        console.error("Failed to fetch employees:", error);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  // 🔹 react-select options
+  const employeeOptions = employees.map((emp) => ({
+    value: emp.employeeId,
+    label: emp.name,
+  }));
+
+  // Sync with initial props
   useEffect(() => {
     setSignatures(initialSignatureData);
   }, [initialSignatureData]);
@@ -28,12 +52,7 @@ const CompanyUpdateKickOffSignature = ({
   const handleAddSignature = () => {
     setSignatures([
       ...signatures,
-      {
-        id: null,
-        kickOffId: id,
-        departments: "",
-        headName: "",
-      },
+      { id: null, kickOffId: id, departments: "", headName: "" },
     ]);
   };
 
@@ -43,7 +62,6 @@ const CompanyUpdateKickOffSignature = ({
     onSignatureChange(newSignatures);
   };
 
-  // ✅ Independent Save for Signatures
   const handleUpdateSignatures = async () => {
     try {
       const payload = signatures.map((sig) => ({
@@ -53,7 +71,7 @@ const CompanyUpdateKickOffSignature = ({
 
       await axiosInstance.put("/kickoff/updateKickOffSignature", payload);
       alert("Signatures updated successfully!");
-       setIsEditable(false); 
+      setIsEditable(false);
     } catch (error) {
       console.error("Failed to update signatures:", error);
       alert("Failed to update signatures");
@@ -69,9 +87,10 @@ const CompanyUpdateKickOffSignature = ({
       >
         Signatures
       </CustomToggle>
+
       <Accordion.Collapse eventKey={eventKey}>
         <Card.Body>
-          {/* Top Right Buttons */}
+          {/* Buttons */}
           <div className="text-end">
             {!isEditable ? (
               <Button
@@ -105,7 +124,8 @@ const CompanyUpdateKickOffSignature = ({
           </div>
 
           {signatures.map((sig, idx) => (
-            <Row key={sig.id || idx} className="mb-3 ">
+            <Row key={sig.id || idx} className="mb-3">
+              {/* Department */}
               <Col md={5}>
                 <Form.Group controlId={`departments-${idx}`}>
                   <Form.Label>Department</Form.Label>
@@ -119,42 +139,70 @@ const CompanyUpdateKickOffSignature = ({
                   />
                 </Form.Group>
               </Col>
+
+              {/* Head Name Dropdown/Text */}
               <Col md={5}>
                 <Form.Group controlId={`headName-${idx}`}>
                   <Form.Label>Head Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={sig.headName || ""}
-                    onChange={(e) =>
-                      handleChange(idx, "headName", e.target.value)
-                    }
-                    disabled={!isEditable}
-                  />
+                  {!isEditable ? (
+                    <Form.Control
+                      type="text"
+                      value={sig.headName || ""}
+                      disabled
+                    />
+                  ) : (
+                    <Select
+                      options={employeeOptions}
+                      value={
+                        employeeOptions.find(
+                          (opt) => opt.label === sig.headName
+                        ) || null
+                      }
+                      onChange={(selected) =>
+                        handleChange(
+                          idx,
+                          "headName",
+                          selected ? selected.label : ""
+                        )
+                      }
+                      placeholder="Select employee"
+                      isClearable
+                      menuPortalTarget={document.body}
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        menu: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                    />
+                  )}
                 </Form.Group>
               </Col>
+
+              {/* Delete Button */}
               <Col md={2} className="d-flex align-items-end p-0">
                 <Button
                   variant="btn btn-outline-danger btn-sm"
                   onClick={() => handleRemoveSignature(idx)}
+                  disabled={!isEditable}
                 >
-                  delete
+                  Delete
                 </Button>
               </Col>
             </Row>
           ))}
 
-          <div className="mt-3">
-            <Button
-              onClick={handleAddSignature}
-              variant="outline-primary"
-              size="sm"
-              className="me-2"
-            >
-              + Add Signature
-            </Button>
-
-            {/* ✅ Save Button */}
-          </div>
+          {/* Add new signature */}
+          {isEditable && (
+            <div className="mt-3">
+              <Button
+                onClick={handleAddSignature}
+                variant="outline-primary"
+                size="sm"
+                className="me-2"
+              >
+                + Add Signature
+              </Button>
+            </div>
+          )}
         </Card.Body>
       </Accordion.Collapse>
     </Card>

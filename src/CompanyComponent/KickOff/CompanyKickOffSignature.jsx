@@ -4,12 +4,18 @@ import axiosInstance from "../../BaseComponet/axiosInstance";
 import Select from "react-select";
 
 const departments = [
-  "Chemical",
-  "Enginnering",
-  "Marketing",
-  "Mechanical",
-  "Quality Assurance",
-  
+  "ENGG",
+  "MKTG",
+  "SIMU",
+
+  "Design",
+  "MFG",
+  "Project",
+  "QA",
+  "VMC ",
+  "Planning",
+  "Tryout",
+  "Purchase",
 ];
 
 const CompanyKickOffSignature = ({
@@ -72,22 +78,20 @@ const CompanyKickOffSignature = ({
     );
   };
 
+  useEffect(() => {
+    // Build array of {departments, headName}
+    const signatureArray = departments.map((dept, idx) => {
+      const selected = selectedEmployees[idx];
+      return {
+        departments: dept,
+        headName: selected ? selected.label : "",
+        // optionally: employeeId: selected ? selected.value : "",
+      };
+    });
+    // Inform parent
+    onSignatureChange && onSignatureChange(signatureArray);
+  }, [selectedEmployees, onSignatureChange]);
 
-   useEffect(() => {
-     // Build array of {departments, headName}
-     const signatureArray = departments.map((dept, idx) => {
-       const selected = selectedEmployees[idx];
-       return {
-         departments: dept,
-         headName: selected ? selected.label : "",
-         // optionally: employeeId: selected ? selected.value : "",
-       };
-     });
-     // Inform parent
-     onSignatureChange && onSignatureChange(signatureArray);
-   }, [selectedEmployees, onSignatureChange]);
-
-   
   return (
     <Card className="mb-3 shadow-sm border-0">
       <CustomToggle

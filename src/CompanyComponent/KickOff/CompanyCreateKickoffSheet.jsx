@@ -353,12 +353,12 @@ const CompanyCreateKickoffSheet = () => {
             </Accordion>
 
             <div className="d-flex justify-content-end gap-2 mt-4 p-3 bg-white rounded-bottom shadow-sm">
-              <Button
+              {/* <Button
                 variant="outline-primary"
                 onClick={() => alert("Preview Clicked")}
               >
                 Preview
-              </Button>
+              </Button> */}
               <Button variant="primary" onClick={handleSave} disabled={isLoading}>
                 <i className="bi bi-save me-1"></i> 
                 {isLoading ? 'Saving...' : 'Save'}
