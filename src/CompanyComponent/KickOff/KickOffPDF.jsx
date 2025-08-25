@@ -192,6 +192,18 @@ const styles = StyleSheet.create({
     borderColor: "#eee",
   },
 
+  CustReqTitle: {
+    fontSize: 10,
+    fontWeight: "bold",
+
+    flex: 1,
+    padding: 4,
+    borderRightWidth: 1,
+    borderLeftWidth: 1,
+    borderTop: 1,
+    borderColor: "#eee",
+  },
+
   custmerReqTit: {
     flex: 1,
     fontSize: 10,
@@ -683,9 +695,14 @@ const KickOffPDF = ({ data }) => {
         </View>
 
         {/* Customer Requirements Table */}
-        <Text style={[styles.txteBold, styles.custmerReqTit]}>
-          Customer Requirements
-        </Text>
+
+        <View style={styles.section1}>
+          <View style={styles.MainRow1}>
+            {" "}
+            <Text style={styles.CustReqTitle}>Customer Requirements</Text>
+          </View>
+        </View>
+
         <View style={styles.section}>
           <View style={styles.table1}>
             {[
@@ -709,50 +726,69 @@ const KickOffPDF = ({ data }) => {
                 >
                   {type}
                 </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    styles.txteCenter,
-                    getReqValue(requirementList, type, "One")
-                      ? styles.selectReqBgColor
-                      : null,
-                  ]}
-                >
-                  {getReqValue(requirementList, type, "One") || "N/A"}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    styles.txteCenter,
-                    getReqValue(requirementList, type, "Two")
-                      ? styles.selectReqBgColor
-                      : null,
-                  ]}
-                >
-                  {getReqValue(requirementList, type, "Two") || "N/A"}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    styles.txteCenter,
-                    getReqValue(requirementList, type, "Three")
-                      ? styles.selectReqBgColor
-                      : null,
-                  ]}
-                >
-                  {getReqValue(requirementList, type, "Three") || "N/A"}
-                </Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    styles.txteCenter,
-                    getReqValue(requirementList, type, "Four")
-                      ? styles.selectReqBgColor
-                      : null,
-                  ]}
-                >
-                  {getReqValue(requirementList, type, "Four") || "N/A"}
-                </Text>
+                {type === "Remarks" ? (
+                  // Remarks: single wide cell for output
+                  <Text
+                    style={[
+                      styles.tableCell,
+                      styles.txteCenter,
+                      { flex: 4.28 }, // combines 4 data columns (1.5 flex * 4 = 6)
+                      getReqValue(requirementList, type, "One")
+                        ? styles.selectReqBgColor
+                        : null,
+                    ]}
+                  >
+                    {getReqValue(requirementList, type, "One") || "N/A"}
+                  </Text>
+                ) : (
+                  // Normal data fields
+                  <>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        styles.txteCenter,
+                        getReqValue(requirementList, type, "One")
+                          ? styles.selectReqBgColor
+                          : null,
+                      ]}
+                    >
+                      {getReqValue(requirementList, type, "One") || "N/A"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        styles.txteCenter,
+                        getReqValue(requirementList, type, "Two")
+                          ? styles.selectReqBgColor
+                          : null,
+                      ]}
+                    >
+                      {getReqValue(requirementList, type, "Two") || "N/A"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        styles.txteCenter,
+                        getReqValue(requirementList, type, "Three")
+                          ? styles.selectReqBgColor
+                          : null,
+                      ]}
+                    >
+                      {getReqValue(requirementList, type, "Three") || "N/A"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        styles.txteCenter,
+                        getReqValue(requirementList, type, "Four")
+                          ? styles.selectReqBgColor
+                          : null,
+                      ]}
+                    >
+                      {getReqValue(requirementList, type, "Four") || "N/A"}
+                    </Text>
+                  </>
+                )}
               </View>
             ))}
           </View>
